@@ -68,6 +68,19 @@ $ yarn add package_name
 - Create a config folder in the root directory of the project
 - Add .env file and specify your variables
 
+## Setting up gitignore
+
+- Setup a global git ignore by creat the file in your root directory
+- copy and paste this `git config --global core.excludesFile {path to .gitignore file}`
+
+## Commiting your changes
+
+- Create a feature branch off of develop
+- git branch -b "name of branch"
+- git add .
+- git commit -m "your message"
+- git push -u origin feature/"name of branch"
+
 # Project variables
 
 - DATABASE_URI : mongodb uri consisting of your username, password and cluster number

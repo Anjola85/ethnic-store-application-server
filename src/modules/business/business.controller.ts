@@ -68,14 +68,9 @@ export class BusinessController {
   @Get('all')
   async findAll(@Res() res: Response): Promise<any> {
     try {
-      // log that a request has been made
-      console.log('GET /business/all');
-
       const business = await this.businessService.findAll();
       const length: number = Object.keys(business).length;
 
-      //log that request succeeded
-      console.log(`Fetched ${length} businesses`);
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message: `Fetched ${length} businesses`,
