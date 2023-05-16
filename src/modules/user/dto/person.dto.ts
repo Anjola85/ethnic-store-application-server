@@ -49,7 +49,7 @@ export class PersonDTO {
   @Type(() => MobileDto)
   @ApiProperty({
     description: 'The mobile phone number of the person',
-    example: { phoneNumber: '1234567890', isoCode: 'CA' },
+    example: { phoneNumber: '1234567890', isoCode: '+1', isoType: 'CA' },
   })
   mobile: MobileDto;
 }

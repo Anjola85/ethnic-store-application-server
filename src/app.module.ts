@@ -12,6 +12,7 @@ import { ContinentModule } from './modules/continent/continent.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { JwtService } from '@nestjs/jwt';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { JwtService } from '@nestjs/jwt';
       envFilePath: ['config/.env'],
     }),
     DatabseModule,
+    AuthModule,
     UserModule,
     UserAccountModule,
     BusinessModule,
@@ -33,9 +35,10 @@ import { JwtService } from '@nestjs/jwt';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // interceptor to validate the token
     consumer
       .apply(AuthMiddleware)
-      .exclude('auth/(login|signup)')
+      .exclude('user/register', 'auth/login') //TODO: move the regiser to auth
       .forRoutes('*');
   }
 }
