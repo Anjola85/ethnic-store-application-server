@@ -13,6 +13,9 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { JwtService } from '@nestjs/jwt';
 import { AuthModule } from './modules/auth/auth.module';
+import { SendgridModule } from './providers/sendgrid/sendgrid.module';
+import { TwilioModule } from './providers/twilio/twilio.module';
+import { UserService } from './modules/user/user.service';
 
 @Module({
   imports: [
@@ -20,6 +23,8 @@ import { AuthModule } from './modules/auth/auth.module';
       isGlobal: true,
       envFilePath: ['config/.env'],
     }),
+    // TwilioModule,
+    SendgridModule,
     DatabseModule,
     AuthModule,
     UserModule,

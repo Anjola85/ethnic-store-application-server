@@ -72,7 +72,7 @@ export class AuthService {
           // generate token
           const privateKey = fs.readFileSync('./private_key.pem');
           const token = jsonwebtoken.sign(
-            { id: user.id },
+            { id: user.id, email: loginDto.email },
             privateKey.toString(),
             {
               expiresIn: '1d',
