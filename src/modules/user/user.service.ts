@@ -62,7 +62,7 @@ export class UserService {
         );
         otpCode = response.otpCode;
       } else if (userDTO.email != null) {
-        // use twilio to send otp
+        // TODO: use twilio to send otp
         otpCode = null;
       }
 

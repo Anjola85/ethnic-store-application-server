@@ -35,7 +35,6 @@ export class AuthMiddleware implements NestMiddleware {
   private async validate(res: Response, token: string): Promise<void> {
     const privateKey = fs.readFileSync('./private_key.pem');
 
-    // TODO: unable to verify the tokenm getting back errors
     const decoded: any = await jsonwebtoken.verify(
       token,
       privateKey.toString(),
