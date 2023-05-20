@@ -24,17 +24,23 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     try {
-      // verify the token
-      // const decodedToken = await this.jwtService.verifyAsync(token);
-
-      const privateKey = fs.readFileSync('./private_key.pem');
-
-      // TODO: unable to verify the tokenm getting back errors
-      jsonwebtoken.verify(token, privateKey.toString());
+      await this.validate(res, token);
 
       next();
     } catch (error) {
       throw new HttpException('Invalid token: ', HttpStatus.UNAUTHORIZED);
     }
+  }
+
+  private async validate(res: Response, token: string): Promise<void> {
+    const privateKey = fs.readFileSync('./private_key.pem');
+
+    const decoded: any = await jsonwebtoken.verify(
+      token,
+      privateKey.toString(),
+    );
+
+    // add email to respons object
+    res.locals.email = decoded.email;
   }
 }

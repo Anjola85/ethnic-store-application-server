@@ -12,6 +12,7 @@ import { User, UserSchema } from '../user/entities/user.entity';
 import { Customer, CustomerSchema } from '../user/entities/customer.entity';
 import { Merchant, MerchantSchema } from '../user/entities/merchant.entity';
 import { Auth, AuthSchema } from './entities/auth.entity';
+import { SendgridService } from 'src/providers/sendgrid/sendgrid.service';
 
 @Module({
   imports: [
@@ -24,6 +25,6 @@ import { Auth, AuthSchema } from './entities/auth.entity';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserAccountService, UserService],
+  providers: [AuthService, UserAccountService, UserService, SendgridService],
 })
 export class AuthModule {}

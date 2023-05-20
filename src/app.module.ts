@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
@@ -13,6 +13,9 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { JwtService } from '@nestjs/jwt';
 import { AuthModule } from './modules/auth/auth.module';
+import { SendgridModule } from './providers/sendgrid/sendgrid.module';
+import { BullModule } from '@nestjs/bull';
+import { TwilioModule } from 'nestjs-twilio';
 
 @Module({
   imports: [
@@ -20,6 +23,21 @@ import { AuthModule } from './modules/auth/auth.module';
       isGlobal: true,
       envFilePath: ['config/.env'],
     }),
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+    TwilioModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        accountSid: configService.get<string>('TWILIO_ACCOUNT_SID'),
+        authToken: configService.get<string>('TWILIO_AUTH_TOKEN'),
+      }),
+      inject: [ConfigService],
+    }),
+    SendgridModule,
     DatabseModule,
     AuthModule,
     UserModule,
@@ -35,10 +53,9 @@ import { AuthModule } from './modules/auth/auth.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // interceptor to validate the token
     consumer
       .apply(AuthMiddleware)
-      .exclude('user/register', 'auth/login') //TODO: move the regiser to auth
+      .exclude('user/register', 'auth/login')
       .forRoutes('*');
   }
 }
