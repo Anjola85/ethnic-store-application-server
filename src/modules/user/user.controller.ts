@@ -17,7 +17,7 @@ import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
-import { SendgridService } from 'src/providers/sendgrid/sendgrid.service';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 
 @Controller('user')
 export class UserController {

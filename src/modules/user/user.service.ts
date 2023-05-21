@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './entities/customer.entity';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
-import { SendgridService } from 'src/providers/sendgrid/sendgrid.service';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 
 @Injectable()
 export class UserService {
@@ -55,9 +55,8 @@ export class UserService {
       let otpCode = null;
       if (userDTO.mobile != null) {
         // use sendgrid to send otp
-        const response = await this.sendgridService.sendEmail(
+        const response = await this.sendgridService.sendOTPEmail(
           userDTO.email,
-          null,
           userDTO.firstName,
         );
         otpCode = response.otpCode;

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SendgridController } from './sendgrid.controller';
-import { SendgridService } from './sendgrid.service';
+import { SendgridController } from './otp.controller';
+import { SendgridService } from './sendgrid/sendgrid.service';
 
 describe('SendgridController', () => {
   let controller: SendgridController;

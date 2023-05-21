@@ -12,7 +12,8 @@ import {
 } from '../user_account/entities/user_account.entity';
 import { AuthService } from '../auth/auth.service';
 import { Auth, AuthSchema } from '../auth/entities/auth.entity';
-import { SendgridService } from 'src/providers/sendgrid/sendgrid.service';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
+import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 
 @Module({
   imports: [
@@ -25,6 +26,12 @@ import { SendgridService } from 'src/providers/sendgrid/sendgrid.service';
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, UserAccountService, AuthService, SendgridService],
+  providers: [
+    UserService,
+    UserAccountService,
+    AuthService,
+    SendgridService,
+    OTPCodeGenerator,
+  ],
 })
 export class UserModule {}

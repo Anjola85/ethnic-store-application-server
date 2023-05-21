@@ -13,7 +13,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { JwtService } from '@nestjs/jwt';
 import { AuthModule } from './modules/auth/auth.module';
-import { SendgridModule } from './providers/sendgrid/sendgrid.module';
+import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 
