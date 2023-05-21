@@ -11,8 +11,21 @@ export class MobileDto {
   @IsString()
   phoneNumber: string;
 
-  @ApiProperty({ example: 'CA' })
+  @ApiProperty({ example: '+1' })
   @IsNotEmpty()
   @IsString()
   isoCode: string;
+
+  @ApiProperty({ example: 'CA' })
+  @IsNotEmpty()
+  @IsString()
+  isoType: string;
+
+  getPhoneNumber(): string {
+    return `${this.isoCode}${this.phoneNumber}`;
+  }
+
+  toString(): string {
+    return `MobileDto: ${JSON.stringify(this)}`;
+  }
 }

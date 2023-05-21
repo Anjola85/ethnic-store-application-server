@@ -12,16 +12,19 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
+import { AuthService } from '../auth/auth.service';
+import { CreateAuthDto } from '../auth/dto/create-auth.dto';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 
 @Controller('user')
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly userAccountService: UserAccountService,
+    private readonly authService: AuthService,
   ) {}
 
   /**
@@ -30,58 +33,65 @@ export class UserController {
    * @returns {*}
    */
   @Post('register')
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'The user has been successfully registered.',
-    schema: {
-      properties: {
-        success: { type: 'boolean' },
-        message: { type: 'string' },
-        user: { type: 'object' },
-      },
-    },
-  })
   async create(
-    @Body() createUserDto: CreateUserDto,
+    // @Body() createUserDto: CreateUserDto,
+    @Body() requestBody: any,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      // Check if the user already exists
-      const userExists = await this.userAccountService.findUserByEmail(
-        createUserDto.email,
-      );
+      const createUserDto = new CreateUserDto();
+      Object.assign(createUserDto, { ...requestBody });
 
-      // response if user already exists
-      if (Object.keys(userExists).length != 0) {
-        // indicating that the user already exists
-        return res.status(HttpStatus.CONFLICT).json({
-          success: false,
-          message: 'user already exist',
-          account: '',
-          user: userExists,
+      // Check if the user already exists, throw error if they do
+      let userExists = false;
+      if (createUserDto.email != null) {
+        const user = await this.userAccountService.getUserByEmail(
+          createUserDto.email,
+        );
+        if (Object.keys(user).length > 0) {
+          userExists = true;
+        }
+      } else if (createUserDto.mobile != null) {
+        const user = await this.userAccountService.getUserByPhone(
+          createUserDto.mobile.getPhoneNumber(),
+        );
+        if (Object.keys(user).length > 0) {
+          userExists = true;
+        }
+      }
+
+      if (userExists) {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          message: 'user already exists',
         });
       }
 
       // create the user(customer/merchant) and pass the user account id
       const user = await this.userService.create(createUserDto);
-      const userID = user.id;
+      const userID: string = user.id;
+      const token = user.token;
 
       // pass response from request and created user id to account service
       const userAccountDto = new CreateUserAccountDto();
       Object.assign(userAccountDto, { _id: userID, ...createUserDto });
 
+      // create auth account, pass user account id to auth service
+      const authDto = new CreateAuthDto();
+      Object.assign(authDto, { user_account_id: userID, ...requestBody });
+      const authAccount = await this.authService.create(authDto, userID);
+
       // create user account
       const account = await this.userAccountService.create(userAccountDto);
 
       return res.status(HttpStatus.CREATED).json({
-        success: true,
         message: 'user successfully registered',
-        account: account,
-        user: user,
+        auth: authAccount,
+        account,
+        token,
+        user,
       });
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
         message: 'failed to register user',
         error: err.message,
       });

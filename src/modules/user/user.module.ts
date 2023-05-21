@@ -10,6 +10,10 @@ import {
   UserAccount,
   UserAccountSchema,
 } from '../user_account/entities/user_account.entity';
+import { AuthService } from '../auth/auth.service';
+import { Auth, AuthSchema } from '../auth/entities/auth.entity';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
+import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 
 @Module({
   imports: [
@@ -18,9 +22,16 @@ import {
       { name: Customer.name, schema: CustomerSchema },
       { name: Merchant.name, schema: MerchantSchema },
       { name: UserAccount.name, schema: UserAccountSchema },
+      { name: Auth.name, schema: AuthSchema },
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, UserAccountService],
+  providers: [
+    UserService,
+    UserAccountService,
+    AuthService,
+    SendgridService,
+    OTPCodeGenerator,
+  ],
 })
 export class UserModule {}

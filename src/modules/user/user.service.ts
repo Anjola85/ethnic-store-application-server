@@ -6,6 +6,9 @@ import { Merchant, MerchantDocument } from './entities/merchant.entity';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Customer, CustomerDocument } from './entities/customer.entity';
+import * as fs from 'fs';
+import * as jsonwebtoken from 'jsonwebtoken';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 
 @Injectable()
 export class UserService {
@@ -16,6 +19,7 @@ export class UserService {
     public readonly merchantModel: Model<MerchantDocument>,
     @InjectModel(Customer.name)
     public readonly customerModel: Model<CustomerDocument>,
+    private readonly sendgridService: SendgridService,
   ) {}
 
   /**
@@ -46,12 +50,41 @@ export class UserService {
       });
 
       user = await user.save();
+
+      // send OTP depending if user provided email or phone number
+      let otpCode = null;
+      if (userDTO.mobile != null) {
+        // use sendgrid to send otp
+        const response = await this.sendgridService.sendOTPEmail(
+          userDTO.email,
+          userDTO.firstName,
+        );
+        otpCode = response.otpCode;
+      } else if (userDTO.email != null) {
+        // TODO: use twilio to send otp
+        otpCode = null;
+      }
+
+      // create jwt token with user id and set expiry to 1 day
+      const privateKey = fs.readFileSync('./private_key.pem');
+
+      const token = jsonwebtoken.sign(
+        { id: user.id, emailAddress: email, otp: otpCode },
+        privateKey.toString(),
+        {
+          expiresIn: '1d',
+        },
+      );
+
+      // add token to user object
+      user.token = token;
+
       return user;
     } catch (error) {
       throw new Error(
         `Error registering user with request DTO ${userDTO}, 
-        \nfrom create method in user_account.service.ts. 
-        \nWith error message: ${error.message}`,
+        from create method in user.service.ts. 
+        With error message: ${error.message} and error: ${error}, error stack: ${error.stack}`,
       );
     }
   }

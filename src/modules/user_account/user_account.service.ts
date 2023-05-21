@@ -23,7 +23,7 @@ export class UserAccountService {
     } catch (error) {
       throw new Error(
         `Error creating user account, from create method in user_account.service.ts. 
-        \nWith error message: ${error.message}`,
+        With error message: ${error.message}`,
       );
     }
   }
@@ -35,8 +35,8 @@ export class UserAccountService {
     } catch (error) {
       throw new Error(
         `Error retrieving users from database 
-        \nfrom create method in user_account.service.ts. 
-        \nWith error message: ${error.message}`,
+        from create method in user_account.service.ts. 
+        With error message: ${error.message}`,
       );
     }
   }
@@ -112,15 +112,40 @@ export class UserAccountService {
   }
 
   /**
-   * Helper methods
+   * Check if user with email exists
+   * @param email
+   * @returns
+   * @throws Error if user with email exists
    */
-  async findUserByEmail(email: string): Promise<any> {
+  async getUserByEmail(email: string): Promise<object> {
     try {
-      const user = await this.userAccountModel.find({ email: email }).exec();
+      let user: object = null;
+      user = await this.userAccountModel.find({ email: email }).exec();
+
       return user;
     } catch (error) {
       throw new Error(
         `Error from findUserByEmail method in user_account.service.ts. 
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Check if user with phone exists
+   * @param phone
+   * @returns
+   * @throws Error if user with phone exists
+   */
+  async getUserByPhone(phone: string): Promise<object> {
+    try {
+      let user: object = null;
+      user = await this.userAccountModel.find({ phone: phone }).exec();
+
+      return user;
+    } catch (error) {
+      throw new Error(
+        `Error from findUserByPhone method in user_account.service.ts. 
         \nWith error message: ${error.message}`,
       );
     }
