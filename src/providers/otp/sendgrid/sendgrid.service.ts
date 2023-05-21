@@ -70,7 +70,7 @@ export class SendgridService {
 
     try {
       // send otp code to email
-      const result = await this.send(mail);
+      const response = await this.send(mail);
 
       // get auth object from database
       const auth = await this.authModel.findOne({
@@ -82,7 +82,7 @@ export class SendgridService {
       await auth.save();
 
       // log success repsonse
-      this.logger.log('Email sent successfully\n' + result + '\n'); //TODO: log might be too verbose
+      this.logger.log('Email sent successfully\n' + response + '\n'); //TODO: log might be too verbose
 
       // return success response to client
       return {

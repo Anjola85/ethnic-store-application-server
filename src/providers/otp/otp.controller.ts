@@ -52,15 +52,14 @@ export class SendgridController {
    */
   @Post('sendOTPBySms')
   async sendOTPBySms(@Body() requestBody: any) {
-    const { to, body: messageBody } = requestBody;
-    const options: MessageListInstanceCreateOptions = {
-      to: to,
-      body: 'Quickmart is live!',
-      from: '+14314416827', // Replace with your Twilio phone number
-    };
-
+    const { id, phoneNumber, codeLength, expirationMinutes } = requestBody;
     try {
-      await this.twilioService.sendSms(options);
+      await this.twilioService.sendSms(
+        id,
+        phoneNumber,
+        codeLength,
+        expirationMinutes,
+      );
       return { success: true, message: 'SMS sent successfully.' };
     } catch (error) {
       return { success: false, message: 'Failed to send SMS.' };
