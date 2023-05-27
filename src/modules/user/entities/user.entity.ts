@@ -17,14 +17,6 @@ export type Profile = Customer | Merchant;
 export class User {
   @Prop({
     type: Types.ObjectId,
-    default: null,
-    required: false,
-    ref: 'Auth',
-  })
-  auth: string | Auth;
-
-  @Prop({
-    type: Types.ObjectId,
     required: true,
     refpath: 'profileType',
   })
