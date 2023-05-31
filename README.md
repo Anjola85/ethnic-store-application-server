@@ -68,7 +68,7 @@ $ yarn add package_name
 - Create a config folder in the root directory of the project
 - Add .env file and specify your variables
 
-## Generate private-key.pem
+## Generate private_key.pem
 
 Enter this in terminal in the root folder:
 `openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:65537`

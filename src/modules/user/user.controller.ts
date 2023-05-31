@@ -17,10 +17,15 @@ import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
-import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 
 @Controller('user')
 export class UserController {
+  /**
+   *
+   * @param userService
+   * @param userAccountService
+   * @param authService
+   */
   constructor(
     private readonly userService: UserService,
     private readonly userAccountService: UserAccountService,
@@ -98,6 +103,11 @@ export class UserController {
     }
   }
 
+  /**
+   *
+   * @param res
+   * @returns {*}
+   */
   @Get('all')
   async findAll(@Res() res: Response): Promise<any> {
     try {
@@ -159,6 +169,8 @@ export class UserController {
     @Res() res: Response,
   ): Promise<any> {
     try {
+      // get the id from the token
+
       // call to user account service
       const account = await this.userAccountService.update(id, updateUserDto);
 

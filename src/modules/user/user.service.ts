@@ -68,8 +68,9 @@ export class UserService {
       // create jwt token with user id and set expiry to 1 day
       const privateKey = fs.readFileSync('./private_key.pem');
 
+      // create jwt token with user id and set expiry to 1 day
       const token = jsonwebtoken.sign(
-        { id: user.id, emailAddress: email, otp: otpCode },
+        { _id: user.id, emailAddress: email, otp: otpCode },
         privateKey.toString(),
         {
           expiresIn: '1d',
