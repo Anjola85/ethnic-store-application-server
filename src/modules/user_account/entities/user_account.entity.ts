@@ -50,6 +50,45 @@ export class UserAccount {
     country: string;
   };
 
+  // @Prop({
+  //   type: {
+  //     primary: {
+  //       type: String,
+  //       required: true,
+  //       default: '',
+  //     },
+  //     other: {
+  //       type: Map,
+  //       of: {
+  //         type: {
+  //           unit: { type: String, required: false, default: '' },
+  //           street: { type: String, required: true, default: '' },
+  //           city: { type: String, required: true, default: '' },
+  //           province: { type: String, required: true, default: '' },
+  //           postalCode: { type: String, required: true, default: '' },
+  //           country: { type: String, required: true, default: '' },
+  //         },
+  //         required: true,
+  //         default: {},
+  //       },
+  //     },
+  //   },
+  //   required: true,
+  // })
+  // address: {
+  //   primary: string;
+  //   other: {
+  //     [key: string]: {
+  //       unit?: string;
+  //       street: string;
+  //       city: string;
+  //       province: string;
+  //       postalCode: string;
+  //       country: string;
+  //     };
+  //   };
+  // };
+
   @Prop(
     raw({
       phoneNumber: { type: String },

@@ -32,10 +32,15 @@ export class AuthController {
     try {
       const response: any = await this.authService.login(loginDto);
 
+      const userResponse = {
+        info: response.user[0],
+        encryptedPassword: response.encryptedPassword,
+      };
+
       return res.status(HttpStatus.OK).json({
         message: response.message,
         token: response.token,
-        user: response.user,
+        user: userResponse,
       });
     } catch (error) {
       if (error instanceof InternalServerError) {

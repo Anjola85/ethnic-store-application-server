@@ -11,7 +11,7 @@ import {
 export class CreateAuthDto {
   @IsNotEmpty()
   @IsString()
-  password: string;
+  hashedPassword: string;
 
   @IsNotEmpty()
   @IsOptional()

@@ -23,16 +23,8 @@ export class AuthService {
 
   async create(createAuthDto: CreateAuthDto, userID: string): Promise<any> {
     try {
-      const saltOrRounds = 10;
-      const salt = await bcrypt.genSalt(saltOrRounds);
-      const password: string = createAuthDto.password;
-
-      // hash the password
-      const hashedPassword: string = await bcrypt.hash(password, salt); //TODO: errro here: data and salt argument required
-
-      // add auth to database
       let auth = new this.authModel({
-        password: hashedPassword,
+        password: createAuthDto.hashedPassword,
         user_account_id: userID,
       });
 
@@ -84,6 +76,7 @@ export class AuthService {
             message: 'user successfully logged in',
             token,
             user,
+            encryptedPassword: encryptedPassword,
           };
         } else {
           throw new UnauthorizedException(
