@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SendgridController } from './otp.controller';
-import { SendgridService } from './sendgrid/sendgrid.service';
+import { SendgridController } from '../otp.controller';
+import { SendgridService } from '../sendgrid/sendgrid.service';
 
-describe('SendgridController', () => {
+describe('TwilioService', () => {
   let controller: SendgridController;
 
   beforeEach(async () => {

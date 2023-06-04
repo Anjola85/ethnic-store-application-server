@@ -16,7 +16,6 @@ export default class TwilioService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectQueue('twilioQueue') private queue: Queue,
     private readonly otpCodeGenerator: OTPCodeGenerator,
     @InjectModel(Auth.name)
     private authModel: Model<AuthDocument> & any,
@@ -35,8 +34,8 @@ export default class TwilioService {
   public async sendSms(
     userId: string,
     phoneNumber: string,
-    codeLength?: number,
-    expirationMinutes = 5,
+    codeLength = 6,
+    expirationMinutes = 6,
   ) {
     // phone number of sender is quickmartdev
     const senderPhoneNumber = '+14314416827';
@@ -58,14 +57,15 @@ export default class TwilioService {
       // send otp code to phone number
       const response = this.client.messages.create(options);
 
-      // get auth object from database
-      const auth = await this.authModel.findOne({
-        user_account_id: userId,
-      });
-      // save otp code to database
-      auth.verification_code = otpCode;
-      auth.verify_code_expiration = expiryTime;
-      await auth.save();
+      // // get auth object from database
+      // const auth = await this.authModel.findOne({
+      //   user_account_id: userId,
+      // });
+
+      // // save otp code to database
+      // auth.verification_code = otpCode;
+      // auth.verify_code_expiration = expiryTime;
+      // await auth.save();
 
       // log success repsonse
       this.logger.log('SMS sent successfully\n' + response + '\n'); //TODO: log might be too verbose
@@ -73,7 +73,8 @@ export default class TwilioService {
       // return success response to client
       return {
         message: 'SMS sent successfully',
-        emailAddress: phoneNumber,
+        code: otpCode,
+        expiryTime: expiryTime,
       };
     } catch (error) {
       // log error response

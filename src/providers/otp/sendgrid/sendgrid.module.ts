@@ -21,6 +21,10 @@ import { UserAccountService } from 'src/modules/user_account/user_account.servic
 import TwilioService from '../twilio/twilio.service';
 import { BullModule } from '@nestjs/bull';
 import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
+import {
+  TempUserAccount,
+  TempUserAccountSchema,
+} from 'src/modules/user_account/entities/temporary_user_account.entity';
 
 @Module({
   imports: [
@@ -30,6 +34,7 @@ import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
       { name: Merchant.name, schema: MerchantSchema },
       { name: UserAccount.name, schema: UserAccountSchema },
       { name: Auth.name, schema: AuthSchema },
+      { name: TempUserAccount.name, schema: TempUserAccountSchema },
     ]),
     BullModule.registerQueue({
       name: 'twilioQueue',
@@ -38,7 +43,6 @@ import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
       },
     }),
   ],
-  controllers: [SendgridController],
   providers: [
     SendgridService,
     UserService,

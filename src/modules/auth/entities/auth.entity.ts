@@ -15,7 +15,7 @@ export type AuthDocument = Auth & Document;
 export class Auth {
   @Prop({
     type: String,
-    required: true,
+    required: false,
   })
   password: string;
 
@@ -33,7 +33,7 @@ export class Auth {
   @Prop({
     type: Date,
   })
-  verify_code_expiration: Date;
+  verification_code_expiration: Date;
 
   @Prop({
     type: String,

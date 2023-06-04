@@ -17,6 +17,7 @@ import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
+import { MobileUtil } from 'src/common/util/mobileUtil';
 
 @Controller('user')
 export class UserController {
@@ -44,56 +45,59 @@ export class UserController {
     @Res() res: Response,
   ): Promise<any> {
     try {
-      const createUserDto = new CreateUserDto();
-      Object.assign(createUserDto, { ...requestBody });
+      // get user id from auth middleware
+      const userID = res.locals.userId;
 
-      // Check if the user already exists, throw error if they do
-      let userExists = false;
-      if (createUserDto.email != null) {
-        const user = await this.userAccountService.getUserByEmail(
-          createUserDto.email,
-        );
-        if (Object.keys(user).length > 0) {
-          userExists = true;
-        }
-      } else if (createUserDto.mobile != null) {
-        const user = await this.userAccountService.getUserByPhone(
-          createUserDto.mobile.getPhoneNumber(),
-        );
-        if (Object.keys(user).length > 0) {
-          userExists = true;
-        }
-      }
+      const createUserDto = new CreateUserDto();
+      Object.assign(createUserDto, { ...requestBody, _id: userID });
+
+      // check if user exists with email or mobile
+      const userExists = await this.userAccountService.userExists(
+        createUserDto.email,
+        createUserDto.mobile.phoneNumber,
+      );
 
       if (userExists) {
-        return res.status(HttpStatus.BAD_REQUEST).json({
+        return res.status(HttpStatus.CONFLICT).json({
           message: 'user already exists',
         });
       }
 
+      // make sure user exists in temp user account for customer
+      if (createUserDto.profileType === 'customer') {
+        const tempUserAccount =
+          await this.userAccountService.findUserInTempAccount(userID);
+
+        if (!tempUserAccount) {
+          return res.status(HttpStatus.NOT_FOUND).json({
+            message: 'user not found in temp account',
+          });
+        }
+      }
+
       // create the user(customer/merchant) and pass the user account id
       const user = await this.userService.create(createUserDto);
-      const userID: string = user.id;
       const token = user.token;
 
       // pass response from request and created user id to account service
       const userAccountDto = new CreateUserAccountDto();
       Object.assign(userAccountDto, { _id: userID, ...createUserDto });
 
-      // create auth account, pass user account id to auth service
+      // update auth account
       const authDto = new CreateAuthDto();
       Object.assign(authDto, { user_account_id: userID, ...requestBody });
-      const authAccount = await this.authService.create(authDto, userID);
+      await this.authService.updateAccount(authDto, userID);
 
       // create user account
-      const account = await this.userAccountService.create(userAccountDto);
+      const userAccount = await this.userAccountService.create(
+        userAccountDto,
+        userID,
+      );
 
       return res.status(HttpStatus.CREATED).json({
         message: 'user successfully registered',
-        auth: authAccount,
-        account,
         token,
-        user,
+        userAccount,
       });
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
@@ -138,7 +142,7 @@ export class UserController {
    * @param id - user id
    * @returns {*}
    */
-  @Get(':id')
+  @Get('find/:id')
   async findOne(@Param('id') id: string, @Res() res: Response): Promise<any> {
     try {
       // call to userAccountService
