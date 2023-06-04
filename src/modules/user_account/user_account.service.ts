@@ -44,8 +44,6 @@ export class UserAccountService {
         ).getDto();
       }
 
-      console.log('userAccountDto', userAccountDto);
-
       const account = new this.userAccountModel({ ...userAccountDto });
       const userAccount = await account.save();
 

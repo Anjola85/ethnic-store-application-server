@@ -40,7 +40,6 @@ export class SendgridController {
         result,
       });
     } catch (error) {
-      console.error('Error sending email:', error);
       return { error: 'Failed to send email' };
     }
   }
