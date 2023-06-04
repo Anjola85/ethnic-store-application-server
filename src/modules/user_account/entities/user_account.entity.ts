@@ -27,7 +27,7 @@ export class UserAccount {
 
   @Prop({
     type: String,
-    required: true,
+    required: false,
   })
   email: string;
 
@@ -92,10 +92,11 @@ export class UserAccount {
   @Prop(
     raw({
       phoneNumber: { type: String },
-      iso_code: { type: String, required: true, default: '+1' },
+      isoCode: { type: String, required: true, default: '+1' },
+      isoType: { type: String, required: true, default: 'CA' },
     }),
   )
-  mobile: { phoneNumber: string; iso_code?: string };
+  mobile: { phoneNumber: string; isoCode?: string; isoType?: string };
 
   @Prop({
     type: Boolean,

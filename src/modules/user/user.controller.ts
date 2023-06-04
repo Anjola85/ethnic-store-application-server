@@ -17,6 +17,7 @@ import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
+import { MobileUtil } from 'src/common/util/mobileUtil';
 
 @Controller('user')
 export class UserController {
@@ -47,26 +48,14 @@ export class UserController {
       const createUserDto = new CreateUserDto();
       Object.assign(createUserDto, { ...requestBody });
 
-      // Check if the user already exists, throw error if they do
-      let userExists = false;
-      if (createUserDto.email != null) {
-        const user = await this.userAccountService.getUserByEmail(
-          createUserDto.email,
-        );
-        if (Object.keys(user).length > 0) {
-          userExists = true;
-        }
-      } else if (createUserDto.mobile != null) {
-        const user = await this.userAccountService.getUserByPhone(
-          createUserDto.mobile.getPhoneNumber(),
-        );
-        if (Object.keys(user).length > 0) {
-          userExists = true;
-        }
-      }
+      // check if user exists with email or mobile
+      const userExists = this.userAccountService.userExists(
+        createUserDto.email,
+        createUserDto.mobile.phoneNumber,
+      );
 
       if (userExists) {
-        return res.status(HttpStatus.BAD_REQUEST).json({
+        return res.status(HttpStatus.CONFLICT).json({
           message: 'user already exists',
         });
       }
@@ -138,7 +127,7 @@ export class UserController {
    * @param id - user id
    * @returns {*}
    */
-  @Get(':id')
+  @Get('find/:id')
   async findOne(@Param('id') id: string, @Res() res: Response): Promise<any> {
     try {
       // call to userAccountService

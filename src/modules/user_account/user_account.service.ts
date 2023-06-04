@@ -7,12 +7,19 @@ import {
   UserAccount,
   UserAccountDocument,
 } from './entities/user_account.entity';
+import { TempUserAccountDto } from './dto/temporary-user-account.dto';
+import {
+  TempUserAccount,
+  TempUserAccountDocument,
+} from './entities/temporary_user_account.entity';
 
 @Injectable()
 export class UserAccountService {
   constructor(
     @InjectModel(UserAccount.name)
     private userAccountModel: Model<UserAccountDocument>,
+    @InjectModel(TempUserAccount.name)
+    private tempUserAccountModel: Model<TempUserAccountDocument>,
   ) {}
 
   async create(userAccountDto: CreateUserAccountDto): Promise<UserAccount> {
@@ -23,6 +30,21 @@ export class UserAccountService {
     } catch (error) {
       throw new Error(
         `Error creating user account, from create method in user_account.service.ts. 
+        With error message: ${error.message}`,
+      );
+    }
+  }
+
+  async createTempUserAccount(
+    userAccountDto: TempUserAccountDto,
+  ): Promise<any> {
+    try {
+      const account = new this.tempUserAccountModel({ ...userAccountDto });
+      const userAccount = await account.save();
+      return userAccount;
+    } catch (error) {
+      throw new Error(
+        `Error creating temporary user account, from createTempUserAccount method in user_account.service.ts. 
         With error message: ${error.message}`,
       );
     }
@@ -140,12 +162,82 @@ export class UserAccountService {
   async getUserByPhone(phone: string): Promise<object> {
     try {
       let user: object = null;
-      user = await this.userAccountModel.find({ phone: phone }).exec();
-
+      user = await this.userAccountModel
+        .find({ 'mobile.phoneNumber': phone })
+        .exec();
       return user;
     } catch (error) {
       throw new Error(
         `Error from findUserByPhone method in user_account.service.ts. 
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  // get user by phone or email
+  async getUserByPhoneOrEmail(phone: string, email: string): Promise<any> {
+    try {
+      let user: object = null;
+      user = await this.userAccountModel
+        .find({ $or: [{ 'mobile.phoneNumber': phone }, { email: email }] })
+        .exec();
+      return user;
+    } catch (error) {
+      throw new Error(
+        `Error from findUserByPhoneOrEmail method in user_account.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  async userExists(email: string, phoneNumber: string) {
+    let userExists = false;
+
+    // check if user exists in user accounts collection
+    if (email != null && email != '') {
+      // use email to check if user exists
+      const user = await this.getUserByEmail(email);
+      if (Object.keys(user).length > 0) {
+        userExists = true;
+      }
+    } else if (phoneNumber != null && phoneNumber != '') {
+      // use mobile to check if user exists
+      const user = await this.getUserByPhone(phoneNumber);
+      if (Object.keys(user).length > 0) {
+        userExists = true;
+      }
+    }
+
+    if (!userExists) {
+      // check if user exists in temporary user accounts collection
+      if (email != null && email != '') {
+        const user = await this.tempUserAccountModel
+          .find({ email: email })
+          .exec();
+        if (Object.keys(user).length > 0) {
+          userExists = true;
+        }
+      } else if (phoneNumber != null && phoneNumber != '') {
+        const user = await this.tempUserAccountModel
+          .find({ 'mobile.phoneNumber': phoneNumber })
+          .exec();
+        if (Object.keys(user).length > 0) {
+          userExists = true;
+        }
+      }
+    }
+
+    return userExists;
+  }
+
+  // find user in temporary account
+  async findUserInTempAccount(userId: string): Promise<any> {
+    try {
+      const user = await this.tempUserAccountModel.findById(userId).exec();
+      return user;
+    } catch (error) {
+      throw new Error(
+        `Error from findUserInTempAccount method in user_account.service.ts. 
         \nWith error message: ${error.message}`,
       );
     }

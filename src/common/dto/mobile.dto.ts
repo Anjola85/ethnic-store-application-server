@@ -20,12 +20,4 @@ export class MobileDto {
   @IsNotEmpty()
   @IsString()
   isoType: string;
-
-  getPhoneNumber(): string {
-    return `${this.isoCode}${this.phoneNumber}`;
-  }
-
-  toString(): string {
-    return `MobileDto: ${JSON.stringify(this)}`;
-  }
 }

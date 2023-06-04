@@ -39,8 +39,7 @@ export class AuthMiddleware implements NestMiddleware {
       token,
       privateKey.toString(),
     );
-
     // add user id to response object
-    res.locals.email = decoded._id;
+    res.locals.userId = decoded.id;
   }
 }
