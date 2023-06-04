@@ -140,9 +140,6 @@ export class AuthService {
         return { message: 'Account already verified', verified: true };
       }
 
-      // set entry time to current time
-      // entryTime = new Date();
-
       // check if otp matches
       if (otp === auth.verification_code) {
         // check if otp is expired
