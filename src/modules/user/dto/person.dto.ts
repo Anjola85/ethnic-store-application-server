@@ -33,21 +33,6 @@ export class PersonDTO {
   @ApiProperty({ description: 'The email address of the person' })
   email: string;
 
-  // @IsNotEmpty()
-  // @ValidateNested()
-  // @Type(() => AddressDto)
-  // @ApiProperty({
-  //   description: 'The address of the person',
-  //   example: {
-  //     unit: '123',
-  //     street: 'Main St',
-  //     city: 'Toronto',
-  //     province: 'ON',
-  //     country: 'CA',
-  //   },
-  // })
-  // address: AddressDto;
-
   @IsNotEmpty()
   @ApiProperty({
     description: 'The address of the person',
