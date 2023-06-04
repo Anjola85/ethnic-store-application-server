@@ -52,7 +52,7 @@ export class AuthService {
         password: createAuthDto.hashedPassword,
         user_account_id: userID,
         verification_code: response.code,
-        verify_code_expiration: response.expiryTime,
+        verification_code_expiration: response.expiryTime,
       });
 
       // save auth object
@@ -140,6 +140,9 @@ export class AuthService {
         return { message: 'Account already verified', verified: true };
       }
 
+      // set entry time to current time
+      // entryTime = new Date();
+
       // check if otp matches
       if (otp === auth.verification_code) {
         // check if otp is expired
@@ -165,7 +168,32 @@ export class AuthService {
     }
   }
 
-  // resendOtp method
+  /**
+   * Update account by user_account_id
+   * @param authDto
+   * @param userId
+   * @returns
+   */
+  async updateAccount(authDto: CreateAuthDto, userId: string) {
+    try {
+      // get auth object
+      const auth = await this.authModel.findOne({ user_account_id: userId });
+
+      if (auth == null) {
+        throw new Error('User not found in auth database');
+      }
+
+      // update auth object
+      await this.authModel.findByIdAndUpdate(auth.id, {
+        ...authDto,
+      });
+
+      // return updated auth
+      return await this.authModel.findOne({ user_account_id: userId });
+    } catch (e) {
+      throw new Error(`From AuthService.updateAccount: ${e.message}`);
+    }
+  }
 
   findAll() {
     return `This action returns all auth`;

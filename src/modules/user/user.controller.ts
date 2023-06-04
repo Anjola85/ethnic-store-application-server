@@ -45,11 +45,14 @@ export class UserController {
     @Res() res: Response,
   ): Promise<any> {
     try {
+      // get user id from auth middleware
+      const userID = res.locals.userId;
+
       const createUserDto = new CreateUserDto();
-      Object.assign(createUserDto, { ...requestBody });
+      Object.assign(createUserDto, { ...requestBody, _id: userID });
 
       // check if user exists with email or mobile
-      const userExists = this.userAccountService.userExists(
+      const userExists = await this.userAccountService.userExists(
         createUserDto.email,
         createUserDto.mobile.phoneNumber,
       );
@@ -60,29 +63,41 @@ export class UserController {
         });
       }
 
+      // make sure user exists in temp user account for customer
+      if (createUserDto.profileType === 'customer') {
+        const tempUserAccount =
+          await this.userAccountService.findUserInTempAccount(userID);
+
+        if (!tempUserAccount) {
+          return res.status(HttpStatus.NOT_FOUND).json({
+            message: 'user not found in temp account',
+          });
+        }
+      }
+
       // create the user(customer/merchant) and pass the user account id
       const user = await this.userService.create(createUserDto);
-      const userID: string = user.id;
       const token = user.token;
 
       // pass response from request and created user id to account service
       const userAccountDto = new CreateUserAccountDto();
       Object.assign(userAccountDto, { _id: userID, ...createUserDto });
 
-      // create auth account, pass user account id to auth service
+      // update auth account
       const authDto = new CreateAuthDto();
       Object.assign(authDto, { user_account_id: userID, ...requestBody });
-      const authAccount = await this.authService.create(authDto, userID);
+      await this.authService.updateAccount(authDto, userID);
 
       // create user account
-      const account = await this.userAccountService.create(userAccountDto);
+      const userAccount = await this.userAccountService.create(
+        userAccountDto,
+        userID,
+      );
 
       return res.status(HttpStatus.CREATED).json({
         message: 'user successfully registered',
-        auth: authAccount,
-        account,
         token,
-        user,
+        userAccount,
       });
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

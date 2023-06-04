@@ -53,4 +53,12 @@ export class MobileUtil {
   setIsoType(isoType: string): void {
     this.isoType = isoType;
   }
+
+  getDto(): MobileDto {
+    return {
+      isoCode: this.isoCode,
+      isoType: this.isoType,
+      phoneNumber: this.phoneNumber,
+    };
+  }
 }

@@ -12,6 +12,7 @@ import {
   TempUserAccount,
   TempUserAccountDocument,
 } from './entities/temporary_user_account.entity';
+import { MobileUtil } from 'src/common/util/mobileUtil';
 
 @Injectable()
 export class UserAccountService {
@@ -22,10 +23,37 @@ export class UserAccountService {
     private tempUserAccountModel: Model<TempUserAccountDocument>,
   ) {}
 
-  async create(userAccountDto: CreateUserAccountDto): Promise<UserAccount> {
+  async create(
+    userAccountDto: CreateUserAccountDto,
+    userId: string,
+  ): Promise<UserAccount> {
     try {
+      // get data from temp auth account and delete temp auth account
+      const tempUserAccount = await this.tempUserAccountModel.findById(userId);
+
+      const { mobile, email } = tempUserAccount;
+
+      // pass either email or mobile to userAccountDto
+      if (email) {
+        userAccountDto.email = email;
+      } else if (mobile) {
+        userAccountDto.mobile = new MobileUtil(
+          mobile.isoCode,
+          mobile.isoType,
+          mobile.phoneNumber,
+        ).getDto();
+      }
+
+      console.log('userAccountDto', userAccountDto);
+
       const account = new this.userAccountModel({ ...userAccountDto });
       const userAccount = await account.save();
+
+      // if userAccount is saved successfully, delete temp user account
+      if (userAccount) {
+        await this.tempUserAccountModel.findByIdAndDelete(userId);
+      }
+
       return userAccount;
     } catch (error) {
       throw new Error(

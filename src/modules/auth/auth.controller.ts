@@ -85,8 +85,6 @@ export class AuthController {
   @Post('signup')
   async register(@Body() requestBody: any, @Res() res: Response): Promise<any> {
     try {
-      // TODO: pull exissting data from temporary_user collection then delete the user in that collection
-      // Call the create method from the userController instance
       const result = await this.userController.create(requestBody, res);
       return result;
     } catch (error) {
