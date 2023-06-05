@@ -123,7 +123,6 @@ export class AuthService {
       if (user != null && Object.keys(auth).length > 0) {
         const encryptedPassword: string = auth[0].password;
 
-        // check if password matches, the encrypted password is store in auth
         const passwordMatch: boolean = await bcrypt.compare(
           loginDto.password,
           encryptedPassword,
@@ -249,6 +248,7 @@ export class AuthService {
       // use sendgrid to send otp
       response = await this.sendgridService.sendOTPEmail(userID, email);
     } else if (phoneNumber != null) {
+      console.log('reached');
       // use twilio to send otp
       response = await this.twilioService.sendSms(userID, phoneNumber);
     }
@@ -277,6 +277,7 @@ export class AuthService {
     email?: string,
     phoneNumber?: string,
   ): Promise<{ message; code; expiryTime; token }> {
+    console.log('reached resend otp');
     let response: { message; code; expiryTime };
     if (email != null) {
       // use sendgrid to send otp

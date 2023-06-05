@@ -38,7 +38,7 @@ export default class TwilioService {
     expirationMinutes = 6,
   ) {
     // phone number of sender is quickmartdev
-    const senderPhoneNumber = '+14314416827';
+    const senderPhoneNumber = '+14318133976';
 
     // generate otp code
     const otpResponse = await this.otpCodeGenerator.generateCode(
