@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Res,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -101,12 +102,6 @@ export class AuthController {
       });
     }
   }
-
-  // verify otp controller
-  // for sign up logic, look below
-  // get the temp account of the user with use od
-  // transfaer the data to the actual user account.
-  // also update the auth account if the password was provided
 
   /**
    * Verify the OTP sent, update the auth collection
@@ -233,7 +228,7 @@ export class AuthController {
   }
 
   /**
-   * Testing endpoint
+   * This endpint is to test the sendOTPBySms method
    * This endpoint sends an OTP code to the user's phone number.
    * @param requestBody
    * @returns
@@ -246,6 +241,41 @@ export class AuthController {
       return { success: true, message: 'SMS sent successfully.' };
     } catch (error) {
       return { success: false, message: 'Failed to send SMS.' };
+    }
+  }
+
+  /**
+   * TODO: To be deleted
+   * THis endpoint is to test the sendOTPByEmail method
+   * @param reset
+   * @param res
+   * @returns
+   */
+  @Post('reset')
+  async reset(@Query('reset') reset: boolean, @Res() res: Response) {
+    try {
+      // take in query param resetType to be true or false
+      if (reset === undefined || reset === null) {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          message: 'reset query param is required',
+        });
+      } else if (reset === false) {
+        return res.status(HttpStatus.OK).json({
+          message: 'reset query param must be true in order to reset',
+        });
+      }
+
+      // reset user account
+      this.authService.resetRegisteredUsers();
+
+      return res.status(HttpStatus.OK).json({
+        message: 'reset successful',
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        message: `400 reset failed from auth.controller.ts`,
+        error: error.message,
+      });
     }
   }
 

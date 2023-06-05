@@ -15,6 +15,16 @@ import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { MobileUtil } from 'src/common/util/mobileUtil';
+import { User, UserDocument } from '../user/entities/user.entity';
+import {
+  UserAccount,
+  UserAccountDocument,
+} from '../user_account/entities/user_account.entity';
+import {
+  TempUserAccount,
+  TempUserAccountDocument,
+} from '../user_account/entities/temporary_user_account.entity';
+import { Customer, CustomerDocument } from '../user/entities/customer.entity';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +35,15 @@ export class AuthService {
     private readonly userAccountService: UserAccountService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
+    // delete from here,
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument> & any,
+    @InjectModel(UserAccount.name)
+    private userAccountModel: Model<UserAccountDocument> & any,
+    @InjectModel(TempUserAccount.name)
+    private tempUserAccountModel: Model<TempUserAccountDocument> & any,
+    @InjectModel(Customer.name)
+    private customerModel: Model<CustomerDocument> & any,
   ) {}
 
   async create(
@@ -65,6 +84,27 @@ export class AuthService {
     }
   }
 
+  findAll() {
+    return `This action returns all auth`;
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} auth`;
+  }
+
+  update(id: number, updateAuthDto: UpdateAuthDto) {
+    return `This action updates a #${id} auth`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} auth`;
+  }
+
+  /**
+   *
+   * @param loginDto
+   * @returns
+   */
   async login(loginDto: loginDto): Promise<any> {
     try {
       let user: any;
@@ -192,22 +232,13 @@ export class AuthService {
     }
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
-
+  /**
+   * THis method sends otp to user
+   * @param userID
+   * @param email
+   * @param phoneNumber
+   * @returns
+   */
   async sendOTP(
     userID: string,
     email?: string,
@@ -234,6 +265,13 @@ export class AuthService {
     return otpResponse;
   }
 
+  /**
+   * THis method resends otp to user
+   * @param userID
+   * @param email
+   * @param phoneNumber
+   * @returns
+   */
   async resendOtp(
     userID: string,
     email?: string,
@@ -268,13 +306,49 @@ export class AuthService {
     return otpResponse;
   }
 
-  // test otp
+  /**
+   * THis endpoint is to test twilio send sms feature
+   * @param phoneNumber
+   * @returns
+   */
   async sendOTPBySmsTest(phoneNumber: string) {
     try {
       await this.twilioService.sendSmsTest(phoneNumber);
       return { success: true, message: 'SMS sent successfully.' };
     } catch (error) {
       return { success: false, message: 'Failed to send SMS.' };
+    }
+  }
+
+  /**
+   * TODO: to be deleted
+   * THis method deletes registered users on that current day for testing purposes
+   * @returns
+   */
+  async resetRegisteredUsers() {
+    try {
+      // delete only documents in authModel starting from current day, by checking updated at field from the colection
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      await this.authModel.deleteMany({
+        updated_at: { $gte: today, $lt: tomorrow },
+      });
+      await this.userModel.deleteMany({
+        updated_at: { $gte: today, $lt: tomorrow },
+      });
+      await this.userAccountModel.deleteMany({
+        updated_at: { $gte: today, $lt: tomorrow },
+      });
+      await this.customerModel.deleteMany({
+        updated_at: { $gte: today, $lt: tomorrow },
+      });
+      await this.tempUserAccountModel.deleteMany({
+        updated_at: { $gte: today, $lt: tomorrow },
+      });
+      return { success: true, message: 'Reset successful' };
+    } catch (error) {
+      return { success: false, message: 'Reset failed from auth.service.ts' };
     }
   }
 }
