@@ -34,7 +34,7 @@ export default class TwilioService {
   public async sendSms(
     userId: string,
     phoneNumber: string,
-    codeLength = 6,
+    codeLength = 4,
     expirationMinutes = 6,
   ) {
     // phone number of sender is quickmartdev
@@ -66,6 +66,51 @@ export default class TwilioService {
       // auth.verification_code = otpCode;
       // auth.verify_code_expiration = expiryTime;
       // await auth.save();
+
+      // log success repsonse
+      this.logger.log('SMS sent successfully\n' + response + '\n'); //TODO: log might be too verbose
+
+      // return success response to client
+      return {
+        message: 'SMS sent successfully',
+        code: otpCode,
+        expiryTime: expiryTime,
+      };
+    } catch (error) {
+      // log error response
+      this.logger.error('Error sending sms:', error);
+      // return error response to client
+      throw new HttpException(
+        'Failed to send email',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async sendSmsTest(
+    phoneNumber: string,
+    codeLength = 4,
+    expirationMinutes = 6,
+  ) {
+    // phone number of sender is quickmartdev
+    const senderPhoneNumber = '+14318133976';
+
+    // generate otp code
+    const otpResponse = await this.otpCodeGenerator.generateCode(
+      codeLength,
+      expirationMinutes,
+    );
+    const otpCode: string = otpResponse.code;
+    const expiryTime: Date = otpResponse.expiryTime;
+
+    const options: MessageListInstanceCreateOptions = {
+      to: phoneNumber,
+      body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
+      from: senderPhoneNumber,
+    };
+    try {
+      // send otp code to phone number
+      const response = this.client.messages.create(options);
 
       // log success repsonse
       this.logger.log('SMS sent successfully\n' + response + '\n'); //TODO: log might be too verbose

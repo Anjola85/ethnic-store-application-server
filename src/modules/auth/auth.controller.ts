@@ -232,6 +232,23 @@ export class AuthController {
     }
   }
 
+  /**
+   * Testing endpoint
+   * This endpoint sends an OTP code to the user's phone number.
+   * @param requestBody
+   * @returns
+   */
+  @Post('sendOTPBySms')
+  async sendOTPBySms(@Body() requestBody: any) {
+    const { phoneNumber } = requestBody;
+    try {
+      await this.authService.sendOTPBySmsTest(phoneNumber);
+      return { success: true, message: 'SMS sent successfully.' };
+    } catch (error) {
+      return { success: false, message: 'Failed to send SMS.' };
+    }
+  }
+
   @Post()
   async create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.create(createAuthDto, '');

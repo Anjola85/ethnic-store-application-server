@@ -267,4 +267,14 @@ export class AuthService {
 
     return otpResponse;
   }
+
+  // test otp
+  async sendOTPBySmsTest(phoneNumber: string) {
+    try {
+      await this.twilioService.sendSmsTest(phoneNumber);
+      return { success: true, message: 'SMS sent successfully.' };
+    } catch (error) {
+      return { success: false, message: 'Failed to send SMS.' };
+    }
+  }
 }

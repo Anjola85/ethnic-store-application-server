@@ -32,7 +32,7 @@ export class SendgridService {
     userId: string,
     receiverEmail: string,
     firstName?: string,
-    codeLength = 6,
+    codeLength = 4,
     expirationMinutes = 6,
   ): Promise<any> {
     // email address of sender is quickmartdev
