@@ -57,6 +57,13 @@ export class AuthController {
    */
   @Post('login')
   async login(@Body() loginDto: loginDto, @Res() res: Response) {
+    // log time of request
+    const requestTime = new Date();
+
+    this.logger.log(
+      '\nRequest to ** login endpoint ** With starttime: ' + requestTime,
+    );
+
     try {
       const response: any = await this.authService.login(loginDto);
 
@@ -64,6 +71,16 @@ export class AuthController {
         info: response.user[0],
         encryptedPassword: response.encryptedPassword,
       };
+
+      // log end time for response
+      const endTime = new Date();
+
+      this.logger.log(
+        '\nResponse from ** login endpoint ** With endtime: ' +
+          endTime +
+          ' with response ' +
+          JSON.stringify(response),
+      );
 
       return res.status(HttpStatus.OK).json({
         message: response.message,
@@ -87,8 +104,25 @@ export class AuthController {
 
   @Post('signup')
   async register(@Body() requestBody: any, @Res() res: Response): Promise<any> {
+    // log time of request
+    const requestTime = new Date();
+
+    this.logger.log(
+      '\nRequest to ** signup endpoint ** With starttime: ' + requestTime,
+    );
+
     try {
       const result = await this.userController.create(requestBody, res);
+
+      // log end time for response
+      const endTime = new Date();
+
+      this.logger.log(
+        '\nResponse from ** signup endpoint ** With endtime: ' +
+          endTime +
+          ' with response ' +
+          JSON.stringify(result.message),
+      );
       return result;
     } catch (error) {
       // Handle any error that occurs during the registration process
@@ -191,11 +225,14 @@ export class AuthController {
         userAccount.id,
       );
 
+      // log time of response
+      const endTime = new Date();
+
       this.logger.log(
         'Response to sendOtp endpoint end-time: ' +
-          requestTime +
+          endTime +
           ' with data: ' +
-          JSON.stringify(authResponse),
+          JSON.stringify(authResponse.message),
       );
 
       return res.status(HttpStatus.OK).json({
@@ -216,6 +253,12 @@ export class AuthController {
     @Body() requestBody: TempUserAccountDto,
     @Res() res: Response,
   ) {
+    // log time of request
+    const requestTime = new Date();
+    this.logger.log(
+      '\nRequest to ** sendOtp endpoint ** With starttime: ' + requestTime,
+    );
+
     try {
       const userId = res.locals.userId;
 
@@ -235,6 +278,20 @@ export class AuthController {
         userAccount.id,
         requestBody.email,
         requestBody.mobile.phoneNumber,
+      );
+
+      const logResponse = {
+        message: authResponse.message,
+        expiryTime: authResponse.expiryTime,
+      };
+
+      // log time of request
+      const endTime = new Date();
+      this.logger.log(
+        '\nRequest to ** sendOtp endpoint ** With endpoint: ' +
+          endTime +
+          ' with response: ' +
+          JSON.stringify(logResponse),
       );
 
       return res.status(HttpStatus.OK).json({

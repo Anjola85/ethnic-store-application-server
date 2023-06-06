@@ -97,7 +97,6 @@ export class UserController {
       return res.status(HttpStatus.CREATED).json({
         message: 'user successfully registered',
         token,
-        userAccount,
       });
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
