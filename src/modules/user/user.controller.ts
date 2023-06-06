@@ -54,7 +54,7 @@ export class UserController {
       // check if user exists with email or mobile
       const userExists = await this.userAccountService.userExists(
         createUserDto.email,
-        createUserDto.mobile.phoneNumber,
+        createUserDto.mobile,
       );
 
       if (userExists) {

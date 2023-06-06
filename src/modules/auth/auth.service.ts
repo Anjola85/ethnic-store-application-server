@@ -248,7 +248,6 @@ export class AuthService {
       // use sendgrid to send otp
       response = await this.sendgridService.sendOTPEmail(userID, email);
     } else if (phoneNumber != null) {
-      console.log('reached');
       // use twilio to send otp
       response = await this.twilioService.sendSms(userID, phoneNumber);
     }
@@ -277,7 +276,6 @@ export class AuthService {
     email?: string,
     phoneNumber?: string,
   ): Promise<{ message; code; expiryTime; token }> {
-    console.log('reached resend otp');
     let response: { message; code; expiryTime };
     if (email != null) {
       // use sendgrid to send otp

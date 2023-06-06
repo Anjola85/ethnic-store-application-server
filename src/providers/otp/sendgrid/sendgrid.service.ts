@@ -48,20 +48,13 @@ export class SendgridService {
     const otpCode: string = otpResponse.code;
     const expiryTime: Date = otpResponse.expiryTime;
 
-    // Get name from DB if name was not provided get firstname from user database
-    if (!firstName || firstName === '' || firstName === undefined) {
-      // get user from database
-      const user = await this.userAccountService.findOne(userId);
-      firstName = user.firstName;
-    }
-
     // create mail object
     const mail = {
       to: receiverEmail,
       subject: 'Welcome to Quickmart! One-Time Password (OTP) Verification',
       from: senderEmailAddress,
       text: `Please verify your email address by entering the OTP code: ${otpCode}`,
-      html: `<h3>Hello ${firstName ? firstName : '!'},</h3>
+      html: `<h3>Hello!,</h3>
             <p>Thank you for joining Quickmart! <br/> To complete your account registration, please verify your email address by entering the OTP (One-Time Password) code provided below:</p>
             <h4>OTP Code: ${otpCode}</h4>
             <p>Please enter this code within 5 minutes to verify your account. If you did not sign up for an account with Quickmart, please disregard this email.</p>
@@ -74,8 +67,21 @@ export class SendgridService {
       // send otp code to email
       const response = await this.send(mail);
 
+      const maskedEmail = receiverEmail;
+
+      // replace first 5 digits with *
+      const maskedEmailAdd = maskedEmail.replace(
+        maskedEmail.substring(0, 5),
+        '*****',
+      );
+
       // log success repsonse
-      this.logger.log('Email sent successfully\n' + response + '\n');
+      this.logger.log(
+        'Email sent successfully to: \n' +
+          maskedEmailAdd +
+          '\nwith expiry time: ' +
+          expiryTime,
+      );
 
       // return success response to client
       return {

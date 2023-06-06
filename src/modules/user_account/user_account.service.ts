@@ -13,6 +13,8 @@ import {
   TempUserAccountDocument,
 } from './entities/temporary_user_account.entity';
 import { MobileUtil } from 'src/common/util/mobileUtil';
+import { Mobile } from 'aws-sdk';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class UserAccountService {
@@ -89,19 +91,19 @@ export class UserAccountService {
     }
   }
 
-  async findOne(id: string): Promise<any> {
+  async findOne(id: string): Promise<{ message: string; data: any }> {
     try {
       const user = await this.userAccountModel.findById(id).exec();
       // throw error if user does not exist
       if (!user) {
-        throw new Error(`User with id ${id} not found`);
+        return { message: `User with id ${id} not found`, data: null };
       }
 
       if (user.deleted) {
-        throw new Error(`User with id ${id} has been deleted`);
+        return { message: `User with id ${id} has been deleted`, data: null };
       }
 
-      return user;
+      return { message: 'found user', data: user };
     } catch (error) {
       throw new Error(
         `Error getting user information for user with id ${id}, 
@@ -216,8 +218,9 @@ export class UserAccountService {
     }
   }
 
-  async userExists(email: string, phoneNumber: string) {
+  async userExists(email: string, mobile: MobileDto): Promise<boolean> {
     let userExists = false;
+    const phoneNumber = mobile.phoneNumber;
 
     // check if user exists in user accounts collection
     if (email != null && email != '') {
@@ -233,23 +236,26 @@ export class UserAccountService {
         userExists = true;
       }
     }
+    return userExists;
+  }
 
-    if (!userExists) {
-      // check if user exists in temporary user accounts collection
-      if (email != null && email != '') {
-        const user = await this.tempUserAccountModel
-          .find({ email: email })
-          .exec();
-        if (Object.keys(user).length > 0) {
-          userExists = true;
-        }
-      } else if (phoneNumber != null && phoneNumber != '') {
-        const user = await this.tempUserAccountModel
-          .find({ 'mobile.phoneNumber': phoneNumber })
-          .exec();
-        if (Object.keys(user).length > 0) {
-          userExists = true;
-        }
+  async tempUserExists(email: string, mobile: MobileDto): Promise<boolean> {
+    let userExists = false;
+    const phoneNumber = mobile.phoneNumber;
+
+    if (email != null && email != '') {
+      const user = await this.tempUserAccountModel
+        .find({ email: email })
+        .exec();
+      if (Object.keys(user).length > 0) {
+        userExists = true;
+      }
+    } else if (phoneNumber != null && phoneNumber != '') {
+      const user = await this.tempUserAccountModel
+        .find({ 'mobile.phoneNumber': phoneNumber })
+        .exec();
+      if (Object.keys(user).length > 0) {
+        userExists = true;
       }
     }
 

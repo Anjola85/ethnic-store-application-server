@@ -67,8 +67,21 @@ export default class TwilioService {
       // auth.verify_code_expiration = expiryTime;
       // await auth.save();
 
+      // mask phone number
+      const maskedNumber = phoneNumber;
+      // replace first 5 digits with *
+      const maskedPhoneNumber = maskedNumber.replace(
+        maskedNumber.substring(0, 5),
+        '*****',
+      );
+
       // log success repsonse
-      this.logger.log('SMS sent successfully\n' + response + '\n'); //TODO: log might be too verbose
+      this.logger.log(
+        'SMS sent successfully to: \n' +
+          maskedPhoneNumber +
+          '\nwith expiry time: ' +
+          expiryTime,
+      );
 
       // return success response to client
       return {

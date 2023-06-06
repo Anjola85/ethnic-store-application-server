@@ -22,7 +22,7 @@ export class MobileDto {
   isoCode: string;
 
   @ApiProperty({ example: 'CA' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   isoType: string;
 }

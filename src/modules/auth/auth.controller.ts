@@ -10,6 +10,7 @@ import {
   Res,
   NotFoundException,
   Query,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -24,6 +25,7 @@ import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.d
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
   private readonly userController: UserController;
 
   constructor(
@@ -149,13 +151,26 @@ export class AuthController {
   @Post('sendOtp')
   async sendOtp(@Body() requestBody: TempUserAccountDto, @Res() res: Response) {
     try {
+      // log time of request
+      const requestTime = new Date();
+
+      this.logger.log(
+        '\nRequest to ** sendOtp endpoint ** With starttime: ' + requestTime,
+      );
+
       // check if user exists through either email or phone number
       const userExists = await this.userAccountService.userExists(
         requestBody.email,
-        requestBody.mobile.phoneNumber,
+        requestBody.mobile,
       );
 
-      if (userExists) {
+      // check if user exists in temp user account
+      const tempUserExists = await this.userAccountService.tempUserExists(
+        requestBody.email,
+        requestBody.mobile,
+      );
+
+      if (userExists || tempUserExists) {
         return res.status(HttpStatus.CONFLICT).json({
           message: 'user already exists',
         });
@@ -174,6 +189,13 @@ export class AuthController {
       const authResponse = await this.authService.create(
         authDto,
         userAccount.id,
+      );
+
+      this.logger.log(
+        'Response to sendOtp endpoint end-time: ' +
+          requestTime +
+          ' with data: ' +
+          JSON.stringify(authResponse),
       );
 
       return res.status(HttpStatus.OK).json({

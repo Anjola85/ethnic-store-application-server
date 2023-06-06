@@ -22,8 +22,8 @@ export class TempUserAccount {
   @Prop(
     raw({
       phoneNumber: { type: String },
-      isoCode: { type: String, required: true, default: '+1' },
-      isoType: { type: String, required: true, default: 'CA' },
+      isoCode: { type: String, required: false, default: '+1' },
+      isoType: { type: String, required: false, default: 'CA' },
     }),
   )
   mobile: { phoneNumber: string; isoCode?: string; isoType?: string };
