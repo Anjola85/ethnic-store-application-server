@@ -1,18 +1,13 @@
 version: '1'
-
 services:
-  quickmartServer:
-    image: quickmartServer
+  app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8080:8080
-    depends_on:
-      - database
+      - 7080:7080
+    volumes:
+      - ./src:/quickmart/src/app/src
+      - ./package.json:/quickmart/src/app/package.json
     environment:
-      - DB_HOST=database
-      - DB_PORT=3000
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=postgres
+      - NODE_ENV=development

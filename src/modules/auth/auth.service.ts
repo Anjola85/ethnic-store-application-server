@@ -7,14 +7,11 @@ import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
-import { NotFoundError } from 'rxjs';
 import { Auth, AuthDocument } from './entities/auth.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
-import { MobileDto } from 'src/common/dto/mobile.dto';
-import { MobileUtil } from 'src/common/util/mobileUtil';
 import { User, UserDocument } from '../user/entities/user.entity';
 import {
   UserAccount,

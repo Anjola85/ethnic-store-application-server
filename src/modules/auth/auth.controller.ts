@@ -46,6 +46,16 @@ export class AuthController {
    */
   @Get('test')
   public test() {
+    this.logger.log('\nTest endpoint hit at ' + new Date());
+    // log the response of this method and the name of the method and class
+    this.logger.log(
+      '\nResponse from ** test endpoint ** in ** auth.controller ** With endtime: ' +
+        new Date() +
+        ' with response: ' +
+        '\n' +
+        'This is the  test endpoint from the user controller',
+    );
+
     return 'This is the  test endpoint from the user controller';
   }
 
