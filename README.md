@@ -105,6 +105,12 @@ $ yarn run test:cov
 
 # Deploy to ECR
 
+## To connect to EC2 via console
+
+`ssh -i "quickmart-secret.pem" ubuntu@ec2-44-211-194-83.compute-1.amazonaws.com`
+
+NOTE: the public ip might change
+
 ## These are the steps to push the docker image to AWS ECR reposiotry
 
 1. Retrieve an authentication token and authenticate your Docker client to your registry.
