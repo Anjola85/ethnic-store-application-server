@@ -27,36 +27,64 @@ export class UserAccount {
 
   @Prop({
     type: String,
-    required: true,
+    required: false,
   })
   email: string;
 
   @Prop({
     type: {
-      unit: { type: String, required: false, default: '' },
-      street: { type: String, required: true, default: '' },
-      city: { type: String, required: true, default: '' },
-      province: { type: String, required: true, default: '' },
-      postalCode: { type: String, required: true, default: '' },
-      country: { type: String, required: true, default: '' },
+      primary: {
+        type: {
+          unit: { type: String, required: false, default: '' },
+          street: { type: String, required: true, default: '' },
+          city: { type: String, required: true, default: '' },
+          province: { type: String, required: true, default: '' },
+          postalCode: { type: String, required: true, default: '' },
+          country: { type: String, required: true, default: '' },
+        },
+        required: true,
+        default: '',
+      },
+      other: {
+        type: Map,
+        of: {
+          type: {
+            unit: { type: String, required: false, default: '' },
+            street: { type: String, required: true, default: '' },
+            city: { type: String, required: true, default: '' },
+            province: { type: String, required: true, default: '' },
+            postalCode: { type: String, required: true, default: '' },
+            country: { type: String, required: true, default: '' },
+          },
+          required: false,
+          default: {},
+        },
+      },
     },
     required: true,
   })
   address: {
-    street: string;
-    city: string;
-    province: string;
-    postalCode: string;
-    country: string;
+    primary: string;
+    other: {
+      [key: string]: {
+        unit?: string;
+        street: string;
+        city: string;
+        province: string;
+        postalCode: string;
+        country: string;
+      };
+    };
   };
 
   @Prop(
     raw({
       phoneNumber: { type: String },
-      iso_code: { type: String, required: true, default: '+1' },
+      isoCode: { type: String, required: false, default: '+1' },
+      isoType: { type: String, required: false, default: 'CA' },
     }),
   )
-  mobile: { phoneNumber: string; iso_code?: string };
+  mobile: { phoneNumber: string; isoCode?: string; isoType?: string };
 
   @Prop({
     type: Boolean,

@@ -1,31 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsPhoneNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+} from 'class-validator';
 
 /**
  * Defining the structire for the mobile field
  */
 export class MobileDto {
   @ApiProperty({ example: '+14165555555' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsPhoneNumber('CA')
   @IsString()
   phoneNumber: string;
 
   @ApiProperty({ example: '+1' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   isoCode: string;
 
   @ApiProperty({ example: 'CA' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   isoType: string;
-
-  getPhoneNumber(): string {
-    return `${this.isoCode}${this.phoneNumber}`;
-  }
-
-  toString(): string {
-    return `MobileDto: ${JSON.stringify(this)}`;
-  }
 }

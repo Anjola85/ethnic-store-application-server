@@ -1,17 +1,22 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { User } from 'aws-sdk/clients/budgets';
 import { UserAccount } from 'aws-sdk/clients/kendra';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { PersonDTO } from 'src/modules/user/dto/person.dto';
 
-export class CreateAuthDto {
-  @IsNotEmpty()
+export class CreateAuthDto extends PersonDTO {
+  @IsOptional()
   @IsString()
-  password: string;
+  hashedPassword: string;
 
   @IsNotEmpty()
   @IsOptional()

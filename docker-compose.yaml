@@ -1,0 +1,13 @@
+version: '1'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 7080:7080
+    volumes:
+      - ./src:/quickmart/src/app/src
+      - ./package.json:/quickmart/src/app/package.json
+    environment:
+      - NODE_ENV=development

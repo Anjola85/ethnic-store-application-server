@@ -40,26 +40,21 @@ export class SendgridController {
         result,
       });
     } catch (error) {
-      console.error('Error sending email:', error);
       return { error: 'Failed to send email' };
     }
   }
 
   /**
+   * Testing endpoint
    * This endpoint sends an OTP code to the user's phone number.
    * @param requestBody
    * @returns
    */
   @Post('sendOTPBySms')
   async sendOTPBySms(@Body() requestBody: any) {
-    const { id, phoneNumber, codeLength, expirationMinutes } = requestBody;
+    const { phoneNumber } = requestBody;
     try {
-      await this.twilioService.sendSms(
-        id,
-        phoneNumber,
-        codeLength,
-        expirationMinutes,
-      );
+      await this.twilioService.sendSmsTest(phoneNumber);
       return { success: true, message: 'SMS sent successfully.' };
     } catch (error) {
       return { success: false, message: 'Failed to send SMS.' };

@@ -2,7 +2,7 @@
   "name": "haydac-server",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "anjola",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
-    "@nestjs/config": "^2.3.1",
+    "@nestjs/config": "^2.3.2",
     "@nestjs/mongoose": "^9.2.2",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/swagger": "^6.2.1",

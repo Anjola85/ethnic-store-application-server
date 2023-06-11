@@ -31,9 +31,9 @@ export class SendgridService {
   async sendOTPEmail(
     userId: string,
     receiverEmail: string,
-    codeLength?: number,
-    expirationMinutes?: number,
     firstName?: string,
+    codeLength = 4,
+    expirationMinutes = 6,
   ): Promise<any> {
     // email address of sender is quickmartdev
     const senderEmailAddress = 'quickmartdev@gmail.com';
@@ -43,23 +43,18 @@ export class SendgridService {
       codeLength,
       expirationMinutes,
     );
+
+    // set otp code and expiry time
     const otpCode: string = otpResponse.code;
     const expiryTime: Date = otpResponse.expiryTime;
-
-    // Get name from DB if name was not provided get firstname from user database
-    if (!firstName || firstName === '' || firstName === undefined) {
-      // get user from database
-      const user = await this.userAccountService.findOne(userId);
-      firstName = user.firstName;
-    }
 
     // create mail object
     const mail = {
       to: receiverEmail,
-      subject: 'Welcome to Quickmart! Verify Your Account',
+      subject: 'Welcome to Quickmart! One-Time Password (OTP) Verification',
       from: senderEmailAddress,
-      text: `Please verify your account by entering the OTP code: ${otpCode}`,
-      html: `<h3>Hello ${firstName},</h3>
+      text: `Please verify your email address by entering the OTP code: ${otpCode}`,
+      html: `<h3>Hello!,</h3>
             <p>Thank you for joining Quickmart! <br/> To complete your account registration, please verify your email address by entering the OTP (One-Time Password) code provided below:</p>
             <h4>OTP Code: ${otpCode}</h4>
             <p>Please enter this code within 5 minutes to verify your account. If you did not sign up for an account with Quickmart, please disregard this email.</p>
@@ -72,22 +67,27 @@ export class SendgridService {
       // send otp code to email
       const response = await this.send(mail);
 
-      // get auth object from database
-      const auth = await this.authModel.findOne({
-        user_account_id: userId,
-      });
-      // save otp code to database
-      auth.verification_code = otpCode;
-      auth.verify_code_expiration = expiryTime;
-      await auth.save();
+      const maskedEmail = receiverEmail;
+
+      // replace first 5 digits with *
+      const maskedEmailAdd = maskedEmail.replace(
+        maskedEmail.substring(0, 5),
+        '*****',
+      );
 
       // log success repsonse
-      this.logger.log('Email sent successfully\n' + response + '\n'); //TODO: log might be too verbose
+      this.logger.log(
+        'Email sent successfully to: \n' +
+          maskedEmailAdd +
+          '\nwith expiry time: ' +
+          expiryTime,
+      );
 
       // return success response to client
       return {
         message: 'Email sent successfully',
-        emailAddress: receiverEmail,
+        code: otpCode,
+        expiryTime: expiryTime,
       };
     } catch (error: HttpException | any) {
       // log error response

@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from 'src/modules/user/entities/user.entity';
-import * as bcrypt from 'bcrypt';
 import { UserAccount } from 'src/modules/user_account/entities/user_account.entity';
 
 export type AuthDocument = Auth & Document;
@@ -15,7 +13,7 @@ export type AuthDocument = Auth & Document;
 export class Auth {
   @Prop({
     type: String,
-    required: true,
+    required: false,
   })
   password: string;
 
@@ -33,7 +31,7 @@ export class Auth {
   @Prop({
     type: Date,
   })
-  verify_code_expiration: Date;
+  verification_code_expiration: Date;
 
   @Prop({
     type: String,

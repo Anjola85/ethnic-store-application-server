@@ -14,6 +14,11 @@ import { Merchant, MerchantSchema } from '../user/entities/merchant.entity';
 import { Auth, AuthSchema } from './entities/auth.entity';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
+import TwilioService from 'src/providers/otp/twilio/twilio.service';
+import {
+  TempUserAccount,
+  TempUserAccountSchema,
+} from '../user_account/entities/temporary_user_account.entity';
 
 @Module({
   imports: [
@@ -23,6 +28,7 @@ import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
       { name: User.name, schema: UserSchema },
       { name: Customer.name, schema: CustomerSchema },
       { name: Merchant.name, schema: MerchantSchema },
+      { name: TempUserAccount.name, schema: TempUserAccountSchema },
     ]),
   ],
   controllers: [AuthController],
@@ -32,6 +38,7 @@ import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
     UserService,
     SendgridService,
     OTPCodeGenerator,
+    TwilioService,
   ],
 })
 export class AuthModule {}

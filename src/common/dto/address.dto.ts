@@ -1,10 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 /**
  * Defining the structire for the address field
  */
 export class AddressDto {
+  @ApiProperty({ example: '123' })
+  @IsOptional()
+  @IsString()
+  unit: string;
+
   @ApiProperty({ example: '123 Main St' })
   @IsNotEmpty()
   @IsString()
