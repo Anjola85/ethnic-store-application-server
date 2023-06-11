@@ -45,7 +45,7 @@ export class AuthController {
    * @returns
    */
   @Get('test')
-  public test() {
+  public test(@Res() res: Response) {
     this.logger.log('\nTest endpoint hit at ' + new Date());
     // log the response of this method and the name of the method and class
     this.logger.log(
@@ -56,7 +56,10 @@ export class AuthController {
         'This is the  test endpoint from the user controller',
     );
 
-    return 'This is the  test endpoint from the user controller';
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      message: 'This is the  test endpoint from AUTH on QUICKMART!!!!',
+    });
   }
 
   /**

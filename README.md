@@ -103,6 +103,38 @@ $ yarn run test:e2e
 $ yarn run test:cov
 ```
 
+# Deploy to ECR
+
+## These are the steps to push the docker image to AWS ECR reposiotry
+
+1. Retrieve an authentication token and authenticate your Docker client to your registry.
+   Use the AWS CLI:
+   `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.us-east-1.amazonaws.com`
+
+2. Build your Docker image using the following command.
+   For information on building a Docker file from scratch see the instructions here . You can skip this step if your image is already built:
+   `docker build -t quickmart-server .`
+
+3. After the build completes, tag your image so you can push the image to this repository:
+   `docker tag quickmart-server:latest 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:latest`
+
+4. Run the following command to push this image to your newly created AWS repository:
+   `docker push 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name_of_tag}`
+
+## Steps to make the docker image available on AWS EC2
+
+1. Run the following command to pull this image from the ECR Repository on EC2
+   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+
+2. Run the following command to expose the port in background mode
+   `docker run -p 7080:7080 -d 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+
+3. Run this to check if image is running
+   `docker ps`
+
+4. Run this to see the logs, add -f (to see the love feed)
+   `docker logs {container id} -f`
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
