@@ -129,8 +129,11 @@ NOTE: the public ip might change
 
 ## Steps to make the docker image available on AWS EC2
 
+NOTE: Remember to login to aws on EC2, if no configuration for docker command comes up run:
+`sudo chmod 666 /var/run/docker.sock`
+
 1. Run the following command to pull this image from the ECR Repository on EC2
-   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of branch and first 7 digits of commit}`
 
 2. Run the following command to expose the port in background mode
    `docker run -p 7080:7080 -d 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
