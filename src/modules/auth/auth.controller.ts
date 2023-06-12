@@ -46,10 +46,12 @@ export class AuthController {
    */
   @Get('test')
   public test(@Res() res: Response) {
-    this.logger.log('\nTest endpoint hit at ' + new Date());
+    this.logger.log(
+      '\n[QuickMart Server] - Request to test endpoint at ' + new Date(),
+    );
     // log the response of this method and the name of the method and class
     this.logger.log(
-      '\nResponse from ** test endpoint ** in ** auth.controller ** With endtime: ' +
+      '\n[QuickMart Server] - Response from ** test endpoint ** in ** auth.controller ** With endtime: ' +
         new Date() +
         ' with response: ' +
         '\n' +
@@ -74,7 +76,10 @@ export class AuthController {
     const requestTime = new Date();
 
     this.logger.log(
-      '\nRequest to ** login endpoint ** With starttime: ' + requestTime,
+      '\n[QuickMart Server] - Request to ** login endpoint ** With starttime: ' +
+        requestTime +
+        ' with payload: ' +
+        JSON.stringify(loginDto),
     );
 
     try {
@@ -89,9 +94,9 @@ export class AuthController {
       const endTime = new Date();
 
       this.logger.log(
-        '\nResponse from ** login endpoint ** With endtime: ' +
+        '\n[QuickMart Server] - Response from ** login endpoint ** With endtime: ' +
           endTime +
-          ' with response ' +
+          ' with response body ' +
           JSON.stringify(response),
       );
 
@@ -121,7 +126,10 @@ export class AuthController {
     const requestTime = new Date();
 
     this.logger.log(
-      '\nRequest to ** signup endpoint ** With starttime: ' + requestTime,
+      '\n[QuickMart Server] - Request to ** signup endpoint ** With starttime: ' +
+        requestTime +
+        ' with payload: ' +
+        JSON.stringify(requestBody),
     );
 
     try {
@@ -131,7 +139,7 @@ export class AuthController {
       const endTime = new Date();
 
       this.logger.log(
-        '\nResponse from ** signup endpoint ** With endtime: ' +
+        '\n[QuickMart Server] - Response from ** signup endpoint ** With endtime: ' +
           endTime +
           ' with response ' +
           JSON.stringify(result.message),
@@ -163,11 +171,31 @@ export class AuthController {
     @Body() body: { code: string; entryTime: Date },
     @Res() res: Response,
   ) {
+    // log the time of request and body of request
+    const requestTime = new Date();
+
+    this.logger.log(
+      '\n[QuickMart Server] - Request to ** verifyOtp endpoint ** With starttime: ' +
+        requestTime +
+        ' with payload: ' +
+        JSON.stringify(body),
+    );
+
     try {
       const userId = res.locals.userId;
 
       const response: { message: string; verified: boolean } =
         await this.authService.verifyOtp(body.code, body.entryTime, userId);
+
+      // log the time of response and body of response
+      const endTime = new Date();
+
+      this.logger.log(
+        '\n[QuickMart Server] - Response from ** verifyOtp endpoint ** With endtime: ' +
+          endTime +
+          ' with response body ' +
+          JSON.stringify(response),
+      );
 
       return res.status(HttpStatus.OK).json({
         message: response.message,
@@ -202,7 +230,10 @@ export class AuthController {
       const requestTime = new Date();
 
       this.logger.log(
-        '\nRequest to ** sendOtp endpoint ** With starttime: ' + requestTime,
+        '\n[QuickMart Server] - Request to ** sendOtp endpoint ** With starttime: ' +
+          requestTime +
+          ' with payload: ' +
+          JSON.stringify(requestBody),
       );
 
       // check if user exists through either email or phone number
@@ -242,7 +273,7 @@ export class AuthController {
       const endTime = new Date();
 
       this.logger.log(
-        'Response to sendOtp endpoint end-time: ' +
+        '[QuickMart Server] - Response from sendOtp endpoint end-time: ' +
           endTime +
           ' with data: ' +
           JSON.stringify(authResponse.message),
@@ -268,8 +299,12 @@ export class AuthController {
   ) {
     // log time of request
     const requestTime = new Date();
+
     this.logger.log(
-      '\nRequest to ** sendOtp endpoint ** With starttime: ' + requestTime,
+      '\n[QuickMart Server] - Request to ** resendOtp endpoint ** With starttime: ' +
+        requestTime +
+        ' with payload: ' +
+        JSON.stringify(requestBody),
     );
 
     try {
@@ -301,7 +336,7 @@ export class AuthController {
       // log time of request
       const endTime = new Date();
       this.logger.log(
-        '\nRequest to ** sendOtp endpoint ** With endpoint: ' +
+        '[QuickMart Server] - Response from ** resendOtp endpoint ** With endpoint: ' +
           endTime +
           ' with response: ' +
           JSON.stringify(logResponse),
@@ -328,8 +363,28 @@ export class AuthController {
   @Post('sendOTPBySms')
   async sendOTPBySms(@Body() requestBody: any) {
     const { phoneNumber } = requestBody;
+
+    const requestTime = new Date();
+
+    this.logger.log(
+      '\n[QuickMart Server] - Request to ** sendOTPBySms endpoint ** With starttime: ' +
+        requestTime +
+        ' with payload: ' +
+        JSON.stringify(requestBody),
+    );
+
     try {
       await this.authService.sendOTPBySmsTest(phoneNumber);
+
+      // log repsonse time and response
+      const endTime = new Date();
+      this.logger.log(
+        '[QuickMart Server] - Response from ** sendOTPBySms endpoint ** With endpoint: ' +
+          endTime +
+          ' with response: ' +
+          JSON.stringify({ success: true, message: 'SMS sent successfully.' }),
+      );
+
       return { success: true, message: 'SMS sent successfully.' };
     } catch (error) {
       return { success: false, message: 'Failed to send SMS.' };
@@ -345,6 +400,13 @@ export class AuthController {
    */
   @Post('reset')
   async reset(@Query('reset') reset: boolean, @Res() res: Response) {
+    const requestTime = new Date();
+
+    this.logger.log(
+      '\n[QuickMart Server] - Request to ** sendOTPBySms endpoint ** With starttime: ' +
+        requestTime,
+    );
+
     try {
       // take in query param resetType to be true or false
       if (reset === undefined || reset === null) {
@@ -358,7 +420,16 @@ export class AuthController {
       }
 
       // reset user account
-      this.authService.resetRegisteredUsers();
+      const response = this.authService.resetRegisteredUsers();
+
+      // log response and the time
+      const endTime = new Date();
+      this.logger.log(
+        '[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
+          endTime +
+          ' with response: ' +
+          JSON.stringify(response),
+      );
 
       return res.status(HttpStatus.OK).json({
         message: 'reset successful',
