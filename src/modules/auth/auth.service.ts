@@ -158,12 +158,10 @@ export class AuthService {
 
   async verifyOtp(
     otp: string,
-    entryTime: Date,
+    entryTime: string,
     userId: string,
   ): Promise<{ message: string; verified: boolean }> {
     try {
-      // TODO: decrypt otp here
-
       // get auth object
       const auth = await this.authModel.findOne({ user_account_id: userId });
 
@@ -181,7 +179,11 @@ export class AuthService {
         // check if otp is expired
         const expiryTime = auth.verification_code_expiration;
 
-        if (entryTime.getTime() <= expiryTime.getTime()) {
+        // convert string to date
+        const dateString = entryTime;
+        const entryDate = new Date(dateString);
+
+        if (entryDate.getTime() <= expiryTime.getTime()) {
           // update auth object
           await this.authModel.findByIdAndUpdate(auth.id, {
             account_verified: true,

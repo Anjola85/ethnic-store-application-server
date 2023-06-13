@@ -168,7 +168,7 @@ export class AuthController {
    */
   @Post('verifyOtp')
   async confirmOtp(
-    @Body() body: { code: string; entryTime: Date },
+    @Body() body: { code: string; entryTime: string },
     @Res() res: Response,
   ) {
     // log the time of request and body of request
