@@ -399,7 +399,7 @@ export class AuthController {
    * @returns
    */
   @Post('reset')
-  async reset(@Query('reset') reset: boolean, @Res() res: Response) {
+  async reset(@Query('clear') clear: boolean, @Res() res: Response) {
     const requestTime = new Date();
 
     this.logger.log(
@@ -409,13 +409,13 @@ export class AuthController {
 
     try {
       // take in query param resetType to be true or false
-      if (reset === undefined || reset === null) {
+      if (clear === undefined || clear === null) {
         return res.status(HttpStatus.BAD_REQUEST).json({
-          message: 'reset query param is required',
+          message: 'clear query param is required',
         });
-      } else if (reset === false) {
+      } else if (clear === false) {
         return res.status(HttpStatus.OK).json({
-          message: 'reset query param must be true in order to reset',
+          message: 'clear query param must be true in order to reset',
         });
       }
 
@@ -425,7 +425,7 @@ export class AuthController {
       // log response and the time
       const endTime = new Date();
       this.logger.log(
-        '[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
+        '\n[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
           endTime +
           ' with response: ' +
           JSON.stringify(response),

@@ -324,26 +324,30 @@ export class AuthService {
    * @returns
    */
   async resetRegisteredUsers() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0); // Set the time to 00:00:00.000
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999); // Set the time to 23:59:59.999
+
     try {
-      // delete only documents in authModel starting from current day, by checking updated at field from the colection
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
       await this.authModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
+
       await this.userModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
       await this.userAccountModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
       await this.customerModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
       await this.tempUserAccountModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
+
       return { success: true, message: 'Reset successful' };
     } catch (error) {
       return { success: false, message: 'Reset failed from auth.service.ts' };
