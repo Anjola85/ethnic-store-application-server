@@ -420,7 +420,7 @@ export class AuthController {
       }
 
       // reset user account
-      const response = this.authService.resetRegisteredUsers();
+      const response = await this.authService.resetRegisteredUsers();
 
       // log response and the time
       const endTime = new Date();
@@ -428,7 +428,7 @@ export class AuthController {
         '\n[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
           endTime +
           ' with response: ' +
-          JSON.stringify(response),
+          JSON.stringify(response.message),
       );
 
       return res.status(HttpStatus.OK).json({
