@@ -29,9 +29,9 @@ export class Auth {
   verification_code: string;
 
   @Prop({
-    type: Date,
+    type: String,
   })
-  verification_code_expiration: Date;
+  verification_code_expiration: string;
 
   @Prop({
     type: String,

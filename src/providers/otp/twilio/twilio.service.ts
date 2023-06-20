@@ -46,7 +46,7 @@ export default class TwilioService {
       expirationMinutes,
     );
     const otpCode: string = otpResponse.code;
-    const expiryTime: Date = otpResponse.expiryTime;
+    const expiryTime: string = otpResponse.expiryTime;
 
     const options: MessageListInstanceCreateOptions = {
       to: phoneNumber,
@@ -114,7 +114,7 @@ export default class TwilioService {
       expirationMinutes,
     );
     const otpCode: string = otpResponse.code;
-    const expiryTime: Date = otpResponse.expiryTime;
+    const expiryTime: string = otpResponse.expiryTime;
 
     const options: MessageListInstanceCreateOptions = {
       to: phoneNumber,

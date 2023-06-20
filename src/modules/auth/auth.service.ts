@@ -48,7 +48,6 @@ export class AuthService {
     userID: string,
   ): Promise<{ token; message }> {
     try {
-      // send OTP code to email or phoen number
       const response: { message; code; expiryTime; token } = await this.sendOTP(
         userID,
         createAuthDto.email,
@@ -179,11 +178,7 @@ export class AuthService {
         // check if otp is expired
         const expiryTime = auth.verification_code_expiration;
 
-        // convert string to date
-        const dateString = entryTime;
-        const entryDate = new Date(dateString);
-
-        if (entryDate.getTime() <= expiryTime.getTime()) {
+        if (entryTime <= expiryTime) {
           // update auth object
           await this.authModel.findByIdAndUpdate(auth.id, {
             account_verified: true,
