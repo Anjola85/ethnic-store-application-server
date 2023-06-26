@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { loginDto } from './dto/login.dto';
@@ -22,9 +22,12 @@ import {
   TempUserAccountDocument,
 } from '../user_account/entities/temporary_user_account.entity';
 import { Customer, CustomerDocument } from '../user/entities/customer.entity';
+import AWS from 'aws-sdk';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(Auth.name)
     protected authModel: Model<AuthDocument> & any,
@@ -56,15 +59,15 @@ export class AuthService {
 
       // set default value for password
       if (
-        createAuthDto.hashedPassword === undefined ||
-        createAuthDto.hashedPassword === null
+        createAuthDto.password === undefined ||
+        createAuthDto.password === null
       ) {
-        createAuthDto.hashedPassword = '';
+        createAuthDto.password = '';
       }
 
       // create new auth object
       const auth = new this.authModel({
-        password: createAuthDto.hashedPassword,
+        password: createAuthDto.password,
         user_account_id: userID,
         verification_code: response.code,
         verification_code_expiration: response.expiryTime,
@@ -162,7 +165,14 @@ export class AuthService {
   ): Promise<{ message: string; verified: boolean }> {
     try {
       // get auth object
-      const auth = await this.authModel.findOne({ user_account_id: userId });
+      const auth: {
+        id: string;
+        account_verified: string;
+        verification_code: string;
+        verification_code_expiration: string;
+      } = await this.authModel.findOne({
+        user_account_id: userId,
+      });
 
       if (auth == null) {
         throw new Error('User not found');
@@ -172,6 +182,25 @@ export class AuthService {
       if (auth.account_verified) {
         return { message: 'Account already verified', verified: true };
       }
+
+      // logger the retrieved otp and verification code expiration
+      this.logger.log(
+        `otp: ${otp}, verification_code: ${auth.verification_code}`,
+      );
+
+      // logger the comparison
+      this.logger.log(
+        `tripple equal:: otp === verification_code: ${
+          otp === auth.verification_code
+        }`,
+      );
+
+      // logger the comparison
+      this.logger.log(
+        `double equal:: otp == verification_code: ${
+          otp == auth.verification_code
+        }`,
+      );
 
       // check if otp matches
       if (otp === auth.verification_code) {
@@ -212,6 +241,20 @@ export class AuthService {
       if (auth == null) {
         throw new Error('User not found in auth database');
       }
+
+      // decrypt password, hash and update the variable
+      // const encryptedPassword: string = authDto.password;
+
+      // const kmsClient = new AWS.KMS();
+
+      // const params = {
+      //   CiphertextBlob: Buffer.from(encryptedPassword, 'base64'),
+      // };
+
+      // const response = await kmsClient.decrypt(params).promise();
+      // const decryptedPayload = response.Plaintext.toString('utf-8');
+
+      // console.log('Decrypted payload: ', decryptedPayload);
 
       // update auth object
       await this.authModel.findByIdAndUpdate(auth.id, {

@@ -61,6 +61,8 @@ export class AppModule implements NestModule {
         'auth/sendOtp',
         'auth/sendOTPBySms',
         'auth/reset',
+        'auth/encrypt',
+        'auth/decrypt',
       )
       .forRoutes('*');
   }

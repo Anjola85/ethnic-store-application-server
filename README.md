@@ -113,6 +113,8 @@ NOTE: the public ip might change
 
 ## These are the steps to push the docker image to AWS ECR reposiotry
 
+NOTE: make sure docker desktop is running
+
 1. Retrieve an authentication token and authenticate your Docker client to your registry.
    Use the AWS CLI:
    `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.us-east-1.amazonaws.com`

@@ -12,7 +12,7 @@ import {
   Query,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -22,6 +22,12 @@ import { UserController } from '../user/user.controller';
 import { UserService } from '../user/user.service';
 import { UserAccountService } from '../user_account/user_account.service';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
+import * as AWS from 'aws-sdk';
+// import {
+//   SecretsManagerClient,
+//   GetSecretValueCommand,
+// } from '@aws-sdk/client-secrets-manager';
+import * as crypto from 'crypto';
 
 @Controller('auth')
 export class AuthController {
@@ -439,6 +445,157 @@ export class AuthController {
         message: `400 reset failed from auth.controller.ts`,
         error: error.message,
       });
+    }
+  }
+
+  // convert plainText key
+  private async convertPlainTextKey(plainTextKey: any): Promise<Buffer> {
+    let key;
+
+    if (typeof plainTextKey === 'string') {
+      key = plainTextKey;
+    } else if (
+      plainTextKey instanceof Buffer ||
+      plainTextKey instanceof Uint8Array
+    ) {
+      key = plainTextKey;
+    } else if (plainTextKey instanceof Blob) {
+      key = await plainTextKey.arrayBuffer();
+      key = Buffer.from(key);
+    } else {
+      // log the error
+      this.logger.log(
+        '\nUnknow type of Plaintext from kmsClient.generateDataKey()',
+      );
+      throw new Error('Unknow type of Plaintext from kmsClient');
+    }
+
+    return key;
+  }
+
+  private encryptData(key: Buffer, data: any) {
+    const iv = Buffer.from('00000000000000000000000000000000', 'hex');
+    const algorithm = 'AES-256-CBC';
+
+    // create encryptor
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+
+    let encryptedData = cipher.update(data, 'utf8', 'hex');
+
+    encryptedData += cipher.final('hex');
+
+    return encryptedData;
+  }
+
+  private decryptData(key: Buffer, cipherText: string) {
+    const iv = Buffer.from('00000000000000000000000000000000', 'hex');
+    const algorithm = 'AES-256-CBC';
+
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
+
+    let decryptedData = decipher.update(cipherText, 'hex', 'utf-8');
+
+    decryptedData += decipher.final('utf8');
+
+    return decryptedData;
+  }
+
+  // test encryption endpoint
+  @Post('encrypt')
+  async encrypt(@Body() requestBody: any, @Res() res: Response) {
+    try {
+      const key = await this.getSecretKey();
+
+      const payload = requestBody.payload;
+
+      const encryptedData = this.encryptData(Buffer.from(key, 'hex'), payload);
+
+      return res.status(HttpStatus.OK).json({
+        message: 'encryption successful',
+        payload: { encryptedData },
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        message: `400 encrypt failed from auth.controller.ts`,
+        error: error.message,
+      });
+    }
+  }
+
+  // test decryption endpoint -- TODO: this will get the key from the enviroment.
+  @Post('decrypt')
+  async decrypt(@Body() requestBody: any, @Res() res: Response) {
+    try {
+      const { Plaintext } = await this.generateEncryptedDataKey();
+
+      const key: Buffer = await this.convertPlainTextKey(Plaintext);
+
+      const clearData = this.decryptData(key, requestBody.payload);
+
+      return res.status(HttpStatus.OK).json({
+        message: 'decryption successful',
+        payload: { clearData },
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        message: `400 decrypt failed from auth.controller.ts`,
+        error: error.message,
+      });
+    }
+  }
+
+  private async generateEncryptedDataKey() {
+    try {
+      // create kms client
+      const kmsClient = new AWS.KMS({
+        region: 'us-east-1',
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      });
+
+      const params = {
+        KeyId: process.env.AWS_KMS_KEY_ID,
+        KeySpec: 'AES_256',
+      };
+
+      const key = await kmsClient.generateDataKey(params).promise();
+
+      return key;
+    } catch (error) {
+      throw new Error(
+        'Error in generating encrypted data key from kmsClient.generateDataKey()',
+      );
+    }
+  }
+
+  // retrieve secret from AWS Secrets Manager. TODO - make this a method to load the env variables on build of the server
+  private async getSecretKey() {
+    try {
+      let key;
+
+      const secret_name = 'payload-key';
+
+      const client = new AWS.SecretsManager({
+        region: 'us-east-1',
+        // accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        // secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      });
+
+      const data = await client
+        .getSecretValue({ SecretId: secret_name })
+        .promise();
+
+      if ('SecretString' in data) {
+        const secret = JSON.parse(data.SecretString);
+        key = secret.key;
+      } else {
+        throw new Error('Unable to retrieve key');
+      }
+
+      return key;
+    } catch (err) {
+      console.error('Error retrieving secret from AWS:', err);
+      throw new Error('Error retrieving secret from AWS');
     }
   }
 

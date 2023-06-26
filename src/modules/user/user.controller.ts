@@ -63,7 +63,7 @@ export class UserController {
         });
       }
 
-      // make sure user exists in temp user account for customer
+      // make sure user exists in temp user account for customer, this part is only for manual signup
       if (createUserDto.profileType === 'customer') {
         const tempUserAccount =
           await this.userAccountService.findUserInTempAccount(userID);
