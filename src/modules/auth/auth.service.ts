@@ -64,6 +64,12 @@ export class AuthService {
       ) {
         createAuthDto.password = '';
       }
+      // encrypt password
+      const saltRounds = 10;
+      createAuthDto.password = await bcrypt.hash(
+        createAuthDto.password,
+        saltRounds,
+      );
 
       // create new auth object
       const auth = new this.authModel({
@@ -254,9 +260,12 @@ export class AuthService {
       // const response = await kmsClient.decrypt(params).promise();
       // const decryptedPayload = response.Plaintext.toString('utf-8');
 
+      // exclude password from authDto
+      const { password, ...rest } = authDto;
+
       // update auth object
       await this.authModel.findByIdAndUpdate(auth.id, {
-        ...authDto,
+        ...rest,
       });
 
       // return updated auth

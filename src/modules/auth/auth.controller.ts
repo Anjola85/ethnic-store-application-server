@@ -82,7 +82,7 @@ export class AuthController {
    * @returns {*}
    */
   @Post('login')
-  async login(@Body() loginDto: loginDto, @Res() res: Response) {
+  async login(@Body() body: any, @Res() res: Response) {
     // log time of request
     const requestTime = new Date();
 
@@ -94,7 +94,14 @@ export class AuthController {
     );
 
     try {
-      const response: any = await this.authService.login(loginDto);
+      // decrypt request body
+      const decryptedData = await decryptKms(body.payload);
+
+      // convert decrypted data to loginDto
+      const requestBody = new loginDto();
+      Object.assign(requestBody, decryptedData);
+
+      const response: any = await this.authService.login(requestBody);
 
       const userResponse = {
         info: response.user[0],
@@ -266,8 +273,6 @@ export class AuthController {
       // change the type of clearObject to TempUserAccountDto
       const requestBody = new TempUserAccountDto();
       Object.assign(requestBody, decryptedBody);
-
-      // return 'breaking out of block';
 
       // check if user exists through either email or phone number
       const userExists = await this.userAccountService.userExists(
