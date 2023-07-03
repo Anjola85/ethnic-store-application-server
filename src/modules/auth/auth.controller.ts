@@ -22,12 +22,16 @@ import { UserController } from '../user/user.controller';
 import { UserService } from '../user/user.service';
 import { UserAccountService } from '../user_account/user_account.service';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
+import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import * as AWS from 'aws-sdk';
-// import {
-//   SecretsManagerClient,
-//   GetSecretValueCommand,
-// } from '@aws-sdk/client-secrets-manager';
 import * as crypto from 'crypto';
+import { AwsSecretKey } from 'src/common/util/secret';
+import {
+  encryptData,
+  decryptData,
+  encryptKms,
+  decryptKms,
+} from '../../common/util/crypto';
 
 @Controller('auth')
 export class AuthController {
@@ -38,6 +42,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly userAccountService: UserAccountService,
+    private readonly awsSecretKey: AwsSecretKey,
   ) {
     this.userController = new UserController(
       userService,
@@ -139,7 +144,10 @@ export class AuthController {
     );
 
     try {
-      const result = await this.userController.create(requestBody, res);
+      //decrypt request body
+      const decryptedBody = await decryptKms(requestBody.payload);
+
+      const result = await this.userController.create(decryptedBody, res);
 
       // log end time for response
       const endTime = new Date();
@@ -230,17 +238,36 @@ export class AuthController {
    * @returns {jwt; message}
    */
   @Post('sendOtp')
-  async sendOtp(@Body() requestBody: TempUserAccountDto, @Res() res: Response) {
+  async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     try {
       // log time of request
-      const requestTime = new Date();
+      const requestTime = new Date().toISOString();
 
       this.logger.log(
-        '\n[QuickMart Server] - Request to ** sendOtp endpoint ** With starttime: ' +
+        '\n[QuickMart Server] - Request to ** sendOtp endpoint ** With start time: ' +
           requestTime +
           ' with payload: ' +
-          JSON.stringify(requestBody),
+          JSON.stringify(body),
       );
+
+      this.logger.log(
+        '\n[QuickMart Server] - Request to ** AWS Secrets Manager ** With start time: ' +
+          new Date().toISOString,
+      );
+
+      this.logger.log(
+        '\n[QuickMart Server] - Successfull response from ** AWS Secrets Manager ** With end time: ' +
+          new Date().toISOString,
+      );
+
+      // decrrypt the payload, TempUserAccountDto
+      const decryptedBody = await decryptKms(body.payload);
+
+      // change the type of clearObject to TempUserAccountDto
+      const requestBody = new TempUserAccountDto();
+      Object.assign(requestBody, decryptedBody);
+
+      // return 'breaking out of block';
 
       // check if user exists through either email or phone number
       const userExists = await this.userAccountService.userExists(
@@ -256,6 +283,7 @@ export class AuthController {
 
       if (userExists || tempUserExists) {
         return res.status(HttpStatus.CONFLICT).json({
+          status: false,
           message: 'user already exists',
         });
       }
@@ -276,7 +304,7 @@ export class AuthController {
       );
 
       // log time of response
-      const endTime = new Date();
+      const endTime = new Date().toISOString();
 
       this.logger.log(
         '[QuickMart Server] - Response from sendOtp endpoint end-time: ' +
@@ -286,18 +314,19 @@ export class AuthController {
       );
 
       return res.status(HttpStatus.OK).json({
+        sttaus: true,
         message: authResponse.message,
         token: authResponse.token,
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
         message: `400 send otp failed from auth.controller.ts`,
         error: error.message,
       });
     }
   }
 
-  // resend otp controller
   @Post('resendOtp')
   async resendOtp(
     @Body() requestBody: TempUserAccountDto,
@@ -398,7 +427,7 @@ export class AuthController {
   }
 
   /**
-   * TODO: To be deleted
+   * TODO: To be deleted later
    * THis endpoint is to test the sendOTPByEmail method
    * @param reset
    * @param res
@@ -448,154 +477,58 @@ export class AuthController {
     }
   }
 
-  // convert plainText key
-  private async convertPlainTextKey(plainTextKey: any): Promise<Buffer> {
-    let key;
-
-    if (typeof plainTextKey === 'string') {
-      key = plainTextKey;
-    } else if (
-      plainTextKey instanceof Buffer ||
-      plainTextKey instanceof Uint8Array
-    ) {
-      key = plainTextKey;
-    } else if (plainTextKey instanceof Blob) {
-      key = await plainTextKey.arrayBuffer();
-      key = Buffer.from(key);
-    } else {
-      // log the error
-      this.logger.log(
-        '\nUnknow type of Plaintext from kmsClient.generateDataKey()',
-      );
-      throw new Error('Unknow type of Plaintext from kmsClient');
-    }
-
-    return key;
-  }
-
-  private encryptData(key: Buffer, data: any) {
-    const iv = Buffer.from('00000000000000000000000000000000', 'hex');
-    const algorithm = 'AES-256-CBC';
-
-    // create encryptor
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-
-    let encryptedData = cipher.update(data, 'utf8', 'hex');
-
-    encryptedData += cipher.final('hex');
-
-    return encryptedData;
-  }
-
-  private decryptData(key: Buffer, cipherText: string) {
-    const iv = Buffer.from('00000000000000000000000000000000', 'hex');
-    const algorithm = 'AES-256-CBC';
-
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-
-    let decryptedData = decipher.update(cipherText, 'hex', 'utf-8');
-
-    decryptedData += decipher.final('utf8');
-
-    return decryptedData;
-  }
-
   // test encryption endpoint
   @Post('encrypt')
-  async encrypt(@Body() requestBody: any, @Res() res: Response) {
+  async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {
     try {
-      const key = await this.getSecretKey();
+      const data = requestBody.payload;
 
-      const payload = requestBody.payload;
+      // convert data to buffer
+      const buffer: Buffer = this.toBuffer(data);
 
-      const encryptedData = this.encryptData(Buffer.from(key, 'hex'), payload);
+      const encryptedData = await encryptKms(buffer);
 
       return res.status(HttpStatus.OK).json({
-        message: 'encryption successful',
-        payload: { encryptedData },
+        status: true,
+        data: encryptedData.toString('hex'),
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
         message: `400 encrypt failed from auth.controller.ts`,
         error: error.message,
       });
     }
   }
 
-  // test decryption endpoint -- TODO: this will get the key from the enviroment.
+  private toBuffer(data: any) {
+    let buffer: Buffer;
+    if (typeof data === 'string') {
+      buffer = Buffer.from(data);
+    } else if (typeof data === 'object' && data !== null) {
+      const json = JSON.stringify(data);
+      buffer = Buffer.from(json);
+    } else {
+      throw new Error('Invalid data type. Expected string or object.');
+    }
+    return buffer;
+  }
+
   @Post('decrypt')
   async decrypt(@Body() requestBody: any, @Res() res: Response) {
     try {
-      const { Plaintext } = await this.generateEncryptedDataKey();
-
-      const key: Buffer = await this.convertPlainTextKey(Plaintext);
-
-      const clearData = this.decryptData(key, requestBody.payload);
+      const decryptedData = await decryptKms(requestBody.payload);
 
       return res.status(HttpStatus.OK).json({
-        message: 'decryption successful',
-        payload: { clearData },
+        status: true,
+        data: decryptedData,
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
         message: `400 decrypt failed from auth.controller.ts`,
         error: error.message,
       });
-    }
-  }
-
-  private async generateEncryptedDataKey() {
-    try {
-      // create kms client
-      const kmsClient = new AWS.KMS({
-        region: 'us-east-1',
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      });
-
-      const params = {
-        KeyId: process.env.AWS_KMS_KEY_ID,
-        KeySpec: 'AES_256',
-      };
-
-      const key = await kmsClient.generateDataKey(params).promise();
-
-      return key;
-    } catch (error) {
-      throw new Error(
-        'Error in generating encrypted data key from kmsClient.generateDataKey()',
-      );
-    }
-  }
-
-  // retrieve secret from AWS Secrets Manager. TODO - make this a method to load the env variables on build of the server
-  private async getSecretKey() {
-    try {
-      let key;
-
-      const secret_name = 'payload-key';
-
-      const client = new AWS.SecretsManager({
-        region: 'us-east-1',
-        // accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        // secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      });
-
-      const data = await client
-        .getSecretValue({ SecretId: secret_name })
-        .promise();
-
-      if ('SecretString' in data) {
-        const secret = JSON.parse(data.SecretString);
-        key = secret.key;
-      } else {
-        throw new Error('Unable to retrieve key');
-      }
-
-      return key;
-    } catch (err) {
-      console.error('Error retrieving secret from AWS:', err);
-      throw new Error('Error retrieving secret from AWS');
     }
   }
 

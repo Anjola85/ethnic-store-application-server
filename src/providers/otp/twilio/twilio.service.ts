@@ -126,7 +126,7 @@ export default class TwilioService {
       const response = this.client.messages.create(options);
 
       // log success repsonse
-      this.logger.log('SMS sent successfully\n' + response + '\n'); //TODO: log might be too verbose
+      this.logger.log('SMS sent successfully\n' + response + '\n');
 
       // return success response to client
       return {

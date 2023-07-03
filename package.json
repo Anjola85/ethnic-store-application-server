@@ -30,7 +30,7 @@
     "@nestjs/passport": "^9.0.3",
     "@nestjs/platform-express": "^9.0.0",
     "@sendgrid/mail": "^7.7.0",
-    "aws-sdk": "^2.1403.0",
+    "aws-sdk": "^2.1409.0",
     "bcrypt": "^5.1.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.10.4",

@@ -254,8 +254,6 @@ export class AuthService {
       // const response = await kmsClient.decrypt(params).promise();
       // const decryptedPayload = response.Plaintext.toString('utf-8');
 
-      // console.log('Decrypted payload: ', decryptedPayload);
-
       // update auth object
       await this.authModel.findByIdAndUpdate(auth.id, {
         ...authDto,
@@ -357,7 +355,7 @@ export class AuthService {
   }
 
   /**
-   * TODO: to be deleted
+   * TODO: to be deleted after testing auth
    * THis method deletes registered users on that current day for testing purposes
    * @returns
    */
