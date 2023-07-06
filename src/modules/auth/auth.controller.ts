@@ -12,7 +12,7 @@ import {
   Query,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -22,6 +22,16 @@ import { UserController } from '../user/user.controller';
 import { UserService } from '../user/user.service';
 import { UserAccountService } from '../user_account/user_account.service';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
+import { EncryptedDTO } from '../../common/dto/encrypted.dto';
+import * as AWS from 'aws-sdk';
+import * as crypto from 'crypto';
+import { AwsSecretKey } from 'src/common/util/secret';
+import {
+  encryptData,
+  decryptData,
+  encryptKms,
+  decryptKms,
+} from '../../common/util/crypto';
 
 @Controller('auth')
 export class AuthController {
@@ -32,6 +42,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly userAccountService: UserAccountService,
+    private readonly awsSecretKey: AwsSecretKey,
   ) {
     this.userController = new UserController(
       userService,
@@ -71,7 +82,7 @@ export class AuthController {
    * @returns {*}
    */
   @Post('login')
-  async login(@Body() loginDto: loginDto, @Res() res: Response) {
+  async login(@Body() body: any, @Res() res: Response) {
     // log time of request
     const requestTime = new Date();
 
@@ -83,7 +94,14 @@ export class AuthController {
     );
 
     try {
-      const response: any = await this.authService.login(loginDto);
+      // decrypt request body
+      const decryptedData = await decryptKms(body.payload);
+
+      // convert decrypted data to loginDto
+      const requestBody = new loginDto();
+      Object.assign(requestBody, decryptedData);
+
+      const response: any = await this.authService.login(requestBody);
 
       const userResponse = {
         info: response.user[0],
@@ -133,7 +151,10 @@ export class AuthController {
     );
 
     try {
-      const result = await this.userController.create(requestBody, res);
+      //decrypt request body
+      const decryptedBody = await decryptKms(requestBody.payload);
+
+      const result = await this.userController.create(decryptedBody, res);
 
       // log end time for response
       const endTime = new Date();
@@ -168,7 +189,7 @@ export class AuthController {
    */
   @Post('verifyOtp')
   async confirmOtp(
-    @Body() body: { code: string; entryTime: Date },
+    @Body() body: { code: string; entryTime: string },
     @Res() res: Response,
   ) {
     // log the time of request and body of request
@@ -224,17 +245,34 @@ export class AuthController {
    * @returns {jwt; message}
    */
   @Post('sendOtp')
-  async sendOtp(@Body() requestBody: TempUserAccountDto, @Res() res: Response) {
+  async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     try {
       // log time of request
-      const requestTime = new Date();
+      const requestTime = new Date().toISOString();
 
       this.logger.log(
-        '\n[QuickMart Server] - Request to ** sendOtp endpoint ** With starttime: ' +
+        '\n[QuickMart Server] - Request to ** sendOtp endpoint ** With start time: ' +
           requestTime +
           ' with payload: ' +
-          JSON.stringify(requestBody),
+          JSON.stringify(body),
       );
+
+      this.logger.log(
+        '\n[QuickMart Server] - Request to ** AWS Secrets Manager ** With start time: ' +
+          new Date().toISOString,
+      );
+
+      this.logger.log(
+        '\n[QuickMart Server] - Successfull response from ** AWS Secrets Manager ** With end time: ' +
+          new Date().toISOString,
+      );
+
+      // decrrypt the payload, TempUserAccountDto
+      const decryptedBody = await decryptKms(body.payload);
+
+      // change the type of clearObject to TempUserAccountDto
+      const requestBody = new TempUserAccountDto();
+      Object.assign(requestBody, decryptedBody);
 
       // check if user exists through either email or phone number
       const userExists = await this.userAccountService.userExists(
@@ -250,6 +288,7 @@ export class AuthController {
 
       if (userExists || tempUserExists) {
         return res.status(HttpStatus.CONFLICT).json({
+          status: false,
           message: 'user already exists',
         });
       }
@@ -270,7 +309,7 @@ export class AuthController {
       );
 
       // log time of response
-      const endTime = new Date();
+      const endTime = new Date().toISOString();
 
       this.logger.log(
         '[QuickMart Server] - Response from sendOtp endpoint end-time: ' +
@@ -280,18 +319,19 @@ export class AuthController {
       );
 
       return res.status(HttpStatus.OK).json({
+        sttaus: true,
         message: authResponse.message,
         token: authResponse.token,
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
         message: `400 send otp failed from auth.controller.ts`,
         error: error.message,
       });
     }
   }
 
-  // resend otp controller
   @Post('resendOtp')
   async resendOtp(
     @Body() requestBody: TempUserAccountDto,
@@ -392,14 +432,14 @@ export class AuthController {
   }
 
   /**
-   * TODO: To be deleted
+   * TODO: To be deleted later
    * THis endpoint is to test the sendOTPByEmail method
    * @param reset
    * @param res
    * @returns
    */
   @Post('reset')
-  async reset(@Query('reset') reset: boolean, @Res() res: Response) {
+  async reset(@Query('clear') clear: boolean, @Res() res: Response) {
     const requestTime = new Date();
 
     this.logger.log(
@@ -409,26 +449,26 @@ export class AuthController {
 
     try {
       // take in query param resetType to be true or false
-      if (reset === undefined || reset === null) {
+      if (clear === undefined || clear === null) {
         return res.status(HttpStatus.BAD_REQUEST).json({
-          message: 'reset query param is required',
+          message: 'clear query param is required',
         });
-      } else if (reset === false) {
+      } else if (clear === false) {
         return res.status(HttpStatus.OK).json({
-          message: 'reset query param must be true in order to reset',
+          message: 'clear query param must be true in order to reset',
         });
       }
 
       // reset user account
-      const response = this.authService.resetRegisteredUsers();
+      const response = await this.authService.resetRegisteredUsers();
 
       // log response and the time
       const endTime = new Date();
       this.logger.log(
-        '[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
+        '\n[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
           endTime +
           ' with response: ' +
-          JSON.stringify(response),
+          JSON.stringify(response.message),
       );
 
       return res.status(HttpStatus.OK).json({
@@ -437,6 +477,61 @@ export class AuthController {
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
         message: `400 reset failed from auth.controller.ts`,
+        error: error.message,
+      });
+    }
+  }
+
+  // test encryption endpoint
+  @Post('encrypt')
+  async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {
+    try {
+      const data = requestBody.payload;
+
+      // convert data to buffer
+      const buffer: Buffer = this.toBuffer(data);
+
+      const encryptedData = await encryptKms(buffer);
+
+      return res.status(HttpStatus.OK).json({
+        status: true,
+        data: encryptedData.toString('hex'),
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
+        message: `400 encrypt failed from auth.controller.ts`,
+        error: error.message,
+      });
+    }
+  }
+
+  private toBuffer(data: any) {
+    let buffer: Buffer;
+    if (typeof data === 'string') {
+      buffer = Buffer.from(data);
+    } else if (typeof data === 'object' && data !== null) {
+      const json = JSON.stringify(data);
+      buffer = Buffer.from(json);
+    } else {
+      throw new Error('Invalid data type. Expected string or object.');
+    }
+    return buffer;
+  }
+
+  @Post('decrypt')
+  async decrypt(@Body() requestBody: any, @Res() res: Response) {
+    try {
+      const decryptedData = await decryptKms(requestBody.payload);
+
+      return res.status(HttpStatus.OK).json({
+        status: true,
+        data: decryptedData,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        status: false,
+        message: `400 decrypt failed from auth.controller.ts`,
         error: error.message,
       });
     }

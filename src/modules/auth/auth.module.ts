@@ -19,6 +19,7 @@ import {
   TempUserAccount,
   TempUserAccountSchema,
 } from '../user_account/entities/temporary_user_account.entity';
+import { AwsSecretKey } from 'src/common/util/secret';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import {
     SendgridService,
     OTPCodeGenerator,
     TwilioService,
+    AwsSecretKey,
   ],
 })
 export class AuthModule {}

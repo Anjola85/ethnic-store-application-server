@@ -113,6 +113,8 @@ NOTE: the public ip might change
 
 ## These are the steps to push the docker image to AWS ECR reposiotry
 
+NOTE: make sure docker desktop is running
+
 1. Retrieve an authentication token and authenticate your Docker client to your registry.
    Use the AWS CLI:
    `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.us-east-1.amazonaws.com`
@@ -129,16 +131,21 @@ NOTE: the public ip might change
 
 ## Steps to make the docker image available on AWS EC2
 
-1. Run the following command to pull this image from the ECR Repository on EC2
-   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+NOTE: Remember to login to aws on EC2, if no configuration for docker command comes up run:
+`sudo chmod 666 /var/run/docker.sock`
 
-2. Run the following command to expose the port in background mode
+1. Run the following command to pull this image from the ECR Repository on EC2
+   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of branch and first 7 digits of commit}`
+
+2. Run `docker images` to see if the image has been added
+
+3. Run the following command to expose the port in background mode
    `docker run -p 7080:7080 -d 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
 
-3. Run this to check if image is running
+4. Run this to check if image is running
    `docker ps`
 
-4. Run this to see the logs, add -f (to see the love feed)
+5. Run this to see the logs, add -f (to see the love feed)
    `docker logs {container id} -f`
 
 ## Support

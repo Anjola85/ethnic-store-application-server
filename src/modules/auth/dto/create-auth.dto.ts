@@ -16,7 +16,7 @@ import { PersonDTO } from 'src/modules/user/dto/person.dto';
 export class CreateAuthDto extends PersonDTO {
   @IsOptional()
   @IsString()
-  hashedPassword: string;
+  password: string;
 
   @IsNotEmpty()
   @IsOptional()

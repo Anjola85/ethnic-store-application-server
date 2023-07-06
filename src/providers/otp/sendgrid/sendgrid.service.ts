@@ -46,7 +46,7 @@ export class SendgridService {
 
     // set otp code and expiry time
     const otpCode: string = otpResponse.code;
-    const expiryTime: Date = otpResponse.expiryTime;
+    const expiryTime: string = otpResponse.expiryTime;
 
     // create mail object
     const mail = {

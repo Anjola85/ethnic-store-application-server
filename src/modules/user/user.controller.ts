@@ -63,7 +63,7 @@ export class UserController {
         });
       }
 
-      // make sure user exists in temp user account for customer
+      // make sure user exists in temp user account for customer, this part is only for manual signup
       if (createUserDto.profileType === 'customer') {
         const tempUserAccount =
           await this.userAccountService.findUserInTempAccount(userID);
@@ -96,10 +96,12 @@ export class UserController {
 
       return res.status(HttpStatus.CREATED).json({
         message: 'user successfully registered',
+        status: true,
         token,
       });
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        status: false,
         message: 'failed to register user',
         error: err.message,
       });

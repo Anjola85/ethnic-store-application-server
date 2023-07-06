@@ -55,7 +55,15 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .exclude('auth/login', 'auth/test', 'auth/sendOtp', 'auth/sendOTPBySms')
+      .exclude(
+        'auth/login',
+        'auth/test',
+        'auth/sendOtp',
+        'auth/sendOTPBySms',
+        'auth/reset',
+        'auth/encrypt',
+        'auth/decrypt',
+      )
       .forRoutes('*');
   }
 }

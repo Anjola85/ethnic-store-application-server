@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { loginDto } from './dto/login.dto';
@@ -22,9 +22,12 @@ import {
   TempUserAccountDocument,
 } from '../user_account/entities/temporary_user_account.entity';
 import { Customer, CustomerDocument } from '../user/entities/customer.entity';
+import AWS from 'aws-sdk';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(Auth.name)
     protected authModel: Model<AuthDocument> & any,
@@ -48,7 +51,6 @@ export class AuthService {
     userID: string,
   ): Promise<{ token; message }> {
     try {
-      // send OTP code to email or phoen number
       const response: { message; code; expiryTime; token } = await this.sendOTP(
         userID,
         createAuthDto.email,
@@ -57,15 +59,21 @@ export class AuthService {
 
       // set default value for password
       if (
-        createAuthDto.hashedPassword === undefined ||
-        createAuthDto.hashedPassword === null
+        createAuthDto.password === undefined ||
+        createAuthDto.password === null
       ) {
-        createAuthDto.hashedPassword = '';
+        createAuthDto.password = '';
       }
+      // encrypt password
+      const saltRounds = 10;
+      createAuthDto.password = await bcrypt.hash(
+        createAuthDto.password,
+        saltRounds,
+      );
 
       // create new auth object
       const auth = new this.authModel({
-        password: createAuthDto.hashedPassword,
+        password: createAuthDto.password,
         user_account_id: userID,
         verification_code: response.code,
         verification_code_expiration: response.expiryTime,
@@ -158,14 +166,19 @@ export class AuthService {
 
   async verifyOtp(
     otp: string,
-    entryTime: Date,
+    entryTime: string,
     userId: string,
   ): Promise<{ message: string; verified: boolean }> {
     try {
-      // TODO: decrypt otp here
-
       // get auth object
-      const auth = await this.authModel.findOne({ user_account_id: userId });
+      const auth: {
+        id: string;
+        account_verified: string;
+        verification_code: string;
+        verification_code_expiration: string;
+      } = await this.authModel.findOne({
+        user_account_id: userId,
+      });
 
       if (auth == null) {
         throw new Error('User not found');
@@ -176,12 +189,31 @@ export class AuthService {
         return { message: 'Account already verified', verified: true };
       }
 
+      // logger the retrieved otp and verification code expiration
+      this.logger.log(
+        `otp: ${otp}, verification_code: ${auth.verification_code}`,
+      );
+
+      // logger the comparison
+      this.logger.log(
+        `tripple equal:: otp === verification_code: ${
+          otp === auth.verification_code
+        }`,
+      );
+
+      // logger the comparison
+      this.logger.log(
+        `double equal:: otp == verification_code: ${
+          otp == auth.verification_code
+        }`,
+      );
+
       // check if otp matches
       if (otp === auth.verification_code) {
         // check if otp is expired
         const expiryTime = auth.verification_code_expiration;
 
-        if (entryTime.getTime() <= expiryTime.getTime()) {
+        if (entryTime <= expiryTime) {
           // update auth object
           await this.authModel.findByIdAndUpdate(auth.id, {
             account_verified: true,
@@ -216,9 +248,24 @@ export class AuthService {
         throw new Error('User not found in auth database');
       }
 
+      // decrypt password, hash and update the variable
+      // const encryptedPassword: string = authDto.password;
+
+      // const kmsClient = new AWS.KMS();
+
+      // const params = {
+      //   CiphertextBlob: Buffer.from(encryptedPassword, 'base64'),
+      // };
+
+      // const response = await kmsClient.decrypt(params).promise();
+      // const decryptedPayload = response.Plaintext.toString('utf-8');
+
+      // exclude password from authDto
+      const { password, ...rest } = authDto;
+
       // update auth object
       await this.authModel.findByIdAndUpdate(auth.id, {
-        ...authDto,
+        ...rest,
       });
 
       // return updated auth
@@ -317,31 +364,35 @@ export class AuthService {
   }
 
   /**
-   * TODO: to be deleted
+   * TODO: to be deleted after testing auth
    * THis method deletes registered users on that current day for testing purposes
    * @returns
    */
   async resetRegisteredUsers() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0); // Set the time to 00:00:00.000
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999); // Set the time to 23:59:59.999
+
     try {
-      // delete only documents in authModel starting from current day, by checking updated at field from the colection
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
       await this.authModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
+
       await this.userModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
       await this.userAccountModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
       await this.customerModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
       await this.tempUserAccountModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
+
       return { success: true, message: 'Reset successful' };
     } catch (error) {
       return { success: false, message: 'Reset failed from auth.service.ts' };

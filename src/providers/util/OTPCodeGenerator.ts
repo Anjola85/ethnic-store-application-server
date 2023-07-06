@@ -6,8 +6,8 @@ export class OTPCodeGenerator {
    */
   public generateCode(
     length = 4,
-    expirationMinutes = 5,
-  ): { code: string; expiryTime: Date } {
+    expirationMinutes = 6,
+  ): { code: string; expiryTime: string } {
     const digits = '0123456789';
     let code = '';
 
@@ -16,9 +16,9 @@ export class OTPCodeGenerator {
       code += digits[randomIndex];
     }
 
-    // come up with an expiry time of 5 minutes for the code
-    const expiryTime = new Date();
-    expiryTime.setMinutes(expiryTime.getMinutes() + expirationMinutes);
+    const time = new Date();
+    time.setMinutes(time.getMinutes() + expirationMinutes);
+    const expiryTime = new Date(time).toISOString();
 
     return { code, expiryTime };
   }
