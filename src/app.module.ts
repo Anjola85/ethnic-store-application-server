@@ -56,6 +56,8 @@ export class AppModule implements NestModule {
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        'business/register',
+        'business/all',
         'auth/login',
         'auth/test',
         'auth/sendOtp',

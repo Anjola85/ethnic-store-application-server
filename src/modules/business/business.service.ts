@@ -25,9 +25,8 @@ export class BusinessService {
       return business;
     } catch (error) {
       throw new Error(
-        'Error adding new business in create methid in business.service.ts file' +
-          '\n' +
-          `error message: ${error.message}`,
+        `Error adding new business in create method in business.service.ts file\n
+          error message: ${error.message}`,
       );
     }
   }

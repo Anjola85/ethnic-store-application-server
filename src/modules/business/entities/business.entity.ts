@@ -9,6 +9,7 @@ import { Continent } from 'src/modules/continent/entities/continent.entity';
 import { ContinentType } from 'src/modules/continent/continentType.enum';
 import { Review } from 'src/modules/reviews/entities/review.entity';
 import { CategoryType } from 'src/modules/category/categoryType.enum';
+import { GeoLocationDto } from '../dto/geolocation.dto';
 
 export type BusinessDocument = Business & Document;
 export type CategoryTypes = Grocery | Restaurant | Service;
@@ -127,7 +128,7 @@ export class Business {
 
   @Prop({
     type: String,
-    required: true,
+    required: false,
   })
   email: string;
 
@@ -141,7 +142,7 @@ export class Business {
 
   @Prop({
     type: String,
-    required: true,
+    required: false,
   })
   description: string;
 
@@ -175,7 +176,7 @@ export class Business {
 
   @Prop({
     type: String,
-    required: true,
+    default: '4.5',
   })
   rating: string;
 
@@ -201,13 +202,9 @@ export class Business {
   googlePlaceId: string;
 
   @Prop({
-    type: {
-      latitude: { type: String },
-      longitude: { type: String },
-    },
-    required: true,
+    type: GeoLocationDto,
   })
-  geolocation: { latitude: string; longitude: string };
+  geolocation: GeoLocationDto;
 
   @Prop({
     type: Boolean,
