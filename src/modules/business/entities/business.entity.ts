@@ -202,6 +202,8 @@ export class Business {
   googlePlaceId: string;
 
   @Prop({
+    required: true,
+    index: '2dsphere',
     type: GeoLocationDto,
   })
   geolocation: GeoLocationDto;
@@ -222,5 +224,7 @@ BusinessSchema.statics.config = () => {
     hiddenFields: ['deleted'],
   };
 };
+
+BusinessSchema.index({ geolocation: '2dsphere' });
 
 export { BusinessSchema };
