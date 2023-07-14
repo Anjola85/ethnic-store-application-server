@@ -233,7 +233,6 @@ export class BusinessController {
     @Res() res: Response,
   ): Promise<any> {
     try {
-      console.log(body);
       const business = await this.businessService.findStoresNearby(
         body.lat,
         body.lng,
