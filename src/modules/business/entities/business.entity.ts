@@ -21,9 +21,6 @@ export type CategoryTypes = Grocery | Restaurant | Service;
   toJSON: { virtuals: true },
 })
 export class Business {
-  /**
-   * The merchantID this business belongs to
-   */
   @Prop({
     type: Types.ObjectId,
     default: null,
