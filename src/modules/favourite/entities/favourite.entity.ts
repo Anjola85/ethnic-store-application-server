@@ -15,7 +15,6 @@ export class Favourite {
   @Prop({
     type: Types.ObjectId,
     default: null,
-    required: false,
     ref: 'Business',
   })
   businessId: string | Business;
@@ -23,7 +22,6 @@ export class Favourite {
   @Prop({
     type: Types.ObjectId,
     default: null,
-    required: false,
     ref: 'Customer',
   })
   customerId: string | Customer;
@@ -31,7 +29,6 @@ export class Favourite {
   @Prop({
     type: Boolean,
     default: false,
-    select: false,
   })
   deleted: boolean;
 }
@@ -41,7 +38,6 @@ const FavouriteSchema = SchemaFactory.createForClass(Favourite);
 FavouriteSchema.statics.config = () => {
   return {
     idToken: 'favourite',
-    hidden: { deleted: true },
   };
 };
 

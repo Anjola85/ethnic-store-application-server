@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Favourite } from './entities/favourite.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -23,13 +23,38 @@ export class FavouriteService {
     createFavouriteDto: CreateFavouriteDto,
   ): Promise<any> {
     try {
+      // check if it exists in DB
+      const favouriteExists = await this.favouriteModel.findOne({
+        customerId: createFavouriteDto.customerId,
+        businessId: createFavouriteDto.businessId,
+      });
+
+      if (favouriteExists !== null && favouriteExists.deleted === false) {
+        throw new Error('This business has already been favourited');
+      } else if (favouriteExists !== null && favouriteExists.deleted === true) {
+        // if it has been favourited before but deleted, then undelete it and favourite it
+        const undeletedFavourite = await this.favouriteModel.findOneAndUpdate(
+          {
+            customerId: createFavouriteDto.customerId,
+            businessId: createFavouriteDto.businessId,
+          },
+          {
+            deleted: false,
+          },
+        );
+
+        return undeletedFavourite;
+      }
+
+      console.log('creating new favourite');
+      // new favourite
       let favourite = new this.favouriteModel({ ...createFavouriteDto });
+
       favourite = await favourite.save();
       return favourite;
     } catch (error) {
       throw new Error(
-        `Error adding new favourite in create method in favourite.service.ts file\n
-          error message: ${error.message}`,
+        `Error adding new favourite in create method in favourite.service.ts file, error message: ${error.message}`,
       );
     }
   }
@@ -39,11 +64,11 @@ export class FavouriteService {
    * @param id
    * @returns
    */
-  async getFavourites(custId: string) {
+  async getFavourites(customerId: string) {
     try {
       const favouritedBusinesses = await this.favouriteModel
         .find({
-          customerId: custId,
+          customerId: customerId,
           deleted: false,
         })
         .select('-customerId -__v -_id')
@@ -52,7 +77,7 @@ export class FavouriteService {
       return favouritedBusinesses;
     } catch (error) {
       throw new Error(
-        `Error retrieving favourite with id ${custId} from mongo 
+        `Error retrieving favourite with id ${customerId} from mongo 
         \nfrom findOne method in favourite.service.ts. 
         \nWith error message: ${error.message}`,
       );
@@ -64,17 +89,28 @@ export class FavouriteService {
    * @param id
    * @returns
    */
-  async removeFavourite(custId: string, businessId: string): Promise<any> {
+  async removeFavourite(
+    customerId: string,
+    businessId: string,
+  ): Promise<boolean> {
     try {
       const favourite = await this.favouriteModel.findOne({
-        customerId: { $in: custId },
-        businessId: { $in: businessId },
-        deleted: true,
+        customerId: customerId,
+        businessId: businessId,
+        deleted: false,
       });
-      return favourite;
+
+      // if found, set deleted to true
+      if (favourite) {
+        favourite.deleted = true;
+        await favourite.save();
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
       throw new Error(
-        `Error retrieving favourite with id ${custId} from mongo 
+        `Error retrieving favourite with id ${customerId} from mongo 
         \nfrom findOne method in favourite.service.ts. 
         \nWith error message: ${error.message}`,
       );

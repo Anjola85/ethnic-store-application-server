@@ -10,13 +10,14 @@ import {
 import { FavouriteService } from './favourite.service';
 import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { Response } from 'express';
+import { Types } from 'mongoose';
 
 @Controller('favourite')
 export class FavouriteController {
   constructor(private readonly favouriteService: FavouriteService) {}
 
   /**
-   * Adds a favourited business with the customer id to the database
+   * Adds a favourited business with the customer id to the database.
    * @param createFavouriteDto
    * @param res
    * @returns
@@ -92,10 +93,16 @@ export class FavouriteController {
         businessId,
       );
 
+      if (!unfavouritedBusiness) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          success: false,
+          message: 'Unable to remove from favourites',
+        });
+      }
+
       return res.status(HttpStatus.OK).json({
         success: true,
         message: 'favourite successfully removed',
-        favourite: unfavouritedBusiness,
       });
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
