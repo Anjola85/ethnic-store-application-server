@@ -1581,7 +1581,7 @@
     "jsonc-parser" "3.2.0"
     "pluralize" "8.0.0"
 
-"@nestjs/swagger@^6.2.1":
+"@nestjs/swagger@^6.3.0":
   "integrity" "sha512-Gnig189oa1tD+h0BYIfUwhp/wvvmTn6iO3csR2E4rQrDTgCxSxZDlNdfZo3AC+Rmf8u0KX4ZAX1RZN1qXTtC7A=="
   "resolved" "https://registry.npmjs.org/@nestjs/swagger/-/swagger-6.3.0.tgz"
   "version" "6.3.0"

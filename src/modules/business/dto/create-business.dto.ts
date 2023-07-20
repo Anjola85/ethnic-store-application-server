@@ -83,7 +83,7 @@ export class CreateBusinessDto {
 
   @ApiProperty({
     description: 'Email of the business',
-    required: true,
+    required: false,
   })
   @IsNotEmpty()
   @IsString()
@@ -93,7 +93,7 @@ export class CreateBusinessDto {
   @ValidateNested()
   @ApiProperty({
     description: 'Mobile phone number of the business',
-    required: true,
+    required: false,
   })
   @Type(() => MobileDto)
   readonly mobile: MobileDto;
@@ -123,9 +123,8 @@ export class CreateBusinessDto {
 
   @ApiProperty({
     description: 'Rating of the business',
-    required: true,
+    required: false,
   })
-  @IsNotEmpty()
   @IsString()
   readonly rating: string;
 
@@ -153,10 +152,9 @@ export class CreateBusinessDto {
   @IsString()
   readonly googlePlaceId: string;
 
-  // geolocation
   @ApiProperty({
-    description: 'google place id of the business',
-    required: false,
+    description: 'coordinates of the business',
+    required: true,
     type: () => GeoLocationDto,
   })
   @Type(() => GeoLocationDto)

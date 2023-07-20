@@ -227,4 +227,29 @@ export class BusinessController {
   /**
    * Gell all businesses by location
    */
+  @Post('nearby')
+  async findByLocation(
+    @Body() body: { lat: number; lng: number; radius: number },
+    @Res() res: Response,
+  ): Promise<any> {
+    try {
+      const business = await this.businessService.findStoresNearby(
+        body.lat,
+        body.lng,
+        body.radius,
+      );
+      const length: number = Object.keys(business).length;
+      return res.status(HttpStatus.CREATED).json({
+        success: true,
+        message: `Fetched ${length} businesses`,
+        business,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'failed to get list of businesses',
+        error: error.message,
+      });
+    }
+  }
 }

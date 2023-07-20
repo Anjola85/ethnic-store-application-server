@@ -12,10 +12,7 @@ import { ContinentService } from '../continent/continent.service';
 export class BusinessService {
   constructor(
     @InjectModel(Business.name)
-    protected businessModel: Model<BusinessDocument> & any,
-    private readonly categoryService: CategoryService,
-    private readonly countryService: CountryService,
-    private readonly continentService: ContinentService,
+    private readonly businessModel: Model<Business>,
   ) {}
 
   async create(createBusinessDto: CreateBusinessDto): Promise<any> {
@@ -25,9 +22,8 @@ export class BusinessService {
       return business;
     } catch (error) {
       throw new Error(
-        'Error adding new business in create methid in business.service.ts file' +
-          '\n' +
-          `error message: ${error.message}`,
+        `Error adding new business in create method in business.service.ts file\n
+          error message: ${error.message}`,
       );
     }
   }
@@ -179,6 +175,36 @@ export class BusinessService {
     } catch (error) {
       throw new Error(
         `Error from findByCategory method in business.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  async findStoresNearby(
+    latitude: number,
+    longitude: number,
+    radius: number,
+  ): Promise<Business[]> {
+    try {
+      const coordinates = [latitude, longitude];
+      const businesses = await this.businessModel
+        .find({
+          geolocation: {
+            $near: {
+              $geometry: {
+                type: 'Point',
+                coordinates,
+              },
+              $maxDistance: radius,
+            },
+          },
+        })
+        .exec();
+
+      return businesses;
+    } catch (error) {
+      throw new Error(
+        `Error from findStoresNearby method in business.service.ts.
         \nWith error message: ${error.message}`,
       );
     }

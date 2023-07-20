@@ -8,11 +8,10 @@ import {
   Delete,
   HttpStatus,
   Res,
-  NotFoundException,
   Query,
   Logger,
 } from '@nestjs/common';
-import { Response, response } from 'express';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -23,15 +22,8 @@ import { UserService } from '../user/user.service';
 import { UserAccountService } from '../user_account/user_account.service';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
-import * as AWS from 'aws-sdk';
-import * as crypto from 'crypto';
 import { AwsSecretKey } from 'src/common/util/secret';
-import {
-  encryptData,
-  decryptData,
-  encryptKms,
-  decryptKms,
-} from '../../common/util/crypto';
+import { encryptKms, decryptKms } from '../../common/util/crypto';
 
 @Controller('auth')
 export class AuthController {
@@ -119,6 +111,7 @@ export class AuthController {
       );
 
       return res.status(HttpStatus.OK).json({
+        success: true,
         message: response.message,
         token: response.token,
         user: userResponse,
@@ -536,6 +529,8 @@ export class AuthController {
       });
     }
   }
+
+  // reset password
 
   @Post()
   async create(@Body() createAuthDto: CreateAuthDto) {

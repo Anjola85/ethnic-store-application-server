@@ -64,6 +64,7 @@ export class AuthService {
       ) {
         createAuthDto.password = '';
       }
+
       // encrypt password
       const saltRounds = 10;
       createAuthDto.password = await bcrypt.hash(
@@ -128,10 +129,11 @@ export class AuthService {
       if (user != null && Object.keys(auth).length > 0) {
         const encryptedPassword: string = auth[0].password;
 
-        const passwordMatch: boolean = await bcrypt.compare(
-          loginDto.password,
-          encryptedPassword,
-        );
+        const passwordMatch: boolean = await bcrypt
+          .compare(loginDto.password, encryptedPassword)
+          .then((res) => {
+            return res;
+          });
 
         if (passwordMatch) {
           // generate token
@@ -149,7 +151,7 @@ export class AuthService {
             message: 'user successfully logged in',
             token,
             user,
-            encryptedPassword: encryptedPassword,
+            // encryptedPassword: encryptedPassword,
           };
         } else {
           throw new UnauthorizedException(
@@ -229,7 +231,9 @@ export class AuthService {
         return { message: 'OTP does not match', verified: false };
       }
     } catch (e) {
-      throw new Error(`From AuthService.verifyOtp: ${e.message}`);
+      throw new Error(
+        `From AuthService.verifyOtp: Unable to verify otp with error message: ${e.message}`,
+      );
     }
   }
 
@@ -248,24 +252,12 @@ export class AuthService {
         throw new Error('User not found in auth database');
       }
 
-      // decrypt password, hash and update the variable
-      // const encryptedPassword: string = authDto.password;
-
-      // const kmsClient = new AWS.KMS();
-
-      // const params = {
-      //   CiphertextBlob: Buffer.from(encryptedPassword, 'base64'),
-      // };
-
-      // const response = await kmsClient.decrypt(params).promise();
-      // const decryptedPayload = response.Plaintext.toString('utf-8');
-
-      // exclude password from authDto
-      const { password, ...rest } = authDto;
+      const saltRounds = 10;
+      authDto.password = await bcrypt.hash(authDto.password, saltRounds);
 
       // update auth object
       await this.authModel.findByIdAndUpdate(auth.id, {
-        ...rest,
+        ...authDto,
       });
 
       // return updated auth
