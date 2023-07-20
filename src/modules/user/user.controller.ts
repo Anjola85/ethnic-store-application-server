@@ -41,7 +41,7 @@ export class UserController {
   @Post('register')
   async create(
     // @Body() createUserDto: CreateUserDto,
-    @Body() requestBody: any,
+    @Body() requestBody,
     @Res() res: Response,
   ): Promise<any> {
     try {
@@ -70,7 +70,7 @@ export class UserController {
 
         if (!tempUserAccount) {
           return res.status(HttpStatus.NOT_FOUND).json({
-            message: 'user not found in temp account',
+            message: 'user not found in temp account', // user should have been created in temp account during otp verification
           });
         }
       }

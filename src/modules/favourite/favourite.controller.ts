@@ -11,7 +11,7 @@ import { FavouriteService } from './favourite.service';
 import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { Response } from 'express';
 
-@Controller('addFavourite')
+@Controller('favourite')
 export class FavouriteController {
   constructor(private readonly favouriteService: FavouriteService) {}
 
@@ -21,13 +21,18 @@ export class FavouriteController {
    * @param res
    * @returns
    */
-  @Post('addFavourite')
+  @Post('add')
   async addFavourite(
     @Body() createFavouriteDto: CreateFavouriteDto,
     @Res() res: Response,
   ) {
     try {
-      const resp = await this.favouriteService.addFavourite(createFavouriteDto);
+      const userId = res.locals.userId;
+
+      const resp = await this.favouriteService.addFavourite(
+        userId,
+        createFavouriteDto,
+      );
 
       return res.status(HttpStatus.CREATED).json({
         success: true,
@@ -48,10 +53,10 @@ export class FavouriteController {
    * @param id - customer id
    * @returns
    */
-  @Get('userFavourites')
-  async getFavourites(@Param('id') custId: string, @Res() res: Response) {
+  @Post('get')
+  async getFavourites(@Body() requestBody, @Res() res: Response) {
     try {
-      //const custId = res.locals.userId;
+      const custId = requestBody.custId;
       const favouritedBusinesses = await this.favouriteService.getFavourites(
         custId,
       );
@@ -75,7 +80,7 @@ export class FavouriteController {
    * @param id - business id
    * @returns
    */
-  @Post('removeFavourite')
+  @Post('remove')
   async removeFavourite(
     @Body() body: { custId: string; businessId: string },
     @Res() res: Response,

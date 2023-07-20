@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
+import { FavouriteModule } from './modules/favourite/favourite.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { TwilioModule } from 'nestjs-twilio';
     CountryModule,
     ContinentModule,
     ReviewsModule,
+    FavouriteModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService],

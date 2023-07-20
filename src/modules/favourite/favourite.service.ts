@@ -3,12 +3,14 @@ import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Favourite } from './entities/favourite.entity';
 import { Model } from 'mongoose';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class FavouriteService {
   constructor(
     @InjectModel(Favourite.name)
     private readonly favouriteModel: Model<Favourite>,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -16,7 +18,10 @@ export class FavouriteService {
    * @param createFavouriteDto
    * @returns
    */
-  async addFavourite(createFavouriteDto: CreateFavouriteDto): Promise<any> {
+  async addFavourite(
+    userId: string,
+    createFavouriteDto: CreateFavouriteDto,
+  ): Promise<any> {
     try {
       let favourite = new this.favouriteModel({ ...createFavouriteDto });
       favourite = await favourite.save();
@@ -36,10 +41,14 @@ export class FavouriteService {
    */
   async getFavourites(custId: string) {
     try {
-      const favouritedBusinesses = await this.favouriteModel.find({
-        customerId: { $in: custId },
-        deleted: false,
-      });
+      const favouritedBusinesses = await this.favouriteModel
+        .find({
+          customerId: custId,
+          deleted: false,
+        })
+        .select('-customerId -__v -_id')
+        .lean();
+
       return favouritedBusinesses;
     } catch (error) {
       throw new Error(
