@@ -20,10 +20,11 @@ export class ImagesController {
     @Res() res: Response,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<any> {
-    console.log('recieved file in the form: ', file);
-
+    // console.log('recieved file in the form: ', file);
     try {
       await this.imagesService.uploadImage(file);
+
+      // console.log('image successfully uploaded');
 
       return res.status(HttpStatus.CREATED).json({
         success: true,
@@ -31,6 +32,19 @@ export class ImagesController {
       });
     } catch (error) {
       console.log('error in uploadImage: ', error);
+    }
+  }
+
+  // gett test endpoint
+  @Post('test')
+  async test(@Res() res: Response): Promise<any> {
+    try {
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: 'test endpoint',
+      });
+    } catch (error) {
+      console.log('error in test: ', error);
     }
   }
 

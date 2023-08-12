@@ -9,7 +9,13 @@ export class Image {
   filename: string;
 
   @Prop({ required: true })
-  path: string;
+  data: Buffer;
+
+  @Prop({ required: true })
+  contentType: string;
+
+  @Prop({ required: true })
+  size: number;
 }
 
 export const ImageSchema = SchemaFactory.createForClass(Image);

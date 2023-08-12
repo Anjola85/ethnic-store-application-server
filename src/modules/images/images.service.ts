@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ImageDocument } from './entities/image.entity';
+import { Image, ImageDocument } from './entities/image.entity';
 
 @Injectable()
 export class ImagesService {
@@ -9,13 +9,17 @@ export class ImagesService {
     @InjectModel(Image.name) private readonly imageModel: Model<ImageDocument>,
   ) {}
 
-  async uploadImage(file: Express.Multer.File): Promise<void> {
+  async uploadImage(file: Express.Multer.File): Promise<boolean> {
     const image = new this.imageModel({
       filename: file.originalname,
-      path: file.path,
+      data: file.buffer,
+      contentType: file.mimetype,
+      size: file.size,
     });
 
     await image.save();
+
+    return true;
   }
 
   // create(createImageDto: CreateImageDto) {

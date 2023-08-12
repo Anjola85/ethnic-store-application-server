@@ -17,6 +17,7 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
+import { ImagesModule } from './modules/images/images.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { FavouriteModule } from './modules/favourite/favourite.module';
     ContinentModule,
     ReviewsModule,
     FavouriteModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService],
@@ -68,6 +70,8 @@ export class AppModule implements NestModule {
         'auth/reset',
         'auth/encrypt',
         'auth/decrypt',
+        'images/upload',
+        'images/test',
       )
       .forRoutes('*');
   }
