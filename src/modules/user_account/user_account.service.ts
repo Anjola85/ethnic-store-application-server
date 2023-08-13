@@ -13,7 +13,6 @@ import {
   TempUserAccountDocument,
 } from './entities/temporary_user_account.entity';
 import { MobileUtil } from 'src/common/util/mobileUtil';
-import { Mobile } from 'aws-sdk';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
@@ -57,8 +56,7 @@ export class UserAccountService {
       return userAccount;
     } catch (error) {
       throw new Error(
-        `Error creating user account, from create method in user_account.service.ts. 
-        With error message: ${error.message}`,
+        `Error creating user account, from create method in user_account.service.ts.\nWith error message: ${error.message}`,
       );
     }
   }

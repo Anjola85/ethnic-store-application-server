@@ -312,7 +312,7 @@ export class AuthController {
       );
 
       return res.status(HttpStatus.OK).json({
-        sttaus: true,
+        status: true,
         message: authResponse.message,
         token: authResponse.token,
       });
