@@ -55,7 +55,7 @@ export default class TwilioService {
     };
     try {
       // send otp code to phone number
-      const response = this.client.messages.create(options);
+      this.client.messages.create(options);
 
       // // get auth object from database
       // const auth = await this.authModel.findOne({
@@ -85,6 +85,7 @@ export default class TwilioService {
 
       // return success response to client
       return {
+        status: true,
         message: 'SMS sent successfully',
         code: otpCode,
         expiryTime: expiryTime,

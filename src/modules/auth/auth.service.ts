@@ -90,22 +90,6 @@ export class AuthService {
     }
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
-
   /**
    *
    * @param loginDto
@@ -113,20 +97,54 @@ export class AuthService {
    */
   async login(loginDto: loginDto): Promise<any> {
     try {
-      let user: any;
-
+      let user: any = null;
       // retrieve user_account_id from user database
-      if (loginDto.email !== '') {
+      if (loginDto.email && loginDto.email !== '') {
         user = await this.userAccountService.getUserByEmail(loginDto.email);
-      } else if (loginDto.phone !== '') {
-        user = await this.userAccountService.getUserByPhone(loginDto.phone);
+      } else if (loginDto.mobile && loginDto.mobile.phoneNumber !== '') {
+        user = await this.userAccountService.getUserByPhone(loginDto.mobile);
       }
-      const userId: string = user[0].id;
 
-      // get password from auth database
-      const auth = await this.authModel.find({ user_account_id: userId });
+      if (user === null || user.length == 0) {
+        return {
+          status: false,
+          message: 'Invalid credentials',
+          token: '',
+          user: '',
+        };
+      }
 
-      if (user != null && Object.keys(auth).length > 0) {
+      const userInfo = user;
+
+      // generate token
+      const privateKey = fs.readFileSync('./private_key.pem');
+
+      // sign token with userID
+      const token = jsonwebtoken.sign(
+        { id: userInfo.id },
+        privateKey.toString(),
+        {
+          expiresIn: '1d',
+        },
+      );
+
+      user = {
+        mobile: userInfo.mobile,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        email: userInfo.email ? userInfo.email : '',
+        phoneNumber: userInfo.phoneNumber ? userInfo.phoneNumber : '',
+        address: {
+          primary: userInfo.address.primary,
+          other:
+            userInfo.address.other !== undefined ? userInfo.address.other : '',
+        },
+      };
+
+      // get password from auth database - this is specific to email
+      const auth = await this.authModel.find({ user_account_id: userInfo.id });
+
+      if (loginDto.email && user !== null && Object.keys(auth).length > 0) {
         const encryptedPassword: string = auth[0].password;
 
         const passwordMatch: boolean = await bcrypt
@@ -136,28 +154,57 @@ export class AuthService {
           });
 
         if (passwordMatch) {
-          // generate token
-          const privateKey = fs.readFileSync('./private_key.pem');
-          const token = jsonwebtoken.sign(
-            { id: user.id, email: loginDto.email },
-            privateKey.toString(),
-            {
-              expiresIn: '1d',
-            },
-          );
+          // assign password set in auth database to user object
+          user.encryptedPassword = encryptedPassword;
 
-          // return user
           return {
+            status: true,
             message: 'user successfully logged in',
             token,
             user,
-            // encryptedPassword: encryptedPassword,
           };
         } else {
           throw new UnauthorizedException(
             'Invalid credentials, passwords dont match',
           );
         }
+      } else if (loginDto.mobile && user !== null) {
+        // case for phone number
+
+        // generate token
+        const privateKey = fs.readFileSync('./private_key.pem');
+
+        // sign token with userID
+        const token = jsonwebtoken.sign(
+          { id: userInfo.id },
+          privateKey.toString(),
+          {
+            expiresIn: '1d',
+          },
+        );
+
+        const user = {
+          mobile: userInfo.mobile,
+          firstName: userInfo.firstName,
+          lastName: userInfo.lastName,
+          email: userInfo.email ? userInfo.email : '',
+          phoneNumber: userInfo.phoneNumber ? userInfo.phoneNumber : '',
+          address: {
+            primary: userInfo.address.primary,
+            other:
+              userInfo.address.other !== undefined
+                ? userInfo.address.other
+                : '',
+          },
+          encryptedPassword: '',
+        };
+
+        return {
+          status: true,
+          message: 'user successfully logged in',
+          token,
+          user,
+        };
       } else {
         throw new Error('User not found');
       }
@@ -170,7 +217,7 @@ export class AuthService {
     otp: string,
     entryTime: string,
     userId: string,
-  ): Promise<{ message: string; verified: boolean }> {
+  ): Promise<{ message: string; status: boolean }> {
     try {
       // get auth object
       const auth: {
@@ -188,7 +235,7 @@ export class AuthService {
 
       // check if account is already verified
       if (auth.account_verified) {
-        return { message: 'Account already verified', verified: true };
+        return { message: 'Account already verified', status: true };
       }
 
       // logger the retrieved otp and verification code expiration
@@ -222,13 +269,13 @@ export class AuthService {
           });
 
           // return updated auth
-          return { message: 'OTP successfully verified', verified: true };
+          return { message: 'OTP successfully verified', status: true };
         } else {
           // time elapsed
-          return { message: 'OTP has expired', verified: false };
+          return { message: 'OTP has expired', status: false };
         }
       } else {
-        return { message: 'OTP does not match', verified: false };
+        return { message: 'OTP does not match', status: false };
       }
     } catch (e) {
       throw new Error(
@@ -311,8 +358,8 @@ export class AuthService {
     userID: string,
     email?: string,
     phoneNumber?: string,
-  ): Promise<{ message; code; expiryTime; token }> {
-    let response: { message; code; expiryTime };
+  ): Promise<{ status; message; code; expiryTime; token }> {
+    let response: { status; message; code; expiryTime };
     if (email != null) {
       // use sendgrid to send otp
       response = await this.sendgridService.sendOTPEmail(userID, email);

@@ -65,7 +65,7 @@ export class SendgridService {
 
     try {
       // send otp code to email
-      const response = await this.send(mail);
+      await this.send(mail);
 
       const maskedEmail = receiverEmail;
 
@@ -85,6 +85,7 @@ export class SendgridService {
 
       // return success response to client
       return {
+        status: true,
         message: 'Email sent successfully',
         code: otpCode,
         expiryTime: expiryTime,

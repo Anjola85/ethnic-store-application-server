@@ -24,6 +24,7 @@ import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.d
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { encryptKms, decryptKms } from '../../common/util/crypto';
+import { createError, createResponse } from './dto/response';
 
 @Controller('auth')
 export class AuthController {
@@ -61,10 +62,11 @@ export class AuthController {
         'This is the  test endpoint from the user controller',
     );
 
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      message: 'This is the  test endpoint from AUTH on QUICKMART!!!!',
-    });
+    return res
+      .status(HttpStatus.OK)
+      .json(
+        createResponse('This is the  test endpoint from AUTH on QUICKMART!!!!'),
+      );
   }
 
   /**
@@ -86,47 +88,59 @@ export class AuthController {
     );
 
     try {
-      // decrypt request body
-      const decryptedData = await decryptKms(body.payload);
+      if (body.payload && body.payload !== '') {
+        // decrypt request body
+        const decryptedData = await decryptKms(body.payload);
 
-      // convert decrypted data to loginDto
-      const requestBody = new loginDto();
-      Object.assign(requestBody, decryptedData);
+        // convert decrypted data to loginDto
+        const requestBody = new loginDto();
+        Object.assign(requestBody, decryptedData);
 
-      const response: any = await this.authService.login(requestBody);
+        const response: any = await this.authService.login(requestBody);
 
-      const userResponse = {
-        info: response.user[0],
-        encryptedPassword: response.encryptedPassword,
-      };
+        const { token, ...userResponse } = response;
 
-      // log end time for response
-      const endTime = new Date();
+        // log end time for response
+        const endTime = new Date();
 
-      this.logger.log(
-        '\n[QuickMart Server] - Response from ** login endpoint ** With endtime: ' +
-          endTime +
-          ' with response body ' +
-          JSON.stringify(response),
-      );
+        this.logger.log(
+          '\n[QuickMart Server] - Response from ** login endpoint ** With endtime: ' +
+            endTime +
+            ' with status: ' +
+            response.status,
+        );
 
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: response.message,
-        token: response.token,
-        user: userResponse,
-      });
+        return res.status(HttpStatus.OK).json(
+          createResponse(
+            response.message,
+            {
+              token,
+              user: userResponse.user,
+            },
+            response.status,
+          ),
+        );
+      } else {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('payload is required'));
+      }
     } catch (error) {
       if (error instanceof InternalServerError) {
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          message: `login failed from auth.controller.ts`,
-          error: error.message,
-        });
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            createResponse(
+              'login failed from auth.controller.ts',
+              error.message,
+            ),
+          );
       } else {
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          message: `login failed from auth.controller.ts`,
-          error: error.message,
-        });
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            createError('login failed from auth.controller.ts', error.message),
+          );
       }
     }
   }
@@ -158,19 +172,29 @@ export class AuthController {
           ' with response ' +
           JSON.stringify(result.message),
       );
+
       return result;
     } catch (error) {
       // Handle any error that occurs during the registration process
       if (error instanceof InternalServerError) {
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          message: `500 user registeration failed from auth.controller.ts`,
-          error: error.message,
-        });
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            createError(
+              '500 user registeration failed from auth.controller.ts',
+              error.message,
+            ),
+          );
       }
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        message: `400 user registeration failed from auth.controller.ts`,
-        error: error.message,
-      });
+
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          createError(
+            '400 user registeration failed from auth.controller.ts',
+            error.message,
+          ),
+        );
     }
   }
 
@@ -198,7 +222,7 @@ export class AuthController {
     try {
       const userId = res.locals.userId;
 
-      const response: { message: string; verified: boolean } =
+      const response: { message: string; status: boolean } =
         await this.authService.verifyOtp(body.code, body.entryTime, userId);
 
       // log the time of response and body of response
@@ -211,21 +235,28 @@ export class AuthController {
           JSON.stringify(response),
       );
 
-      return res.status(HttpStatus.OK).json({
-        message: response.message,
-        verified: response.verified,
-      });
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse(response.message, null, response.status));
     } catch (error) {
       if (error instanceof InternalServerError) {
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          message: `500 confirm otp failed from auth.controller.ts`,
-          error: error.message,
-        });
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            createError(
+              '500 confirm otp failed from auth.controller.ts',
+              error.message,
+            ),
+          );
       } else {
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          message: `400 confirm otp failed from auth.controller.ts`,
-          error: error.message,
-        });
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            createError(
+              '400 confirm otp failed from auth.controller.ts',
+              error.message,
+            ),
+          );
       }
     }
   }
@@ -267,11 +298,15 @@ export class AuthController {
       const requestBody = new TempUserAccountDto();
       Object.assign(requestBody, decryptedBody);
 
+      console.log('here: ', requestBody);
+
       // check if user exists through either email or phone number
       const userExists = await this.userAccountService.userExists(
         requestBody.email,
         requestBody.mobile,
       );
+
+      console.log('exist: ', userExists);
 
       // check if user exists in temp user account
       const tempUserExists = await this.userAccountService.tempUserExists(
@@ -311,17 +346,25 @@ export class AuthController {
           JSON.stringify(authResponse.message),
       );
 
-      return res.status(HttpStatus.OK).json({
-        status: true,
-        message: authResponse.message,
-        token: authResponse.token,
-      });
+      // {
+      //   status: true,
+      //   message: authResponse.message,
+      //   data: authResponse.token,
+      // }
+      return res
+        .status(HttpStatus.OK)
+        .json(
+          createResponse(authResponse.message, { token: authResponse.token }),
+        );
     } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        status: false,
-        message: `400 send otp failed from auth.controller.ts`,
-        error: error.message,
-      });
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          createError(
+            '400 send otp failed from auth.controller.ts',
+            error.message,
+          ),
+        );
     }
   }
 
@@ -375,15 +418,24 @@ export class AuthController {
           JSON.stringify(logResponse),
       );
 
-      return res.status(HttpStatus.OK).json({
-        message: authResponse.message,
-        token: authResponse.token,
-      });
+      return res.status(HttpStatus.OK).json(
+        createResponse(
+          authResponse.message,
+          {
+            token: authResponse.token,
+          },
+          authResponse.status,
+        ),
+      );
     } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        message: `400 resend otp failed from auth.controller.ts`,
-        error: error.message,
-      });
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          createError(
+            '400 resend otp failed from auth.controller.ts',
+            error.message,
+          ),
+        );
     }
   }
 
@@ -394,7 +446,7 @@ export class AuthController {
    * @returns
    */
   @Post('sendOTPBySms')
-  async sendOTPBySms(@Body() requestBody: any) {
+  async sendOTPBySms(@Body() requestBody: any, @Res() res: Response) {
     const { phoneNumber } = requestBody;
 
     const requestTime = new Date();
@@ -415,12 +467,16 @@ export class AuthController {
         '[QuickMart Server] - Response from ** sendOTPBySms endpoint ** With endpoint: ' +
           endTime +
           ' with response: ' +
-          JSON.stringify({ success: true, message: 'SMS sent successfully.' }),
+          JSON.stringify({ status: true, message: 'SMS sent successfully.' }),
       );
 
-      return { success: true, message: 'SMS sent successfully.' };
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('SMS sent successfully.'));
     } catch (error) {
-      return { success: false, message: 'Failed to send SMS.' };
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(createError('Failed to send SMS.', error.message));
     }
   }
 
@@ -464,18 +520,20 @@ export class AuthController {
           JSON.stringify(response.message),
       );
 
-      return res.status(HttpStatus.OK).json({
-        message: 'reset successful',
-      });
+      return res.status(HttpStatus.OK).json(createResponse('reset successful'));
     } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        message: `400 reset failed from auth.controller.ts`,
-        error: error.message,
-      });
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          createError(
+            `400 reset failed from auth.controller.ts`,
+            error.message,
+          ),
+        );
     }
   }
 
-  // test encryption endpoint
+  // remove - for testing
   @Post('encrypt')
   async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {
     try {
@@ -499,6 +557,7 @@ export class AuthController {
     }
   }
 
+  // remove
   private toBuffer(data: any) {
     let buffer: Buffer;
     if (typeof data === 'string') {
@@ -512,6 +571,7 @@ export class AuthController {
     return buffer;
   }
 
+  // for testing
   @Post('decrypt')
   async decrypt(@Body() requestBody: any, @Res() res: Response) {
     try {
@@ -533,27 +593,22 @@ export class AuthController {
   // reset password
 
   @Post()
-  async create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto, '');
-  }
+  async create(@Body() createAuthDto: CreateAuthDto, @Res() res: Response) {
+    try {
+      const resp = await this.authService.create(createAuthDto, '');
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+      return res
+        .status(HttpStatus.CREATED)
+        .json(createResponse(resp.message, { token: resp.token }));
+    } catch (error) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          createError(
+            '400 create failed from auth.controller.ts',
+            error.message,
+          ),
+        );
+    }
   }
 }
