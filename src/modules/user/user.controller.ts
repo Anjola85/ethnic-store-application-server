@@ -17,7 +17,7 @@ import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
-import { MobileUtil } from 'src/common/util/mobileUtil';
+import { createError, createResponse } from '../auth/dto/response';
 
 @Controller('user')
 export class UserController {
@@ -89,22 +89,15 @@ export class UserController {
       await this.authService.updateAccount(authDto, userID);
 
       // create user account
-      const userAccount = await this.userAccountService.create(
-        userAccountDto,
-        userID,
-      );
+      await this.userAccountService.create(userAccountDto, userID);
 
-      return res.status(HttpStatus.CREATED).json({
-        message: 'user successfully registered',
-        status: true,
-        token,
-      });
+      return res
+        .status(HttpStatus.CREATED)
+        .json(createResponse('user successfully registered', { token }));
     } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        status: false,
-        message: 'failed to register user',
-        error: err.message,
-      });
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createError('failed to register user', err.message));
     }
   }
 
@@ -122,18 +115,15 @@ export class UserController {
       // call to userAccountService
       const users = await this.userService.findAll();
 
-      return res.status(HttpStatus.CREATED).json({
-        success: true,
-        message: 'user successfully registered',
-        accounts: accounts,
-        users: users,
-      });
+      return res
+        .status(HttpStatus.CREATED)
+        .json(
+          createResponse('user successfully registered', { accounts, users }),
+        );
     } catch (error) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to get list of users',
-        error: error.message,
-      });
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createError('failed to get list of users', error.message));
     }
     return this.userService.findAll();
   }
@@ -152,18 +142,13 @@ export class UserController {
       // call user service
       const user = await this.userService.findOne(id);
 
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'user information fetched',
-        account: account,
-        user: user,
-      });
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('user information fetched', { account, user }));
     } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to retrieve user information',
-        error: err.message,
-      });
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createError('failed to retrieve user information', err.message));
     }
   }
 
@@ -182,18 +167,13 @@ export class UserController {
       // call to user service
       const user = await this.userService.update(id);
 
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'user information updated',
-        account: account,
-        user: user,
-      });
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('user information updated', { account, user }));
     } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to register user',
-        error: err.message,
-      });
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createError('failed to register user', err.message));
     }
   }
 
@@ -208,18 +188,13 @@ export class UserController {
       // call to user service
       const user = await this.userService.remove(id);
 
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'user information updated',
-        account: account,
-        user: user,
-      });
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('user information updated', { account, user }));
     } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to delete user',
-        error: err.message,
-      });
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createError('failed to delete user', err.message));
     }
   }
 }

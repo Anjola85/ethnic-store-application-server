@@ -139,13 +139,15 @@ NOTE: Remember to login to aws on EC2, if no configuration for docker command co
 
 2. Run `docker images` to see if the image has been added
 
-3. Run the following command to expose the port in background mode
+3. Run `docker stop {pid}` to stop previous image
+
+4. Run the following command to expose the port in background mode
    `docker run -p 7080:7080 -d 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
 
-4. Run this to check if image is running
+5. Run this to check if image is running
    `docker ps`
 
-5. Run this to see the logs, add -f (to see the love feed)
+6. Run this to see the logs, add -f (to see the love feed)
    `docker logs {container id} -f`
 
 ## Support

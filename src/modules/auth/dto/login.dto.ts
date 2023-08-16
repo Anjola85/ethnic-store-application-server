@@ -1,19 +1,12 @@
 import { IsNotEmpty, IsString, isString } from 'class-validator';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export class loginDto {
   @IsString()
   email?: string;
 
-  @IsString()
-  phone?: string;
+  mobile?: MobileDto;
 
-  @IsNotEmpty()
   @IsString()
   password: string;
-
-  constructor() {
-    this.email = '';
-    this.phone = '';
-    this.password = '';
-  }
 }

@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
+import { AddressDto } from 'src/common/dto/address.dto';
 
 export type UserAccountDocument = UserAccount & Document;
 
@@ -64,16 +65,9 @@ export class UserAccount {
     required: true,
   })
   address: {
-    primary: string;
-    other: {
-      [key: string]: {
-        unit?: string;
-        street: string;
-        city: string;
-        province: string;
-        postalCode: string;
-        country: string;
-      };
+    primary: AddressDto;
+    other?: {
+      [key: string]: AddressDto;
     };
   };
 

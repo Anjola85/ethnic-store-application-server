@@ -13,7 +13,6 @@ import {
   TempUserAccountDocument,
 } from './entities/temporary_user_account.entity';
 import { MobileUtil } from 'src/common/util/mobileUtil';
-import { Mobile } from 'aws-sdk';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
@@ -57,8 +56,7 @@ export class UserAccountService {
       return userAccount;
     } catch (error) {
       throw new Error(
-        `Error creating user account, from create method in user_account.service.ts. 
-        With error message: ${error.message}`,
+        `Error creating user account, from create method in user_account.service.ts.\nWith error message: ${error.message}`,
       );
     }
   }
@@ -170,12 +168,14 @@ export class UserAccountService {
   async getUserByEmail(email: string): Promise<object> {
     try {
       let user: object = null;
-      user = await this.userAccountModel.find({ email: email }).exec();
+      user = await this.userAccountModel
+        .findOne({ email: email })
+        .select('-createdAt -updatedAt -__v -deleted -active');
 
       return user;
     } catch (error) {
       throw new Error(
-        `Error from findUserByEmail method in user_account.service.ts. 
+        `Error fom findUserByEmail method in user_account.service.ts. 
         \nWith error message: ${error.message}`,
       );
     }
@@ -187,12 +187,16 @@ export class UserAccountService {
    * @returns
    * @throws Error if user with phone exists
    */
-  async getUserByPhone(phone: string): Promise<object> {
+  async getUserByPhone(phone: MobileDto): Promise<object> {
     try {
+      const phoneNum = phone.phoneNumber;
       let user: object = null;
       user = await this.userAccountModel
-        .find({ 'mobile.phoneNumber': phone })
-        .exec();
+        .findOne({
+          'mobile.phoneNumber': phoneNum,
+        })
+        .select('-createdAt -updatedAt -__v, -deleted -active');
+
       return user;
     } catch (error) {
       throw new Error(
@@ -220,7 +224,6 @@ export class UserAccountService {
 
   async userExists(email: string, mobile: MobileDto): Promise<boolean> {
     let userExists = false;
-    const phoneNumber = mobile.phoneNumber;
 
     // check if user exists in user accounts collection
     if (email != null && email != '') {
@@ -229,10 +232,11 @@ export class UserAccountService {
       if (Object.keys(user).length > 0) {
         userExists = true;
       }
-    } else if (phoneNumber != null && phoneNumber != '') {
+    } else if (mobile) {
       // use mobile to check if user exists
-      const user = await this.getUserByPhone(phoneNumber);
-      if (Object.keys(user).length > 0) {
+      const user = await this.getUserByPhone(mobile);
+
+      if (user !== null && Object.keys(user).length > 0) {
         userExists = true;
       }
     }

@@ -46,8 +46,6 @@ export class FavouriteService {
         return undeletedFavourite;
       }
 
-      console.log('creating new favourite');
-      // new favourite
       let favourite = new this.favouriteModel({ ...createFavouriteDto });
 
       favourite = await favourite.save();
