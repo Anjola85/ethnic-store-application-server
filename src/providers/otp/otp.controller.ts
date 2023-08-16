@@ -31,7 +31,6 @@ export class SendgridController {
     try {
       const { id, email, codeLength, expirationMinutes } = requestBody;
       const result = await this.sendgridService.sendOTPEmail(
-        id,
         email,
         codeLength,
         expirationMinutes,

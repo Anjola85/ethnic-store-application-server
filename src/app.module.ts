@@ -66,6 +66,7 @@ export class AppModule implements NestModule {
         'auth/login',
         'auth/test',
         'auth/sendOtp',
+        'auth/resendOtp',
         'auth/sendOTPBySms',
         'auth/reset',
         'auth/encrypt',

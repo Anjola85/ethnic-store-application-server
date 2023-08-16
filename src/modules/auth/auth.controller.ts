@@ -10,6 +10,7 @@ import {
   Res,
   Query,
   Logger,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -24,7 +25,8 @@ import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.d
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { encryptKms, decryptKms } from '../../common/util/crypto';
-import { createError, createResponse } from './dto/response';
+import { createError, createResponse } from '../../common/util/response';
+import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
 
 @Controller('auth')
 export class AuthController {
@@ -292,49 +294,79 @@ export class AuthController {
       );
 
       // decrrypt the payload, TempUserAccountDto
-      const decryptedBody = await decryptKms(body.payload);
+      const decrypted = await decryptKms(body.payload);
+
+      const { fTime, ...decryptedBody } = decrypted;
 
       // change the type of clearObject to TempUserAccountDto
       const requestBody = new TempUserAccountDto();
       Object.assign(requestBody, decryptedBody);
 
-      console.log('here: ', requestBody);
+      let authResponse;
 
-      // check if user exists through either email or phone number
-      const userExists = await this.userAccountService.userExists(
-        requestBody.email,
-        requestBody.mobile,
-      );
+      if (fTime) {
+        // first time registeration
 
-      console.log('exist: ', userExists);
+        const userExists = await this.userAccountService.userExists(
+          requestBody.email,
+          requestBody.mobile,
+        );
 
-      // check if user exists in temp user account
-      const tempUserExists = await this.userAccountService.tempUserExists(
-        requestBody.email,
-        requestBody.mobile,
-      );
+        // check if user exists in temp user account
+        const tempUserExists = await this.userAccountService.tempUserExists(
+          requestBody.email,
+          requestBody.mobile,
+        );
 
-      if (userExists || tempUserExists) {
-        return res.status(HttpStatus.CONFLICT).json({
-          status: false,
-          message: 'user already exists',
-        });
+        if (userExists || tempUserExists) {
+          return res.status(HttpStatus.CONFLICT).json({
+            status: false,
+            message: 'user already exists',
+          });
+        }
+
+        // create temporary user account
+        const userAccount = await this.userAccountService.createTempUserAccount(
+          requestBody,
+        );
+
+        // create auth for user
+        const authDto = new CreateAuthDto();
+        authDto.email = requestBody.email;
+        authDto.mobile = requestBody.mobile;
+
+        authResponse = await this.authService.create(authDto, userAccount.id);
+      } else {
+        const userFound: any[] =
+          await this.userAccountService.getUserByPhoneOrEmail(
+            requestBody.mobile.phoneNumber,
+            requestBody.email,
+          );
+
+        const user = userFound.length !== 0 ? userFound[0] : null;
+
+        if (!user) {
+          return res.status(HttpStatus.NOT_FOUND).json({
+            status: false,
+            message: 'user not found',
+          });
+        }
+
+        const otpResp = await this.authService.sendOTP(
+          user.id,
+          requestBody.email,
+          requestBody.mobile.phoneNumber,
+        );
+
+        // update auth
+        this.authService.updateAuthOtp(
+          user.id,
+          otpResp.code,
+          otpResp.expiryTime,
+        );
+
+        authResponse = otpResp;
       }
-
-      // create temporary user account
-      const userAccount = await this.userAccountService.createTempUserAccount(
-        requestBody,
-      );
-
-      // create auth for user
-      const authDto = new CreateAuthDto();
-      authDto.email = requestBody.email;
-      authDto.mobile = requestBody.mobile;
-
-      const authResponse = await this.authService.create(
-        authDto,
-        userAccount.id,
-      );
 
       // log time of response
       const endTime = new Date().toISOString();
@@ -346,11 +378,6 @@ export class AuthController {
           JSON.stringify(authResponse.message),
       );
 
-      // {
-      //   status: true,
-      //   message: authResponse.message,
-      //   data: authResponse.token,
-      // }
       return res
         .status(HttpStatus.OK)
         .json(
@@ -369,6 +396,7 @@ export class AuthController {
   }
 
   @Post('resendOtp')
+  @UseInterceptors(EncryptionInterceptor)
   async resendOtp(
     @Body() requestBody: TempUserAccountDto,
     @Res() res: Response,
@@ -386,7 +414,7 @@ export class AuthController {
     try {
       const userId = res.locals.userId;
 
-      // get user by email or phone number
+      // get user by email or phone number - so i can get userId?
       const userAccount = await this.userAccountService.findUserInTempAccount(
         userId,
       );

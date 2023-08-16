@@ -61,10 +61,25 @@ export class UserAccountService {
     }
   }
 
+  /**
+   * Used to successfully verify OTP
+   * @param userAccountDto
+   * @returns
+   */
   async createTempUserAccount(
     userAccountDto: TempUserAccountDto,
   ): Promise<any> {
     try {
+      // check if user exists
+      const userExists = await this.tempUserExists(
+        userAccountDto.email,
+        userAccountDto.mobile,
+      );
+
+      if (userExists) {
+        return userExists;
+      }
+
       const account = new this.tempUserAccountModel({ ...userAccountDto });
       const userAccount = await account.save();
       return userAccount;
@@ -207,9 +222,9 @@ export class UserAccountService {
   }
 
   // get user by phone or email
-  async getUserByPhoneOrEmail(phone: string, email: string): Promise<any> {
+  async getUserByPhoneOrEmail(phone: string, email: string): Promise<any[]> {
     try {
-      let user: object = null;
+      let user = null;
       user = await this.userAccountModel
         .find({ $or: [{ 'mobile.phoneNumber': phone }, { email: email }] })
         .exec();
@@ -245,7 +260,12 @@ export class UserAccountService {
 
   async tempUserExists(email: string, mobile: MobileDto): Promise<boolean> {
     let userExists = false;
-    const phoneNumber = mobile.phoneNumber;
+
+    let phoneNumber;
+
+    if (mobile) {
+      phoneNumber = mobile.phoneNumber;
+    }
 
     if (email != null && email != '') {
       const user = await this.tempUserAccountModel

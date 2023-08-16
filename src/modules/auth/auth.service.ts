@@ -35,7 +35,6 @@ export class AuthService {
     private readonly userAccountService: UserAccountService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
-    // delete from here,
     @InjectModel(User.name)
     private userModel: Model<UserDocument> & any,
     @InjectModel(UserAccount.name)
@@ -315,7 +314,7 @@ export class AuthService {
   }
 
   /**
-   * THis method sends otp to user
+   * This method sends otp to user
    * @param userID
    * @param email
    * @param phoneNumber
@@ -329,10 +328,10 @@ export class AuthService {
     let response: { message; code; expiryTime };
     if (email != null) {
       // use sendgrid to send otp
-      response = await this.sendgridService.sendOTPEmail(userID, email);
+      response = await this.sendgridService.sendOTPEmail(email);
     } else if (phoneNumber != null) {
       // use twilio to send otp
-      response = await this.twilioService.sendSms(userID, phoneNumber);
+      response = await this.twilioService.sendSms(phoneNumber);
     }
 
     // generate jwt
@@ -348,7 +347,8 @@ export class AuthService {
   }
 
   /**
-   * THis method resends otp to user
+   * This method resends otp to user
+   * It sends the otp to the user and updates the auth DB
    * @param userID
    * @param email
    * @param phoneNumber
@@ -361,20 +361,12 @@ export class AuthService {
   ): Promise<{ status; message; code; expiryTime; token }> {
     let response: { status; message; code; expiryTime };
     if (email != null) {
-      // use sendgrid to send otp
-      response = await this.sendgridService.sendOTPEmail(userID, email);
+      response = await this.sendgridService.sendOTPEmail(email);
     } else if (phoneNumber != null) {
-      // use twilio to send otp
-      response = await this.twilioService.sendSms(userID, phoneNumber);
+      response = await this.twilioService.sendSms(phoneNumber);
     }
     // update auth account verification code and expiry time
-    await this.authModel.findOneAndUpdate(
-      { user_account_id: userID },
-      {
-        verification_code: response.code,
-        verification_code_expiration: response.expiryTime,
-      },
-    );
+    await this.updateAuthOtp(userID, response.code, response.expiryTime);
 
     // generate jwt
     const privateKey = fs.readFileSync('./private_key.pem');
@@ -385,7 +377,23 @@ export class AuthService {
     // add token to response
     const otpResponse = { ...response, token };
 
+    // encrypt the otpResponse and send back
+
     return otpResponse;
+  }
+
+  async updateAuthOtp(
+    userID: string,
+    code: string,
+    expiryTime: string,
+  ): Promise<void> {
+    await this.authModel.findOneAndUpdate(
+      { user_account_id: userID },
+      {
+        verification_code: code,
+        verification_code_expiration: expiryTime,
+      },
+    );
   }
 
   /**
@@ -428,9 +436,9 @@ export class AuthService {
       await this.customerModel.deleteMany({
         createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
-      await this.tempUserAccountModel.deleteMany({
-        createdAt: { $gte: startOfDay, $lt: endOfDay },
-      });
+      // await this.tempUserAccountModel.deleteMany({
+      //   createdAt: { $gte: startOfDay, $lt: endOfDay },
+      // });
 
       return { success: true, message: 'Reset successful' };
     } catch (error) {

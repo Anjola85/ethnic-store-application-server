@@ -32,7 +32,6 @@ export default class TwilioService {
   }
 
   public async sendSms(
-    userId: string,
     phoneNumber: string,
     codeLength = 4,
     expirationMinutes = 6,
