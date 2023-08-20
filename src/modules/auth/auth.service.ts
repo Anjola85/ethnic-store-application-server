@@ -232,11 +232,6 @@ export class AuthService {
         throw new Error('User not found');
       }
 
-      // check if account is already verified
-      if (auth.account_verified) {
-        return { message: 'Account already verified', status: true };
-      }
-
       // logger the retrieved otp and verification code expiration
       this.logger.log(
         `otp: ${otp}, verification_code: ${auth.verification_code}`,
