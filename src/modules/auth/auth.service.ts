@@ -1,6 +1,5 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { loginDto } from './dto/login.dto';
 import { UserAccountService } from '../user_account/user_account.service';
 import { UserService } from '../user/user.service';
@@ -22,7 +21,7 @@ import {
   TempUserAccountDocument,
 } from '../user_account/entities/temporary_user_account.entity';
 import { Customer, CustomerDocument } from '../user/entities/customer.entity';
-import AWS from 'aws-sdk';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class AuthService {
@@ -53,7 +52,7 @@ export class AuthService {
       const response: { message; code; expiryTime; token } = await this.sendOTP(
         userID,
         createAuthDto.email,
-        createAuthDto.mobile.phoneNumber,
+        createAuthDto.mobile,
       );
 
       // set default value for password
@@ -104,7 +103,7 @@ export class AuthService {
         user = await this.userAccountService.getUserByPhone(loginDto.mobile);
       }
 
-      if (user === null || user.length == 0) {
+      if (!user) {
         return {
           status: false,
           message: 'Invalid credentials',
@@ -126,12 +125,11 @@ export class AuthService {
           expiresIn: '1d',
         },
       );
-
       user = {
-        mobile: userInfo.mobile,
+        mobile: userInfo.mobile || null,
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
-        email: userInfo.email ? userInfo.email : '',
+        email: userInfo.email || '',
         phoneNumber: userInfo.phoneNumber ? userInfo.phoneNumber : '',
         address: {
           primary: userInfo.address.primary,
@@ -141,16 +139,21 @@ export class AuthService {
       };
 
       // get password from auth database - this is specific to email
-      const auth = await this.authModel.find({ user_account_id: userInfo.id });
+      const auth = await this.authModel.findOne({
+        user_account_id: userInfo.id,
+      });
 
-      if (loginDto.email && user !== null && Object.keys(auth).length > 0) {
-        const encryptedPassword: string = auth[0].password;
+      if (loginDto.email && user && Object.keys(auth).length > 0) {
+        // check if password was provided
+        if (!loginDto.password) throw new Error('Password is required');
 
-        const passwordMatch: boolean = await bcrypt
-          .compare(loginDto.password, encryptedPassword)
-          .then((res) => {
-            return res;
-          });
+        const encryptedPassword: string = auth.password;
+        const password: string = loginDto.password;
+
+        const passwordMatch: boolean = await bcrypt.compare(
+          password,
+          encryptedPassword,
+        );
 
         if (passwordMatch) {
           // assign password set in auth database to user object
@@ -318,13 +321,14 @@ export class AuthService {
   async sendOTP(
     userID: string,
     email?: string,
-    phoneNumber?: string,
+    mobile?: MobileDto,
   ): Promise<{ message; code; expiryTime; token }> {
     let response: { message; code; expiryTime };
-    if (email != null) {
+    if (email) {
       // use sendgrid to send otp
       response = await this.sendgridService.sendOTPEmail(email);
-    } else if (phoneNumber != null) {
+    } else if (mobile) {
+      const phoneNumber = mobile?.phoneNumber || '';
       // use twilio to send otp
       response = await this.twilioService.sendSms(phoneNumber);
     }
@@ -352,14 +356,19 @@ export class AuthService {
   async resendOtp(
     userID: string,
     email?: string,
-    phoneNumber?: string,
+    mobile?: MobileDto,
   ): Promise<{ status; message; code; expiryTime; token }> {
     let response: { status; message; code; expiryTime };
-    if (email != null) {
+    if (email != null && email.length !== 0) {
       response = await this.sendgridService.sendOTPEmail(email);
-    } else if (phoneNumber != null) {
+    } else if (mobile !== null) {
+      if (mobile.phoneNumber === undefined || mobile.phoneNumber === null) {
+        throw new Error('Phone number is required');
+      }
+      const phoneNumber = mobile.phoneNumber;
       response = await this.twilioService.sendSms(phoneNumber);
     }
+
     // update auth account verification code and expiry time
     await this.updateAuthOtp(userID, response.code, response.expiryTime);
 
@@ -371,8 +380,6 @@ export class AuthService {
 
     // add token to response
     const otpResponse = { ...response, token };
-
-    // encrypt the otpResponse and send back
 
     return otpResponse;
   }
@@ -392,7 +399,7 @@ export class AuthService {
   }
 
   /**
-   * THis endpoint is to test twilio send sms feature
+   * This endpoint is to test twilio send sms feature
    * @param phoneNumber
    * @returns
    */
@@ -431,9 +438,9 @@ export class AuthService {
       await this.customerModel.deleteMany({
         createdAt: { $gte: startOfDay, $lt: endOfDay },
       });
-      // await this.tempUserAccountModel.deleteMany({
-      //   createdAt: { $gte: startOfDay, $lt: endOfDay },
-      // });
+      await this.tempUserAccountModel.deleteMany({
+        createdAt: { $gte: startOfDay, $lt: endOfDay },
+      });
 
       return { success: true, message: 'Reset successful' };
     } catch (error) {

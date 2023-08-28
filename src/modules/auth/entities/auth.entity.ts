@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { UserAccount } from 'src/modules/user_account/entities/user_account.entity';
 

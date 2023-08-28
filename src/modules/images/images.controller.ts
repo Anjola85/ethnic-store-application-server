@@ -20,12 +20,8 @@ export class ImagesController {
     @Res() res: Response,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<any> {
-    // console.log('recieved file in the form: ', file);
     try {
       await this.imagesService.uploadImage(file);
-
-      // console.log('image successfully uploaded');
-
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message: 'image successfully uploaded',
@@ -35,7 +31,6 @@ export class ImagesController {
     }
   }
 
-  // gett test endpoint
   @Post('test')
   async test(@Res() res: Response): Promise<any> {
     try {
@@ -47,29 +42,4 @@ export class ImagesController {
       console.log('error in test: ', error);
     }
   }
-
-  // @Post()
-  // create(@Body() createImageDto: CreateImageDto) {
-  //   return this.imagesService.create(createImageDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.imagesService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.imagesService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateImageDto: UpdateImageDto) {
-  //   return this.imagesService.update(+id, updateImageDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.imagesService.remove(+id);
-  // }
 }

@@ -52,7 +52,7 @@ export class UserController {
       Object.assign(createUserDto, { ...requestBody, _id: userID });
 
       // check if user exists with email or mobile
-      const userExists = await this.userAccountService.userExists(
+      const userExists = await this.userAccountService.getUserId(
         createUserDto.email,
         createUserDto.mobile,
       );

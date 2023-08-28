@@ -1,8 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue, Job } from 'bull';
 import { Twilio } from 'twilio';
 import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import { InjectModel } from '@nestjs/mongoose';
@@ -55,16 +53,6 @@ export default class TwilioService {
     try {
       // send otp code to phone number
       this.client.messages.create(options);
-
-      // // get auth object from database
-      // const auth = await this.authModel.findOne({
-      //   user_account_id: userId,
-      // });
-
-      // // save otp code to database
-      // auth.verification_code = otpCode;
-      // auth.verify_code_expiration = expiryTime;
-      // await auth.save();
 
       // mask phone number
       const maskedNumber = phoneNumber;
