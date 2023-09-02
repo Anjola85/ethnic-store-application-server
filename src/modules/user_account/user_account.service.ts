@@ -61,10 +61,25 @@ export class UserAccountService {
     }
   }
 
+  /**
+   * Used to successfully verify OTP
+   * @param userAccountDto
+   * @returns
+   */
   async createTempUserAccount(
     userAccountDto: TempUserAccountDto,
   ): Promise<any> {
     try {
+      // check if user exists
+      const userExists = await this.tempUserExists(
+        userAccountDto.email,
+        userAccountDto.mobile,
+      );
+
+      if (userExists) {
+        return userExists;
+      }
+
       const account = new this.tempUserAccountModel({ ...userAccountDto });
       const userAccount = await account.save();
       return userAccount;
@@ -165,14 +180,14 @@ export class UserAccountService {
    * @returns
    * @throws Error if user with email exists
    */
-  async getUserByEmail(email: string): Promise<object> {
+  async getUserByEmail(email: string): Promise<any | null> {
     try {
       let user: object = null;
       user = await this.userAccountModel
         .findOne({ email: email })
         .select('-createdAt -updatedAt -__v -deleted -active');
 
-      return user;
+      return user || null;
     } catch (error) {
       throw new Error(
         `Error fom findUserByEmail method in user_account.service.ts. 
@@ -187,7 +202,7 @@ export class UserAccountService {
    * @returns
    * @throws Error if user with phone exists
    */
-  async getUserByPhone(phone: MobileDto): Promise<object> {
+  async getUserByPhone(phone: MobileDto): Promise<any | null> {
     try {
       const phoneNum = phone.phoneNumber;
       let user: object = null;
@@ -197,7 +212,7 @@ export class UserAccountService {
         })
         .select('-createdAt -updatedAt -__v, -deleted -active');
 
-      return user;
+      return user || null;
     } catch (error) {
       throw new Error(
         `Error from findUserByPhone method in user_account.service.ts. 
@@ -207,9 +222,9 @@ export class UserAccountService {
   }
 
   // get user by phone or email
-  async getUserByPhoneOrEmail(phone: string, email: string): Promise<any> {
+  async getUserByPhoneOrEmail(phone: string, email: string): Promise<any[]> {
     try {
-      let user: object = null;
+      let user = null;
       user = await this.userAccountModel
         .find({ $or: [{ 'mobile.phoneNumber': phone }, { email: email }] })
         .exec();
@@ -222,39 +237,40 @@ export class UserAccountService {
     }
   }
 
-  async userExists(email: string, mobile: MobileDto): Promise<boolean> {
-    let userExists = false;
+  async getUserId(email: string, mobile: MobileDto): Promise<string | null> {
+    let userId: string;
 
     // check if user exists in user accounts collection
-    if (email != null && email != '') {
+    if (email) {
       // use email to check if user exists
       const user = await this.getUserByEmail(email);
-      if (Object.keys(user).length > 0) {
-        userExists = true;
-      }
+      userId = user?.id;
     } else if (mobile) {
       // use mobile to check if user exists
       const user = await this.getUserByPhone(mobile);
-
-      if (user !== null && Object.keys(user).length > 0) {
-        userExists = true;
-      }
+      userId = user?.id;
     }
-    return userExists;
+
+    return userId || null;
   }
 
   async tempUserExists(email: string, mobile: MobileDto): Promise<boolean> {
     let userExists = false;
-    const phoneNumber = mobile.phoneNumber;
 
-    if (email != null && email != '') {
+    let phoneNumber;
+
+    if (mobile) {
+      phoneNumber = mobile.phoneNumber;
+    }
+
+    if (email !== null && email !== '') {
       const user = await this.tempUserAccountModel
         .find({ email: email })
         .exec();
       if (Object.keys(user).length > 0) {
         userExists = true;
       }
-    } else if (phoneNumber != null && phoneNumber != '') {
+    } else if (phoneNumber !== null && phoneNumber !== '') {
       const user = await this.tempUserAccountModel
         .find({ 'mobile.phoneNumber': phoneNumber })
         .exec();
@@ -274,6 +290,32 @@ export class UserAccountService {
     } catch (error) {
       throw new Error(
         `Error from findUserInTempAccount method in user_account.service.ts. 
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  async getTempUserId(
+    email: string | null,
+    mobile: MobileDto | null,
+  ): Promise<string | null> {
+    let userId: string;
+    try {
+      if (email !== null && email !== '') {
+        const user = await this.tempUserAccountModel
+          .findOne({ email: email })
+          .exec();
+        userId = user?.id;
+      } else if (mobile !== null) {
+        const user = await this.tempUserAccountModel
+          .findOne({ 'mobile.phoneNumber': mobile.phoneNumber })
+          .exec();
+        userId = user?.id;
+      }
+      return userId || null;
+    } catch (error) {
+      throw new Error(
+        `Error from getTempUserId method in user_account.service.ts. 
         \nWith error message: ${error.message}`,
       );
     }

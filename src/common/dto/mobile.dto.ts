@@ -10,7 +10,7 @@ import {
  * Defining the structire for the mobile field
  */
 export class MobileDto {
-  @ApiProperty({ example: '+14165555555' })
+  @ApiProperty({ example: '+6473334839' })
   @IsOptional()
   @IsString()
   phoneNumber: string;

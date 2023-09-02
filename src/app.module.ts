@@ -66,12 +66,14 @@ export class AppModule implements NestModule {
         'auth/login',
         'auth/test',
         'auth/sendOtp',
+        'auth/resendOtp',
         'auth/sendOTPBySms',
         'auth/reset',
         'auth/encrypt',
         'auth/decrypt',
         'images/upload',
         'images/test',
+        'images/upload-s3',
       )
       .forRoutes('*');
   }

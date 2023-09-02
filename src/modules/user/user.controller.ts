@@ -17,7 +17,7 @@ import { UserAccountService } from '../user_account/user_account.service';
 import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
-import { createError, createResponse } from '../auth/dto/response';
+import { createError, createResponse } from '../../common/util/response';
 
 @Controller('user')
 export class UserController {
@@ -52,7 +52,7 @@ export class UserController {
       Object.assign(createUserDto, { ...requestBody, _id: userID });
 
       // check if user exists with email or mobile
-      const userExists = await this.userAccountService.userExists(
+      const userExists = await this.userAccountService.getUserId(
         createUserDto.email,
         createUserDto.mobile,
       );
@@ -63,7 +63,7 @@ export class UserController {
         });
       }
 
-      // make sure user exists in temp user account for customer, this part is only for manual signup
+      // make sure user exists in temp user account for customer
       if (createUserDto.profileType === 'customer') {
         const tempUserAccount =
           await this.userAccountService.findUserInTempAccount(userID);

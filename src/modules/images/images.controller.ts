@@ -2,74 +2,94 @@ import {
   Controller,
   Post,
   UseInterceptors,
-  UploadedFile,
   Res,
   HttpStatus,
+  UploadedFiles,
+  Body,
 } from '@nestjs/common';
 import { ImagesService } from './images.service';
 import { Response } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('images')
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
 
+  /**
+   *
+   * @param file - the image file should be less than 1MB/250KB
+   * @param res
+   * @returns
+   */
   @Post('upload')
-  @UseInterceptors(FileInterceptor('image'))
-  async uploadImage(
-    @Res() res: Response,
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<any> {
-    // console.log('recieved file in the form: ', file);
-    try {
-      await this.imagesService.uploadImage(file);
-
-      // console.log('image successfully uploaded');
-
-      return res.status(HttpStatus.CREATED).json({
-        success: true,
-        message: 'image successfully uploaded',
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'background_image', maxCount: 1 },
+      { name: 'featured_image', maxCount: 1 },
+      { name: 'logo_image', maxCount: 1 },
+    ]),
+  )
+  async uploadFile(
+    @Body() body: any,
+    @UploadedFiles()
+    files: {
+      background_image: Express.Multer.File[];
+      featured_image: Express.Multer.File[];
+      logo_image: Express.Multer.File[];
+    },
+    @Res()
+    res: Response,
+  ) {
+    // Check if files were uploaded
+    if (!files) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No images received',
       });
-    } catch (error) {
-      console.log('error in uploadImage: ', error);
     }
-  }
+    if (!files.background_image && !files.background_image[0]) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No background image received',
+      });
+    }
+    if (!files.featured_image && !files.featured_image[0]) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No featured image received',
+      });
+    }
+    if (!files.logo_image && !files.logo_image[0]) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No logo image received',
+      });
+    }
 
-  // gett test endpoint
-  @Post('test')
-  async test(@Res() res: Response): Promise<any> {
     try {
+      // Validate each file, check type and size
+      this.imagesService.validateImageFile(files.background_image[0]);
+      this.imagesService.validateImageFile(files.featured_image[0]);
+      this.imagesService.validateImageFile(files.logo_image[0]);
+      const buiness_id: string = body.businessId;
+
+      const resp = await this.imagesService.uploadImageToS3({
+        buiness_id,
+        background_blob: files.background_image[0],
+        feature_image_blob: files.featured_image[0],
+        logo_blob: files.logo_image[0],
+      });
+
       return res.status(HttpStatus.OK).json({
         success: true,
-        message: 'test endpoint',
+        message: 'image successfully uploaded',
+        resp: resp,
       });
     } catch (error) {
-      console.log('error in test: ', error);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: error.message,
+      });
     }
   }
-
-  // @Post()
-  // create(@Body() createImageDto: CreateImageDto) {
-  //   return this.imagesService.create(createImageDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.imagesService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.imagesService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateImageDto: UpdateImageDto) {
-  //   return this.imagesService.update(+id, updateImageDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.imagesService.remove(+id);
-  // }
 }

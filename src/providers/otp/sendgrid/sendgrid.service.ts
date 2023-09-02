@@ -29,9 +29,7 @@ export class SendgridService {
    * @returns Promise<any>
    */
   async sendOTPEmail(
-    userId: string,
     receiverEmail: string,
-    firstName?: string,
     codeLength = 4,
     expirationMinutes = 6,
   ): Promise<any> {

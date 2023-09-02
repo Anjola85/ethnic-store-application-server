@@ -4,11 +4,8 @@ import {
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
-// import { JwtService } from '@nestjs/jwt';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
-import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
-import { UserService } from 'src/modules/user/user.service';
 import * as fs from 'fs';
 
 @Injectable()
@@ -40,6 +37,6 @@ export class AuthMiddleware implements NestMiddleware {
       privateKey.toString(),
     );
     // add user id to response object
-    res.locals.userId = decoded.id;
+    res.locals.userId = decoded?.id || '';
   }
 }

@@ -3,18 +3,15 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   HttpStatus,
   Res,
   Query,
   Logger,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { loginDto } from './dto/login.dto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { UserController } from '../user/user.controller';
@@ -24,7 +21,8 @@ import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.d
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { encryptKms, decryptKms } from '../../common/util/crypto';
-import { createError, createResponse } from './dto/response';
+import { createError, createResponse } from '../../common/util/response';
+import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
 
 @Controller('auth')
 export class AuthController {
@@ -79,7 +77,6 @@ export class AuthController {
   async login(@Body() body: any, @Res() res: Response) {
     // log time of request
     const requestTime = new Date();
-
     this.logger.log(
       '\n[QuickMart Server] - Request to ** login endpoint ** With starttime: ' +
         requestTime +
@@ -162,6 +159,7 @@ export class AuthController {
       const decryptedBody = await decryptKms(requestBody.payload);
 
       const result = await this.userController.create(decryptedBody, res);
+      console.log('done creatings');
 
       // log end time for response
       const endTime = new Date();
@@ -271,9 +269,7 @@ export class AuthController {
   @Post('sendOtp')
   async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     try {
-      // log time of request
       const requestTime = new Date().toISOString();
-
       this.logger.log(
         '\n[QuickMart Server] - Request to ** sendOtp endpoint ** With start time: ' +
           requestTime +
@@ -281,60 +277,85 @@ export class AuthController {
           JSON.stringify(body),
       );
 
-      this.logger.log(
-        '\n[QuickMart Server] - Request to ** AWS Secrets Manager ** With start time: ' +
-          new Date().toISOString,
-      );
-
-      this.logger.log(
-        '\n[QuickMart Server] - Successfull response from ** AWS Secrets Manager ** With end time: ' +
-          new Date().toISOString,
-      );
-
-      // decrrypt the payload, TempUserAccountDto
-      const decryptedBody = await decryptKms(body.payload);
-
-      // change the type of clearObject to TempUserAccountDto
+      // handle decryption of request body
+      const decrypted = await decryptKms(body.payload);
       const requestBody = new TempUserAccountDto();
-      Object.assign(requestBody, decryptedBody);
+      Object.assign(requestBody, decrypted);
 
-      console.log('here: ', requestBody);
+      // console.log('body: ', requestBody.email);
 
-      // check if user exists through either email or phone number
-      const userExists = await this.userAccountService.userExists(
-        requestBody.email,
-        requestBody.mobile,
-      );
+      // check if user account exists
+      const userAccountId: string | null =
+        await this.userAccountService.getUserId(
+          requestBody.email,
+          requestBody.mobile,
+        );
 
-      console.log('exist: ', userExists);
+      let authResponse;
 
-      // check if user exists in temp user account
-      const tempUserExists = await this.userAccountService.tempUserExists(
-        requestBody.email,
-        requestBody.mobile,
-      );
+      // check if user exists in temp user account (meaning user has already started registeration)
+      const tempUserAcctId: string | null =
+        await this.userAccountService.getTempUserId(
+          requestBody.email,
+          requestBody.mobile,
+        );
 
-      if (userExists || tempUserExists) {
-        return res.status(HttpStatus.CONFLICT).json({
-          status: false,
-          message: 'user already exists',
-        });
+      let firstTimeReg = true;
+      if (tempUserAcctId !== null) {
+        firstTimeReg = false;
       }
 
-      // create temporary user account
-      const userAccount = await this.userAccountService.createTempUserAccount(
-        requestBody,
-      );
+      if (firstTimeReg && !userAccountId) {
+        // create temporary user account
+        const userAccount = await this.userAccountService.createTempUserAccount(
+          requestBody,
+        );
 
-      // create auth for user
-      const authDto = new CreateAuthDto();
-      authDto.email = requestBody.email;
-      authDto.mobile = requestBody.mobile;
+        // save info in new auth record
+        const authDto = new CreateAuthDto();
 
-      const authResponse = await this.authService.create(
-        authDto,
-        userAccount.id,
-      );
+        // save auth info depending on what was sent
+        if (requestBody.email) {
+          authDto.email = requestBody.email;
+        } else if (requestBody.mobile) {
+          authDto.mobile = requestBody.mobile;
+        }
+
+        authResponse = await this.authService.create(authDto, userAccount.id);
+      } else if (!firstTimeReg && !userAccountId) {
+        const otpResp = await this.authService.sendOTP(
+          tempUserAcctId,
+          requestBody.email,
+          requestBody.mobile,
+        );
+
+        // update auth with new otp
+        this.authService.updateAuthOtp(
+          tempUserAcctId,
+          otpResp.code,
+          otpResp.expiryTime,
+        );
+
+        authResponse = otpResp;
+      } else if (!firstTimeReg && userAccountId) {
+        // just send otp to user
+        const otpResp = await this.authService.sendOTP(
+          userAccountId,
+          requestBody.email,
+          requestBody.mobile,
+        );
+
+        this.authService.updateAuthOtp(
+          tempUserAcctId,
+          otpResp.code,
+          otpResp.expiryTime,
+        );
+      } else {
+        // an error occured
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse('an error occured sending otp', null, false));
+      }
 
       // log time of response
       const endTime = new Date().toISOString();
@@ -346,11 +367,6 @@ export class AuthController {
           JSON.stringify(authResponse.message),
       );
 
-      // {
-      //   status: true,
-      //   message: authResponse.message,
-      //   data: authResponse.token,
-      // }
       return res
         .status(HttpStatus.OK)
         .json(
@@ -369,64 +385,77 @@ export class AuthController {
   }
 
   @Post('resendOtp')
-  async resendOtp(
-    @Body() requestBody: TempUserAccountDto,
-    @Res() res: Response,
-  ) {
-    // log time of request
+  async resendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     const requestTime = new Date();
 
     this.logger.log(
       '\n[QuickMart Server] - Request to ** resendOtp endpoint ** With starttime: ' +
         requestTime +
         ' with payload: ' +
-        JSON.stringify(requestBody),
+        JSON.stringify(body),
     );
 
     try {
-      const userId = res.locals.userId;
+      // decrypt request body
+      const decrypted = await decryptKms(body.payload);
+      const requestBody = new TempUserAccountDto();
+      Object.assign(requestBody, decrypted);
 
-      // get user by email or phone number
-      const userAccount = await this.userAccountService.findUserInTempAccount(
-        userId,
+      // check if user account already exists
+      let userId: string | null = await this.userAccountService.getUserId(
+        requestBody.email,
+        requestBody.mobile,
       );
 
-      if (userAccount === null || userAccount === undefined) {
-        return res.status(HttpStatus.NOT_FOUND).json({
-          message: 'user not found',
-        });
+      if (!userId) {
+        // repalce the userID with the temp user id
+        userId = await this.userAccountService.getTempUserId(
+          requestBody.email,
+          requestBody.mobile,
+        );
       }
 
-      // resend otp
-      const authResponse = await this.authService.resendOtp(
-        userAccount.id,
-        requestBody.email,
-        requestBody.mobile.phoneNumber,
-      );
+      if (!userId) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          message: 'User not found, unable to send otp',
+        });
+      } else {
+        const otpResp = await this.authService.resendOtp(
+          userId,
+          requestBody.email,
+          requestBody.mobile,
+        );
 
-      const logResponse = {
-        message: authResponse.message,
-        expiryTime: authResponse.expiryTime,
-      };
+        this.authService.updateAuthOtp(
+          userId,
+          otpResp.code,
+          otpResp.expiryTime,
+        );
 
-      // log time of request
-      const endTime = new Date();
-      this.logger.log(
-        '[QuickMart Server] - Response from ** resendOtp endpoint ** With endpoint: ' +
-          endTime +
-          ' with response: ' +
-          JSON.stringify(logResponse),
-      );
+        const logResponse = {
+          message: otpResp.message,
+          expiryTime: otpResp.expiryTime,
+        };
 
-      return res.status(HttpStatus.OK).json(
-        createResponse(
-          authResponse.message,
-          {
-            token: authResponse.token,
-          },
-          authResponse.status,
-        ),
-      );
+        // log time of request
+        const endTime = new Date();
+        this.logger.log(
+          '[QuickMart Server] - Response from ** resendOtp endpoint ** With endpoint: ' +
+            endTime +
+            ' with response: ' +
+            JSON.stringify(logResponse),
+        );
+
+        return res.status(HttpStatus.OK).json(
+          createResponse(
+            otpResp.message,
+            {
+              token: otpResp.token,
+            },
+            otpResp.status,
+          ),
+        );
+      }
     } catch (error) {
       return res
         .status(HttpStatus.BAD_REQUEST)
