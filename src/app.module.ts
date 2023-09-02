@@ -73,6 +73,7 @@ export class AppModule implements NestModule {
         'auth/decrypt',
         'images/upload',
         'images/test',
+        'images/upload-s3',
       )
       .forRoutes('*');
   }

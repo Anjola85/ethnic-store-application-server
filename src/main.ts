@@ -1,7 +1,10 @@
+import * as dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
+dotenv.config(); // Load environment variables from .env file
 
 async function bootstrap() {
   const logger = new Logger();
