@@ -18,12 +18,28 @@ import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
 import { ImagesModule } from './modules/images/images.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './modules/user/entities/user.entity';
+import { Business } from './modules/business/entities/business.entity';
+import { Country } from './modules/country/entities/country.entity';
+import { Continent } from './modules/continent/entities/continent.entity';
+import { Category } from './modules/category/entities/category.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['config/.env'],
+    }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.PG_HOST,
+      port: Number(process.env.PG_PORT),
+      username: process.env.PG_USER,
+      password: process.env.PG_PASSWORD,
+      database: process.env.PG_DATABASE,
+      entities: [User, Business, Country, Continent, Category],
+      synchronize: true,
     }),
     BullModule.forRoot({
       redis: {

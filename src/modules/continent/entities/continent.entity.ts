@@ -1,35 +1,10 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { Column, Entity } from 'typeorm';
 
 export type ContinentDocument = Continent & Document;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class Continent {
-  @Prop({
-    type: String,
-    required: true,
-  })
+@Entity('continents')
+export class Continent extends CommonEntity {
+  @Column()
   name: string;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-    select: false,
-  })
-  deleted: boolean;
 }
-
-const ContinentSchema = SchemaFactory.createForClass(Continent);
-
-ContinentSchema.statics.config = () => {
-  return {
-    idToken: 'continent',
-    hiddenFields: ['deleted'],
-  };
-};
-
-export { ContinentSchema };

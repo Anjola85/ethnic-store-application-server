@@ -1,50 +1,30 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { Auth } from 'src/modules/auth/entities/auth.entity';
-import { Merchant } from './merchant.entity';
-import { Customer } from './customer.entity';
-import { UserProfile } from 'src/modules/user/user.enums';
+import { AddressDto } from 'src/common/dto/address.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { Column, Entity, OneToMany } from 'typeorm';
+import { UserProfile } from '../user.enums';
+import { Business } from 'src/modules/business/entities/business.entity';
 
-export type UserDocument = User & Document;
-export type Profile = Customer | Merchant;
+@Entity('users')
+export class User extends CommonEntity {
+  @Column()
+  first_name: string;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class User {
-  @Prop({
-    type: Types.ObjectId,
-    required: true,
-    refpath: 'profileType',
-  })
-  profile: Profile;
+  @Column()
+  last_name: string;
 
-  @Prop({
-    type: String,
-    required: true,
-    enum: Object.values(UserProfile),
-    default: 'Customer',
-  })
-  profileType: string;
+  @Column()
+  email: string;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-    select: false,
-  })
-  deleted: boolean;
+  @Column({ type: 'jsonb', nullable: true })
+  mobile: MobileDto;
+
+  @Column({ type: 'jsonb', nullable: true })
+  address: AddressDto;
+
+  @Column({ type: 'varchar', default: UserProfile.CUSTOMER })
+  user_profile: UserProfile;
+
+  @Column()
+  active: boolean;
 }
-
-const UserSchema = SchemaFactory.createForClass(User);
-
-UserSchema.statics.config = () => {
-  return {
-    idToken: 'usr',
-    hiddenFields: ['deleted'],
-  };
-};
-
-export { UserSchema };

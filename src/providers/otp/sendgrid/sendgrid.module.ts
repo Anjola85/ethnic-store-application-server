@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SendgridService } from './sendgrid.service';
-import { SendgridController } from '../otp.controller';
 import { UserService } from 'src/modules/user/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from 'src/modules/user/entities/user.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 import {
   Customer,
   CustomerSchema,
@@ -16,8 +15,7 @@ import {
   UserAccount,
   UserAccountSchema,
 } from 'src/modules/user_account/entities/user_account.entity';
-import { Auth, AuthSchema } from 'src/modules/auth/entities/auth.entity';
-import { UserAccountService } from 'src/modules/user_account/user_account.service';
+import { Auth } from 'src/modules/auth/entities/auth.entity';
 import TwilioService from '../twilio/twilio.service';
 import { BullModule } from '@nestjs/bull';
 import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
@@ -28,14 +26,6 @@ import {
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: Customer.name, schema: CustomerSchema },
-      { name: Merchant.name, schema: MerchantSchema },
-      { name: UserAccount.name, schema: UserAccountSchema },
-      { name: Auth.name, schema: AuthSchema },
-      { name: TempUserAccount.name, schema: TempUserAccountSchema },
-    ]),
     BullModule.registerQueue({
       name: 'twilioQueue',
       redis: {
@@ -43,12 +33,6 @@ import {
       },
     }),
   ],
-  providers: [
-    SendgridService,
-    UserService,
-    UserAccountService,
-    TwilioService,
-    OTPCodeGenerator,
-  ],
+  providers: [SendgridService, UserService, TwilioService, OTPCodeGenerator],
 })
 export class SendgridModule {}

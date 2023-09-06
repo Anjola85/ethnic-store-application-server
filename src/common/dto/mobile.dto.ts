@@ -11,7 +11,6 @@ import {
  */
 export class MobileDto {
   @ApiProperty({ example: '+6473334839' })
-  @IsOptional()
   @IsString()
   phoneNumber: string;
 

@@ -1,80 +1,21 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { UserAccount } from 'src/modules/user_account/entities/user_account.entity';
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Column, Entity, OneToOne } from 'typeorm';
 
-export type AuthDocument = Auth & Document;
-
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class Auth {
-  @Prop({
-    type: String,
-    required: false,
-  })
+@Entity('auth')
+export class Auth extends CommonEntity {
+  @Column({ type: 'string', nullable: true })
   password: string;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Column({ type: 'boolean', default: false })
   account_verified: boolean;
 
-  @Prop({
-    type: String,
-  })
-  verification_code: string;
+  @Column({ type: 'number', nullable: true })
+  verification_code: number;
 
-  @Prop({
-    type: String,
-  })
-  verification_code_expiration: string;
+  @Column({ type: 'timestamp', nullable: true })
+  verification_code_expiration: Date;
 
-  @Prop({
-    type: String,
-  })
-  password_reset: string;
-
-  @Prop({
-    type: String,
-  })
-  password_reset_code: string;
-
-  @Prop({
-    type: Date,
-  })
-  reset_code_expiration: Date;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  change_password: boolean;
-
-  @Prop({
-    type: Types.ObjectId,
-    ref: 'Auth',
-  })
-  user_account_id: any | UserAccount;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-    select: false,
-  })
-  delete: boolean;
+  @OneToOne(() => User, (user) => user.id)
+  user: User;
 }
-
-const AuthSchema = SchemaFactory.createForClass(Auth);
-
-AuthSchema.statics.config = () => {
-  return {
-    idToken: 'auth',
-    hiddenFields: ['deleted'],
-  };
-};
-
-export { AuthSchema };

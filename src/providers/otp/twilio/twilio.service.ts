@@ -4,7 +4,6 @@ import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/acco
 import { Twilio } from 'twilio';
 import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import { InjectModel } from '@nestjs/mongoose';
-import { Auth, AuthDocument } from 'src/modules/auth/entities/auth.entity';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -15,8 +14,6 @@ export default class TwilioService {
   constructor(
     private readonly configService: ConfigService,
     private readonly otpCodeGenerator: OTPCodeGenerator,
-    @InjectModel(Auth.name)
-    private authModel: Model<AuthDocument> & any,
   ) {
     const twilioAccountSid =
       this.configService.get<string>('TWILIO_ACCOUNT_SID');
