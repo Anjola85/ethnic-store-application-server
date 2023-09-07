@@ -24,6 +24,7 @@ import { Business } from './modules/business/entities/business.entity';
 import { Country } from './modules/country/entities/country.entity';
 import { Continent } from './modules/continent/entities/continent.entity';
 import { Category } from './modules/category/entities/category.entity';
+import * as AWS from 'aws-sdk';
 
 @Module({
   imports: [
@@ -40,6 +41,9 @@ import { Category } from './modules/category/entities/category.entity';
       database: process.env.PG_DATABASE,
       entities: [User, Business, Country, Continent, Category],
       synchronize: true,
+      ssl: {
+        rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      },
     }),
     BullModule.forRoot({
       redis: {

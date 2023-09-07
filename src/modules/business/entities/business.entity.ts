@@ -1,12 +1,5 @@
 import { Country } from 'src/modules/country/entities/country.entity';
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { DayScheduleDto } from '../dto/schedule.dto';
 import { GeoLocationDto } from '../dto/geolocation.dto';
 import { MobileDto } from 'src/common/dto/mobile.dto';
@@ -71,6 +64,6 @@ export class Business extends CommonEntity {
   @OneToMany(() => Category, (category) => category.name)
   categories: Category[];
 
-  @Column({ type: 'boolean', nullable: true })
-  deleted: boolean;
+  @Column({ type: 'varchar', default: 'grocery' })
+  businessType: string;
 }
