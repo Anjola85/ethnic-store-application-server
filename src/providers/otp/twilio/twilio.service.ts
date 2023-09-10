@@ -27,10 +27,11 @@ export default class TwilioService {
   }
 
   public async sendSms(
-    phoneNumber: string,
+    phone_number: string,
     codeLength = 4,
     expirationMinutes = 6,
   ) {
+    console.log('phone number is: ', phone_number);
     // phone number of sender is quickmartdev
     const senderPhoneNumber = '+14318133976';
 
@@ -43,7 +44,7 @@ export default class TwilioService {
     const expiryTime: string = otpResponse.expiryTime;
 
     const options: MessageListInstanceCreateOptions = {
-      to: phoneNumber,
+      to: phone_number,
       body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
       from: senderPhoneNumber,
     };
@@ -52,7 +53,7 @@ export default class TwilioService {
       this.client.messages.create(options);
 
       // mask phone number
-      const maskedNumber = phoneNumber;
+      const maskedNumber = phone_number;
       // replace first 5 digits with *
       const maskedPhoneNumber = maskedNumber.replace(
         maskedNumber.substring(0, 5),
@@ -86,7 +87,7 @@ export default class TwilioService {
   }
 
   public async sendSmsTest(
-    phoneNumber: string,
+    phone_number: string,
     codeLength = 4,
     expirationMinutes = 6,
   ) {
@@ -102,7 +103,7 @@ export default class TwilioService {
     const expiryTime: string = otpResponse.expiryTime;
 
     const options: MessageListInstanceCreateOptions = {
-      to: phoneNumber,
+      to: phone_number,
       body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
       from: senderPhoneNumber,
     };

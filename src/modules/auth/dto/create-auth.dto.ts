@@ -5,6 +5,7 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -13,15 +14,23 @@ import {
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { PersonDTO } from 'src/modules/user/dto/person.dto';
 
-export class CreateAuthDto extends PersonDTO {
+export class CreateAuthDto {
   @IsOptional()
-  @IsString()
-  password: string;
+  @IsEmail()
+  @ApiProperty({
+    description: 'The email address of the person',
+    example: 'johndoe@quickie.com',
+  })
+  email: string;
 
-  @IsNotEmpty()
   @IsOptional()
-  @IsString()
-  user_account_id: string;
+  @ValidateNested()
+  @Type(() => MobileDto)
+  @ApiProperty({
+    description: 'The mobile phone number of the person',
+    example: { phone_number: '1234567890', country_code: '+1', iso_type: 'CA' },
+  })
+  mobile: MobileDto;
 
   @IsOptional()
   @IsBoolean()
@@ -36,23 +45,7 @@ export class CreateAuthDto extends PersonDTO {
   verify_code_expiration?: Date;
 
   @IsOptional()
-  @IsString()
-  password_reset?: string;
-
-  @IsOptional()
-  @IsString()
-  password_reset_code?: string;
-
-  @IsOptional()
-  @IsDateString()
-  reset_code_expiration?: Date;
-
-  @IsOptional()
-  @IsBoolean()
-  change_password?: boolean;
-
-  @IsOptional()
-  user?: any | User;
+  user?: User;
 
   @IsOptional()
   @IsBoolean()

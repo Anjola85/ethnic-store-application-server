@@ -8,63 +8,70 @@ import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Address } from './entities/address.entity';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class UserService {
-  // constructor(
-  //   @InjectModel(User.name)
-  //   protected userModel: Model<UserDocument> & any,
-  //   @InjectModel(Merchant.name)
-  //   public readonly merchantModel: Model<MerchantDocument>,
-  //   @InjectModel(Customer.name)
-  //   public readonly customerModel: Model<CustomerDocument>,
-  //   private readonly sendgridService: SendgridService,
-  //   private readonly twilioService: TwilioService,
-  // ) {}
-  // /**
-  //  *
-  //  * @param createUserDto - parsed request body
-  //  * @returns
-  //  */
-  // async create(userDTO: CreateUserDto): Promise<any> {
-  //   try {
-  //     // get passed in profile type
-  //     const { email, password, profileType = 'customer' } = userDTO;
-  //     const ProfileModel =
-  //       profileType === UserProfile.MERCHANT
-  //         ? this.merchantModel
-  //         : this.customerModel;
-  //     // create either merchant or customer object, and set the id to the user account id and save to DB
-  //     let profile = new ProfileModel({ ...userDTO });
-  //     profile = await profile.save();
-  //     // create user object and save to DB
-  //     let user = new this.userModel({
-  //       email,
-  //       password,
-  //       profileType,
-  //       profile,
-  //     });
-  //     user = await user.save();
-  //     // create jwt token with user id and set expiry to 1 day
-  //     const privateKey = fs.readFileSync('./private_key.pem');
-  //     const token = jsonwebtoken.sign(
-  //       { _id: user.id, emailAddress: email },
-  //       privateKey.toString(),
-  //       {
-  //         expiresIn: '1d',
-  //       },
-  //     );
-  //     // add token to user object
-  //     user.token = token;
-  //     return user;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error registering user with request DTO ${userDTO},
-  //       from create method in user.service.ts.
-  //       With error message: ${error.message} and error: ${error}, error stack: ${error.stack}`,
-  //     );
-  //   }
-  // }
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Address)
+    private addressRepository: Repository<Address>,
+    private readonly sendgridService: SendgridService,
+    private readonly twilioService: TwilioService,
+  ) {}
+  /**
+   *
+   * @param CreateUserDto - parsed request body
+   * @returns
+   */
+  async create(userDto: CreateUserDto): Promise<any> {
+    try {
+      // console.log('entered create method in user.service.dto');
+      const { address, ...userData } = userDto;
+
+      const addressId = await this.addressRepository.create({
+        primary: true,
+        ...address,
+      });
+
+      // console.log('address successfully created with object: ', addressId);
+
+      if (!userData.profile_picture) {
+        const avatarFolder = 'avatars';
+        // assign random avatar from avatars folder in S3 bucket to user
+        const avatar =
+          'https://quickie-user-profile-pictures.s3.ca-central-1.amazonaws.com/avatars/1.png';
+        userData.profile_picture = avatar;
+      }
+
+      const user = await this.userRepository
+        .create({
+          ...userData,
+          addresses: [addressId],
+          user_profile: userData.user_profile || UserProfile.CUSTOMER,
+        })
+        .save();
+
+      addressId.user = user;
+      await this.addressRepository.save(addressId);
+
+      // create jwt token with user id and set expiry to 1 day
+      const privateKey = fs.readFileSync('./private_key.pem');
+      const token = jsonwebtoken.sign({ id: user.id }, privateKey.toString(), {
+        expiresIn: '1d',
+      });
+
+      return { token, user };
+    } catch (error) {
+      throw new Error(
+        `Error registering user from create method in user.service.ts. With error message: ${error.message}`,
+      );
+    }
+  }
   // /**
   //  * Get all users
   //  * @returns
@@ -81,6 +88,7 @@ export class UserService {
   //     );
   //   }
   // }
+
   // /**
   //  *
   //  * @param id
@@ -105,6 +113,7 @@ export class UserService {
   //     );
   //   }
   // }
+
   // /**
   //  *
   //  * @param id
@@ -124,6 +133,7 @@ export class UserService {
   //     );
   //   }
   // }
+
   // /**
   //  * Implementing soft delete
   //  * @param id - user id

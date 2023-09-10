@@ -12,7 +12,7 @@ import { User } from '../user/entities/user.entity';
 import {
   TempUserAccount,
   TempUserAccountDocument,
-} from '../user_account/entities/temporary_user_account.entity';
+} from '../user_account/entities/temporary-user-account.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,49 +21,35 @@ import { Repository } from 'typeorm';
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  // constructor(
-  //   @InjectRepository(Auth) private authRepository: Repository<Auth>,
-  //   @InjectRepository(User) private userRepository: Repository<User>,
-  //   private readonly sendgridService: SendgridService,
-  //   private readonly twilioService: TwilioService,
-  // ) {
-  //   // @InjectModel(TempUserAccount.name)
-  //   // private tempUserAccountModel: Model<TempUserAccountDocument> & any,
-  // }
+  constructor(
+    @InjectRepository(Auth) private authRepository: Repository<Auth>,
+    @InjectRepository(User) private userRepository: Repository<User>,
+    private readonly sendgridService: SendgridService,
+    private readonly twilioService: TwilioService,
+  ) {
+    // @InjectModel(TempUserAccount.name)
+    // private tempUserAccountModel: Model<TempUserAccountDocument> & any,
+  }
 
   // async create(
-  //   createAuthDto: CreateAuthDto,
+  //   authDto: CreateAuthDto,
   //   userID: string,
   // ): Promise<{ token; message }> {
   //   try {
+  //     const { email, mobile } = authDto;
   //     const response: { message; code; expiryTime; token } = await this.sendOTP(
   //       userID,
-  //       createAuthDto.email,
-  //       createAuthDto.mobile,
-  //     );
-
-  //     // set default value for password
-  //     if (
-  //       createAuthDto.password === undefined ||
-  //       createAuthDto.password === null
-  //     ) {
-  //       createAuthDto.password = '';
-  //     }
-
-  //     // encrypt password
-  //     const saltRounds = 10;
-  //     createAuthDto.password = await bcrypt.hash(
-  //       createAuthDto.password,
-  //       saltRounds,
+  //       email,
+  //       mobile,
   //     );
 
   //     // create new auth object
-  //     const auth = new this.authModel({
-  //       password: createAuthDto.password,
-  //       user_account_id: userID,
-  //       verification_code: response.code,
-  //       verification_code_expiration: response.expiryTime,
-  //     });
+  //     const auth = await this.authRepository
+  //       .create({
+  //         ...authDto,
+  //         user: userID,
+  //       })
+  //       .save();
 
   //     // save auth object
   //     await auth.save();
@@ -86,7 +72,7 @@ export class AuthService {
   //     // retrieve user_account_id from user database
   //     if (loginDto.email && loginDto.email !== '') {
   //       user = await this.userAccountService.getUserByEmail(loginDto.email);
-  //     } else if (loginDto.mobile && loginDto.mobile.phoneNumber !== '') {
+  //     } else if (loginDto.mobile && loginDto.mobile.phone_number !== '') {
   //       user = await this.userAccountService.getUserByPhone(loginDto.mobile);
   //     }
 
@@ -117,7 +103,7 @@ export class AuthService {
   //       firstName: userInfo.firstName,
   //       lastName: userInfo.lastName,
   //       email: userInfo.email || '',
-  //       phoneNumber: userInfo.phoneNumber ? userInfo.phoneNumber : '',
+  //       phone_number: userInfo.phone_number ? userInfo.phone_number : '',
   //       address: {
   //         primary: userInfo.address.primary,
   //         other:
@@ -126,7 +112,7 @@ export class AuthService {
   //     };
 
   //     // get password from auth database - this is specific to email
-  //     const auth = await this.authModel.findOne({
+  //     const auth = await this.authRepository.findOne({
   //       user_account_id: userInfo.id,
   //     });
 
@@ -177,7 +163,7 @@ export class AuthService {
   //         firstName: userInfo.firstName,
   //         lastName: userInfo.lastName,
   //         email: userInfo.email ? userInfo.email : '',
-  //         phoneNumber: userInfo.phoneNumber ? userInfo.phoneNumber : '',
+  //         phone_number: userInfo.phone_number ? userInfo.phone_number : '',
   //         address: {
   //           primary: userInfo.address.primary,
   //           other:
@@ -214,7 +200,7 @@ export class AuthService {
   //       account_verified: string;
   //       verification_code: string;
   //       verification_code_expiration: string;
-  //     } = await this.authModel.findOne({
+  //     } = await this.authRepository.findOne({
   //       user_account_id: userId,
   //     });
 
@@ -248,7 +234,7 @@ export class AuthService {
 
   //       if (entryTime <= expiryTime) {
   //         // update auth object
-  //         await this.authModel.findByIdAndUpdate(auth.id, {
+  //         await this.authRepository.findByIdAndUpdate(auth.id, {
   //           account_verified: true,
   //         });
 
@@ -277,7 +263,9 @@ export class AuthService {
   // async updateAccount(authDto: CreateAuthDto, userId: string) {
   //   try {
   //     // get auth object
-  //     const auth = await this.authModel.findOne({ user_account_id: userId });
+  //     const auth = await this.authRepository.findOne({
+  //       user_account_id: userId,
+  //     });
 
   //     if (auth == null) {
   //       throw new Error('User not found in auth database');
@@ -287,57 +275,79 @@ export class AuthService {
   //     authDto.password = await bcrypt.hash(authDto.password, saltRounds);
 
   //     // update auth object
-  //     await this.authModel.findByIdAndUpdate(auth.id, {
+  //     await this.authRepository.findByIdAndUpdate(auth.id, {
   //       ...authDto,
   //     });
 
   //     // return updated auth
-  //     return await this.authModel.findOne({ user_account_id: userId });
+  //     return await this.authRepository.findOne({ user_account_id: userId });
   //   } catch (e) {
   //     throw new Error(`From AuthService.updateAccount: ${e.message}`);
   //   }
   // }
 
-  // /**
-  //  * This method sends otp to user
-  //  * @param userID
-  //  * @param email
-  //  * @param phoneNumber
-  //  * @returns
-  //  */
-  // async sendOTP(
-  //   userID: string,
-  //   email?: string,
-  //   mobile?: MobileDto,
-  // ): Promise<{ message; code; expiryTime; token }> {
-  //   let response: { message; code; expiryTime };
-  //   if (email) {
-  //     // use sendgrid to send otp
-  //     response = await this.sendgridService.sendOTPEmail(email);
-  //   } else if (mobile) {
-  //     const phoneNumber = mobile?.phoneNumber || '';
-  //     // use twilio to send otp
-  //     response = await this.twilioService.sendSms(phoneNumber);
-  //   }
+  /**
+   * This method sends otp to user
+   * @param userID
+   * @param email
+   * @param phone_number
+   * @returns
+   */
+  async sendOtp(
+    email?: string,
+    mobile?: MobileDto,
+  ): Promise<{ message; code; expiryTime; token }> {
+    let response: { message; code; expiryTime };
+    let auth;
 
-  //   // generate jwt
-  //   const privateKey = fs.readFileSync('./private_key.pem');
-  //   const token = jsonwebtoken.sign({ id: userID }, privateKey.toString(), {
-  //     expiresIn: '1d',
-  //   });
+    if (email) {
+      // use sendgrid to send otp
+      response = await this.sendgridService.sendOTPEmail(email);
+      auth = await this.authRepository.findOneBy({ email });
+    } else if (mobile) {
+      // use twilio to send otp
+      const phone_number = mobile?.phone_number || '';
+      response = await this.twilioService.sendSms(phone_number);
+      auth = await this.authRepository.findOneBy({ mobile });
+    }
 
-  //   // add token to response
-  //   const otpResponse = { ...response, token };
+    if (auth) {
+      auth = await this.authRepository.update(auth.id, {
+        verification_code: response.code,
+        verification_code_expiration: response.expiryTime,
+      });
+    } else {
+      auth = await this.authRepository
+        .createQueryBuilder()
+        .insert()
+        .into(Auth)
+        .values({
+          mobile,
+          email,
+          verification_code: response.code,
+          verification_code_expiration: response.expiryTime,
+        })
+        .execute();
+    }
 
-  //   return otpResponse;
-  // }
+    // generate jwt with the auth id
+    const privateKey = fs.readFileSync('./private_key.pem');
+    const token = jsonwebtoken.sign({ id: auth.id }, privateKey.toString(), {
+      expiresIn: '1d',
+    });
+
+    // add token to response
+    const otpResponse = { ...response, token };
+
+    return otpResponse;
+  }
 
   // /**
   //  * This method resends otp to user
   //  * It sends the otp to the user and updates the auth DB
   //  * @param userID
   //  * @param email
-  //  * @param phoneNumber
+  //  * @param phone_number
   //  * @returns
   //  */
   // async resendOtp(
@@ -349,11 +359,11 @@ export class AuthService {
   //   if (email != null && email.length !== 0) {
   //     response = await this.sendgridService.sendOTPEmail(email);
   //   } else if (mobile !== null) {
-  //     if (mobile.phoneNumber === undefined || mobile.phoneNumber === null) {
+  //     if (mobile.phone_number === undefined || mobile.phone_number === null) {
   //       throw new Error('Phone number is required');
   //     }
-  //     const phoneNumber = mobile.phoneNumber;
-  //     response = await this.twilioService.sendSms(phoneNumber);
+  //     const phone_number = mobile.phone_number;
+  //     response = await this.twilioService.sendSms(phone_number);
   //   }
 
   //   // update auth account verification code and expiry time
@@ -376,7 +386,7 @@ export class AuthService {
   //   code: string,
   //   expiryTime: string,
   // ): Promise<void> {
-  //   await this.authModel.findOneAndUpdate(
+  //   await this.authRepository.findOneAndUpdate(
   //     { user_account_id: userID },
   //     {
   //       verification_code: code,
@@ -385,19 +395,38 @@ export class AuthService {
   //   );
   // }
 
-  // /**
-  //  * This endpoint is to test twilio send sms feature
-  //  * @param phoneNumber
-  //  * @returns
-  //  */
-  // async sendOTPBySmsTest(phoneNumber: string) {
-  //   try {
-  //     await this.twilioService.sendSmsTest(phoneNumber);
-  //     return { success: true, message: 'SMS sent successfully.' };
-  //   } catch (error) {
-  //     return { success: false, message: 'Failed to send SMS.' };
-  //   }
-  // }
+  async findByEmailOrMobile(
+    email: string,
+    mobile: MobileDto,
+  ): Promise<Auth | null> {
+    try {
+      const auth = await this.authRepository
+        .createQueryBuilder('user')
+        .where('auth.email = :email', { email })
+        .orWhere('auth.mobile = :mobile', { mobile })
+        .getOne();
+      return auth || null;
+    } catch (e) {
+      throw new Error(
+        `Error from findByEmailOrMobile method in user.service.ts.
+        with error message: ${e.message}`,
+      );
+    }
+  }
+
+  /**
+   * This endpoint is to test twilio send sms feature
+   * @param phone_number
+   * @returns
+   */
+  async sendOTPBySmsTest(phone_number: string) {
+    try {
+      await this.twilioService.sendSmsTest(phone_number);
+      return { success: true, message: 'SMS sent successfully.' };
+    } catch (error) {
+      return { success: false, message: 'Failed to send SMS.' };
+    }
+  }
 
   // /**
   //  * TODO: to be deleted after testing auth
@@ -405,33 +434,29 @@ export class AuthService {
   //  * @returns
   //  */
   // async resetRegisteredUsers() {
-  //   const startOfDay = new Date();
-  //   startOfDay.setHours(0, 0, 0, 0); // Set the time to 00:00:00.000
-
-  //   const endOfDay = new Date();
-  //   endOfDay.setHours(23, 59, 59, 999); // Set the time to 23:59:59.999
-
-  //   try {
-  //     await this.authModel.deleteMany({
-  //       createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //     });
-
-  //     await this.userModel.deleteMany({
-  //       createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //     });
-  //     await this.userAccountModel.deleteMany({
-  //       createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //     });
-  //     await this.customerModel.deleteMany({
-  //       createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //     });
-  //     await this.tempUserAccountModel.deleteMany({
-  //       createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //     });
-
-  //     return { success: true, message: 'Reset successful' };
-  //   } catch (error) {
-  //     return { success: false, message: 'Reset failed from auth.service.ts' };
-  //   }
+  //   // const startOfDay = new Date();
+  //   // startOfDay.setHours(0, 0, 0, 0); // Set the time to 00:00:00.000
+  //   // const endOfDay = new Date();
+  //   // endOfDay.setHours(23, 59, 59, 999); // Set the time to 23:59:59.999
+  //   // try {
+  //   //   await this.authRepository.deleteMany({
+  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
+  //   //   });
+  //   //   await this.userRepository.deleteMany({
+  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
+  //   //   });
+  //   //   await this.userAccountModel.deleteMany({
+  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
+  //   //   });
+  //   //   await this.customerModel.deleteMany({
+  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
+  //   //   });
+  //   //   await this.tempUserAccountModel.deleteMany({
+  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
+  //   //   });
+  //   //   return { success: true, message: 'Reset successful' };
+  //   // } catch (error) {
+  //   //   return { success: false, message: 'Reset failed from auth.service.ts' };
+  //   // }
   // }
 }

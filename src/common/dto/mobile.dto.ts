@@ -12,13 +12,13 @@ import {
 export class MobileDto {
   @ApiProperty({ example: '+6473334839' })
   @IsString()
-  phoneNumber: string;
+  phone_number: string;
 
   @ApiProperty({ example: '+1' })
   @IsString()
-  isoCode: string;
+  country_code: string;
 
   @ApiProperty({ example: 'CA' })
   @IsString()
-  isoType: string;
+  iso_type: string;
 }

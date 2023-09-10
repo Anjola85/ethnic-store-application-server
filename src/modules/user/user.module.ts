@@ -1,27 +1,18 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { Customer, CustomerSchema } from './entities/customer.entity';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Merchant, MerchantSchema } from './entities/merchant.entity';
-import { User } from './entities/user.entity';
 import { UserAccountService } from '../user_account/user_account.service';
-import {
-  UserAccount,
-  UserAccountSchema,
-} from '../user_account/entities/user_account.entity';
 import { AuthService } from '../auth/auth.service';
-import { Auth } from '../auth/entities/auth.entity';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
-import {
-  TempUserAccount,
-  TempUserAccountSchema,
-} from '../user_account/entities/temporary_user_account.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
+import { Address } from './entities/address.entity';
+import { Auth } from '../auth/entities/auth.entity';
 
 @Module({
-  imports: [],
+  imports: [TypeOrmModule.forFeature([User, Address, Auth])],
   controllers: [UserController],
   providers: [
     UserService,

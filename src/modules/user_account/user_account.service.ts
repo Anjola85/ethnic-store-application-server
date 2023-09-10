@@ -11,7 +11,7 @@ import { TempUserAccountDto } from './dto/temporary-user-account.dto';
 import {
   TempUserAccount,
   TempUserAccountDocument,
-} from './entities/temporary_user_account.entity';
+} from './entities/temporary-user-account.entity';
 import { MobileUtil } from 'src/common/util/mobileUtil';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 
@@ -36,9 +36,9 @@ export class UserAccountService {
   //       userAccountDto.email = email;
   //     } else if (mobile) {
   //       userAccountDto.mobile = new MobileUtil(
-  //         mobile.isoCode,
-  //         mobile.isoType,
-  //         mobile.phoneNumber,
+  //         mobile.country_code,
+  //         mobile.iso_type,
+  //         mobile.phone_number,
   //       ).getDto();
   //     }
   //     const account = new this.userAccountModel({ ...userAccountDto });
@@ -185,11 +185,11 @@ export class UserAccountService {
   //  */
   // async getUserByPhone(phone: MobileDto): Promise<any | null> {
   //   try {
-  //     const phoneNum = phone.phoneNumber;
+  //     const phoneNum = phone.phone_number;
   //     let user: object = null;
   //     user = await this.userAccountModel
   //       .findOne({
-  //         'mobile.phoneNumber': phoneNum,
+  //         'mobile.phone_number': phoneNum,
   //       })
   //       .select('-createdAt -updatedAt -__v, -deleted -active');
   //     return user || null;
@@ -205,7 +205,7 @@ export class UserAccountService {
   //   try {
   //     let user = null;
   //     user = await this.userAccountModel
-  //       .find({ $or: [{ 'mobile.phoneNumber': phone }, { email: email }] })
+  //       .find({ $or: [{ 'mobile.phone_number': phone }, { email: email }] })
   //       .exec();
   //     return user;
   //   } catch (error) {
@@ -231,9 +231,9 @@ export class UserAccountService {
   // }
   // async tempUserExists(email: string, mobile: MobileDto): Promise<boolean> {
   //   let userExists = false;
-  //   let phoneNumber;
+  //   let phone_number;
   //   if (mobile) {
-  //     phoneNumber = mobile.phoneNumber;
+  //     phone_number = mobile.phone_number;
   //   }
   //   if (email !== null && email !== '') {
   //     const user = await this.tempUserAccountModel
@@ -242,9 +242,9 @@ export class UserAccountService {
   //     if (Object.keys(user).length > 0) {
   //       userExists = true;
   //     }
-  //   } else if (phoneNumber !== null && phoneNumber !== '') {
+  //   } else if (phone_number !== null && phone_number !== '') {
   //     const user = await this.tempUserAccountModel
-  //       .find({ 'mobile.phoneNumber': phoneNumber })
+  //       .find({ 'mobile.phone_number': phone_number })
   //       .exec();
   //     if (Object.keys(user).length > 0) {
   //       userExists = true;
@@ -277,7 +277,7 @@ export class UserAccountService {
   //       userId = user?.id;
   //     } else if (mobile !== null) {
   //       const user = await this.tempUserAccountModel
-  //         .findOne({ 'mobile.phoneNumber': mobile.phoneNumber })
+  //         .findOne({ 'mobile.phone_number': mobile.phone_number })
   //         .exec();
   //       userId = user?.id;
   //     }

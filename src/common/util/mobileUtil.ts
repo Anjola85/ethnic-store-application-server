@@ -1,37 +1,37 @@
 import { MobileDto } from '../dto/mobile.dto';
 
 export class MobileUtil {
-  public isoCode: string;
-  public isoType: string;
-  public phoneNumber: string;
+  public country_code: string;
+  public iso_type: string;
+  public phone_number: string;
 
-  constructor(isoCode?: string, isoType?: string, phoneNumber?: string) {
+  constructor(country_code?: string, iso_type?: string, phone_number?: string) {
     // check if values are undefined, set default values
-    if (!isoCode && !isoType && !phoneNumber) {
-      this.isoCode = '+1';
-      this.isoType = 'CA';
-      this.phoneNumber = '';
+    if (!country_code && !iso_type && !phone_number) {
+      this.country_code = '+1';
+      this.iso_type = 'CA';
+      this.phone_number = '';
     } else {
-      this.isoCode = isoCode;
-      this.isoType = isoType;
-      this.phoneNumber = phoneNumber;
+      this.country_code = country_code;
+      this.iso_type = iso_type;
+      this.phone_number = phone_number;
     }
 
     return this;
   }
 
   formatMobileDto = (mobile: MobileDto) => {
-    this.isoCode = mobile.isoCode;
-    this.isoType = mobile.isoType;
-    this.phoneNumber = mobile.phoneNumber;
+    this.country_code = mobile.country_code;
+    this.iso_type = mobile.iso_type;
+    this.phone_number = mobile.phone_number;
     return this;
   };
 
   getPhoneNumber(): string {
-    if (!this.phoneNumber) {
+    if (!this.phone_number) {
       return '';
     }
-    return this.phoneNumber;
+    return this.phone_number;
   }
 
   toString(): string {
@@ -39,26 +39,26 @@ export class MobileUtil {
   }
 
   getIsoCode(): string {
-    return this.isoCode;
+    return this.country_code;
   }
 
-  setIsoCode(isoCode: string): void {
-    this.isoCode = isoCode;
+  setIsoCode(country_code: string): void {
+    this.country_code = country_code;
   }
 
   getIsoType(): string {
-    return this.isoType;
+    return this.iso_type;
   }
 
-  setIsoType(isoType: string): void {
-    this.isoType = isoType;
+  setIsoType(iso_type: string): void {
+    this.iso_type = iso_type;
   }
 
   getDto(): MobileDto {
     return {
-      isoCode: this.isoCode,
-      isoType: this.isoType,
-      phoneNumber: this.phoneNumber,
+      country_code: this.country_code,
+      iso_type: this.iso_type,
+      phone_number: this.phone_number,
     };
   }
 }

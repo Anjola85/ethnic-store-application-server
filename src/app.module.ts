@@ -24,7 +24,8 @@ import { Business } from './modules/business/entities/business.entity';
 import { Country } from './modules/country/entities/country.entity';
 import { Continent } from './modules/continent/entities/continent.entity';
 import { Category } from './modules/category/entities/category.entity';
-import * as AWS from 'aws-sdk';
+import { Address } from './modules/user/entities/address.entity';
+import { Auth } from './modules/auth/entities/auth.entity';
 
 @Module({
   imports: [
@@ -39,11 +40,11 @@ import * as AWS from 'aws-sdk';
       username: process.env.PG_USER,
       password: process.env.PG_PASSWORD,
       database: process.env.PG_DATABASE,
-      entities: [User, Business, Country, Continent, Category],
+      entities: [User, Business, Country, Continent, Category, Address, Auth],
       synchronize: true,
-      ssl: {
-        rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-      },
+      // ssl: {
+      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      // },
     }),
     BullModule.forRoot({
       redis: {
@@ -80,6 +81,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        'user/register',
         'business/nearby',
         'business/register',
         'business/all',

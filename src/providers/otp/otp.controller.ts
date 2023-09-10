@@ -49,9 +49,9 @@ export class SendgridController {
   //  */
   // @Post('sendOTPBySms')
   // async sendOTPBySms(@Body() requestBody: any) {
-  //   const { phoneNumber } = requestBody;
+  //   const { phone_number } = requestBody;
   //   try {
-  //     await this.twilioService.sendSmsTest(phoneNumber);
+  //     await this.twilioService.sendSmsTest(phone_number);
   //     return { success: true, message: 'SMS sent successfully.' };
   //   } catch (error) {
   //     return { success: false, message: 'Failed to send SMS.' };

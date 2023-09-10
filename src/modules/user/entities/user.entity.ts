@@ -1,9 +1,7 @@
-import { AddressDto } from 'src/common/dto/address.dto';
-import { MobileDto } from 'src/common/dto/mobile.dto';
 import { CommonEntity } from 'src/modules/common/base.entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
 import { UserProfile } from '../user.enums';
-import { Business } from 'src/modules/business/entities/business.entity';
+import { Address } from './address.entity';
 
 @Entity('users')
 export class User extends CommonEntity {
@@ -13,18 +11,19 @@ export class User extends CommonEntity {
   @Column()
   last_name: string;
 
-  @Column()
-  email: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  mobile: MobileDto;
-
-  @Column({ type: 'jsonb', nullable: true })
-  address: AddressDto;
+  @OneToMany(() => Address, (address) => address.user)
+  @JoinColumn()
+  addresses: Address[];
 
   @Column({ type: 'varchar', default: UserProfile.CUSTOMER })
-  user_profile: UserProfile;
+  user_profile: string;
 
-  @Column()
+  @Column({ type: 'varchar', nullable: true })
+  dob: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  profile_picture: string;
+
+  @Column({ type: 'boolean', default: true })
   active: boolean;
 }

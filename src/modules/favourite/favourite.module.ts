@@ -11,7 +11,7 @@ import { Auth } from '../auth/entities/auth.entity';
 import {
   TempUserAccount,
   TempUserAccountSchema,
-} from '../user_account/entities/temporary_user_account.entity';
+} from '../user_account/entities/temporary-user-account.entity';
 import {
   UserAccount,
   UserAccountSchema,
@@ -22,17 +22,17 @@ import { UserAccountService } from '../user_account/user_account.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 
-@Module({
-  imports: [],
-  controllers: [FavouriteController],
-  providers: [
-    FavouriteService,
-    UserService,
-    UserAccountService,
-    AuthService,
-    SendgridService,
-    OTPCodeGenerator,
-    TwilioService,
-  ],
-})
+// @Module({
+//   imports: [],
+//   controllers: [FavouriteController],
+//   providers: [
+//     FavouriteService,
+//     UserService,
+//     UserAccountService,
+//     AuthService,
+//     SendgridService,
+//     OTPCodeGenerator,
+//     TwilioService,
+//   ],
+// })
 export class FavouriteModule {}

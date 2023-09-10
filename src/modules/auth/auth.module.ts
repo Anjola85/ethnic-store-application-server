@@ -18,18 +18,13 @@ import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import {
   TempUserAccount,
   TempUserAccountSchema,
-} from '../user_account/entities/temporary_user_account.entity';
+} from '../user_account/entities/temporary-user-account.entity';
 import { AwsSecretKey } from 'src/common/util/secret';
+import { Address } from '../user/entities/address.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: UserAccount.name, schema: UserAccountSchema },
-      { name: Customer.name, schema: CustomerSchema },
-      { name: Merchant.name, schema: MerchantSchema },
-      { name: TempUserAccount.name, schema: TempUserAccountSchema },
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Auth, User, Address])],
   controllers: [AuthController],
   providers: [
     AuthService,
