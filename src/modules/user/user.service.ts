@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { UserProfile } from './user.enums';
@@ -12,6 +12,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
+import { Auth } from '../auth/entities/auth.entity';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UserService {
@@ -20,6 +22,7 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(Address)
     private addressRepository: Repository<Address>,
+    private readonly authService: AuthService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
   ) {}
@@ -30,34 +33,51 @@ export class UserService {
    */
   async create(userDto: CreateUserDto): Promise<any> {
     try {
-      // console.log('entered create method in user.service.dto');
-      const { address, ...userData } = userDto;
+      // check if user already exists
+      let user;
+      let exists = true;
 
-      const addressId = await this.addressRepository.create({
-        primary: true,
-        ...address,
-      });
+      const auth = await this.authService.findByEmailOrMobile(
+        userDto.email,
+        userDto.mobile,
+      );
 
-      // console.log('address successfully created with object: ', addressId);
+      if (!auth.user) {
+        // if user doesnt exist, create user
+        exists = false;
+        const { address, ...userData } = userDto;
 
-      if (!userData.profile_picture) {
-        const avatarFolder = 'avatars';
-        // assign random avatar from avatars folder in S3 bucket to user
-        const avatar =
-          'https://quickie-user-profile-pictures.s3.ca-central-1.amazonaws.com/avatars/1.png';
-        userData.profile_picture = avatar;
+        const addressId = await this.addressRepository.create({
+          primary: true,
+          ...address,
+        });
+
+        // console.log('address successfully created with object: ', addressId);
+
+        if (!userData.profile_picture) {
+          const avatarFolder = 'avatars';
+          // assign random avatar from avatars folder in S3 bucket to user
+          const avatar =
+            'https://quickie-user-profile-pictures.s3.ca-central-1.amazonaws.com/avatars/1.png';
+          userData.profile_picture = avatar;
+        }
+
+        user = await this.userRepository
+          .create({
+            ...userData,
+            addresses: [addressId],
+            user_profile: userData.user_profile || UserProfile.CUSTOMER,
+          })
+          .save();
+
+        // update auth table with user id
+        await this.authService.updateAuthUserId(auth.id, user);
+
+        addressId.user = user;
+        await this.addressRepository.save(addressId);
+      } else {
+        user = auth.user;
       }
-
-      const user = await this.userRepository
-        .create({
-          ...userData,
-          addresses: [addressId],
-          user_profile: userData.user_profile || UserProfile.CUSTOMER,
-        })
-        .save();
-
-      addressId.user = user;
-      await this.addressRepository.save(addressId);
 
       // create jwt token with user id and set expiry to 1 day
       const privateKey = fs.readFileSync('./private_key.pem');
@@ -65,13 +85,14 @@ export class UserService {
         expiresIn: '1d',
       });
 
-      return { token, user };
+      return { token, user, exists };
     } catch (error) {
       throw new Error(
         `Error registering user from create method in user.service.ts. With error message: ${error.message}`,
       );
     }
   }
+
   // /**
   //  * Get all users
   //  * @returns

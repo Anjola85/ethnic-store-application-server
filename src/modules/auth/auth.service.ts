@@ -16,6 +16,7 @@ import {
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { secureLoginDto } from './dto/secure-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,152 @@ export class AuthService {
   ) {
     // @InjectModel(TempUserAccount.name)
     // private tempUserAccountModel: Model<TempUserAccountDocument> & any,
+  }
+
+  /**
+   * This method sends otp to user
+   * @param userID
+   * @param email
+   * @param phone_number
+   * @returns
+   */
+  async sendOtp(
+    email?: string,
+    mobile?: MobileDto,
+  ): Promise<{ message; code; expiryTime; token }> {
+    let response: { message; code; expiryTime };
+    // let auth;
+
+    if (email) {
+      // use sendgrid to send otp
+      response = await this.sendgridService.sendOTPEmail(email);
+      // auth = await this.authRepository.findOneBy({ email });
+    } else if (mobile) {
+      // use twilio to send otp
+      const phone_number = mobile?.phone_number || '';
+      response = await this.twilioService.sendSms(phone_number);
+      // auth = await this.authRepository.findOneBy({ mobile });
+    }
+
+    // console.log('auth: ', auth);
+
+    // Try to find an existing authentication record by email or mobile
+    let auth = await this.authRepository.findOne({
+      where: [{ email }, { mobile }],
+    });
+
+    // If no record exists, create a new one
+    if (!auth) {
+      auth = this.authRepository.create({
+        ...auth,
+        mobile,
+        email,
+        verification_code: response.code,
+        verification_code_expiration: response.expiryTime,
+      });
+      await this.authRepository.save(auth);
+    } else {
+      // Update the existing record with the OTP code
+      auth.verification_code = response.code;
+      auth.verification_code_expiration = response.expiryTime;
+      await this.authRepository.save(auth);
+    }
+
+    // auth = await this.authRepository.preload({
+    //   ...auth,
+    //   mobile,
+    //   email,
+    //   verification_code: response.code,
+    //   verification_code_expiration: response.expiryTime,
+    // });
+
+    // auth = await this.authRepository.save(auth);
+
+    // generate jwt with the auth id
+    const token = this.generateJwt(auth.id);
+
+    // add token to response
+    const otpResponse = { ...response, token };
+
+    return otpResponse;
+  }
+
+  async verifyOtp(
+    authId: string,
+    otp: string,
+    entryTime: string,
+  ): Promise<{ message: string; status: boolean }> {
+    try {
+      // console.log('authId: ', authId);
+      const auth = await this.authRepository.findOneBy({ id: authId });
+
+      if (auth == null) throw new Error('Could not find associated account');
+
+      if (otp === auth.verification_code) {
+        const expiryTime = new Date(
+          auth.verification_code_expiration,
+        ).toISOString();
+
+        if (entryTime <= expiryTime) {
+          await this.authRepository.update(authId, {
+            ...auth,
+            account_verified: true,
+          });
+
+          return { message: 'OTP successfully verified', status: true };
+        } else {
+          return { message: 'OTP has expired', status: false };
+        }
+      } else {
+        return { message: 'OTP does not match', status: false };
+      }
+    } catch (e) {
+      throw new Error(
+        `From AuthService.verifyOtp: Unable to verify otp with error message: ${e.message}`,
+      );
+    }
+  }
+
+  async findByEmailOrMobile(email: string, mobile: MobileDto): Promise<Auth> {
+    try {
+      // console.log('email: ', email);
+      // console.log('mobile: ', mobile);
+
+      const auth = await this.authRepository
+        .createQueryBuilder('auth')
+        .leftJoinAndSelect('auth.user', 'user') // Include the user relationship
+        .leftJoinAndSelect('user.addresses', 'addresses') // Include the addresses relationship
+        .where('auth.email = :email', { email })
+        .orWhere('auth.mobile = :mobile', { mobile })
+        .getOne();
+
+      if (!auth)
+        throw new UnauthorizedException(
+          'no auth account found with provided credentials',
+        );
+
+      return auth;
+    } catch (e) {
+      throw new Error(
+        `Error from findByEmailOrMobile method in auth.service.ts.
+        with error message: ${e.message}`,
+      );
+    }
+  }
+
+  // method to update auth account user id
+  async updateAuthUserId(authId: string, user: User): Promise<any> {
+    try {
+      const auth = await this.authRepository.update(authId, {
+        user,
+      });
+      return auth;
+    } catch (e) {
+      throw new Error(
+        `Error from updateAuthUserId method in auth.service.ts.
+        with error message: ${e.message}`,
+      );
+    }
   }
 
   // async create(
@@ -61,198 +208,41 @@ export class AuthService {
   //   }
   // }
 
-  // /**
-  //  *
-  //  * @param loginDto
-  //  * @returns
-  //  */
-  // async login(loginDto: loginDto): Promise<any> {
-  //   try {
-  //     let user: any = null;
-  //     // retrieve user_account_id from user database
-  //     if (loginDto.email && loginDto.email !== '') {
-  //       user = await this.userAccountService.getUserByEmail(loginDto.email);
-  //     } else if (loginDto.mobile && loginDto.mobile.phone_number !== '') {
-  //       user = await this.userAccountService.getUserByPhone(loginDto.mobile);
-  //     }
+  /**
+   *
+   * @param loginDto
+   * @returns
+   */
+  async login(loginDto: secureLoginDto): Promise<any> {
+    try {
+      const authAcct = await this.findByEmailOrMobile(
+        loginDto.email,
+        loginDto.mobile,
+      );
 
-  //     if (!user) {
-  //       return {
-  //         status: false,
-  //         message: 'Invalid credentials',
-  //         token: '',
-  //         user: '',
-  //       };
-  //     }
+      if (!authAcct) throw new Error('Invalid credentials');
 
-  //     const userInfo = user;
+      // incomplete registeration if userId is null
+      if (!authAcct.user) throw new Error('User has incomlete registeration');
 
-  //     // generate token
-  //     const privateKey = fs.readFileSync('./private_key.pem');
+      // retrieve user from user database
+      const userAcct = await this.userRepository.findOneBy({
+        id: authAcct.user.id,
+      });
 
-  //     // sign token with userID
-  //     const token = jsonwebtoken.sign(
-  //       { id: userInfo.id },
-  //       privateKey.toString(),
-  //       {
-  //         expiresIn: '1d',
-  //       },
-  //     );
-  //     user = {
-  //       mobile: userInfo.mobile || null,
-  //       firstName: userInfo.firstName,
-  //       lastName: userInfo.lastName,
-  //       email: userInfo.email || '',
-  //       phone_number: userInfo.phone_number ? userInfo.phone_number : '',
-  //       address: {
-  //         primary: userInfo.address.primary,
-  //         other:
-  //           userInfo.address.other !== undefined ? userInfo.address.other : '',
-  //       },
-  //     };
+      // generate token with userID
+      const token = this.generateJwt(userAcct.id);
 
-  //     // get password from auth database - this is specific to email
-  //     const auth = await this.authRepository.findOne({
-  //       user_account_id: userInfo.id,
-  //     });
-
-  //     if (loginDto.email && user && Object.keys(auth).length > 0) {
-  //       // check if password was provided
-  //       if (!loginDto.password) throw new Error('Password is required');
-
-  //       const encryptedPassword: string = auth.password;
-  //       const password: string = loginDto.password;
-
-  //       const passwordMatch: boolean = await bcrypt.compare(
-  //         password,
-  //         encryptedPassword,
-  //       );
-
-  //       if (passwordMatch) {
-  //         // assign password set in auth database to user object
-  //         user.encryptedPassword = encryptedPassword;
-
-  //         return {
-  //           status: true,
-  //           message: 'user successfully logged in',
-  //           token,
-  //           user,
-  //         };
-  //       } else {
-  //         throw new UnauthorizedException(
-  //           'Invalid credentials, passwords dont match',
-  //         );
-  //       }
-  //     } else if (loginDto.mobile && user !== null) {
-  //       // case for phone number
-
-  //       // generate token
-  //       const privateKey = fs.readFileSync('./private_key.pem');
-
-  //       // sign token with userID
-  //       const token = jsonwebtoken.sign(
-  //         { id: userInfo.id },
-  //         privateKey.toString(),
-  //         {
-  //           expiresIn: '1d',
-  //         },
-  //       );
-
-  //       const user = {
-  //         mobile: userInfo.mobile,
-  //         firstName: userInfo.firstName,
-  //         lastName: userInfo.lastName,
-  //         email: userInfo.email ? userInfo.email : '',
-  //         phone_number: userInfo.phone_number ? userInfo.phone_number : '',
-  //         address: {
-  //           primary: userInfo.address.primary,
-  //           other:
-  //             userInfo.address.other !== undefined
-  //               ? userInfo.address.other
-  //               : '',
-  //         },
-  //         encryptedPassword: '',
-  //       };
-
-  //       return {
-  //         status: true,
-  //         message: 'user successfully logged in',
-  //         token,
-  //         user,
-  //       };
-  //     } else {
-  //       throw new Error('User not found');
-  //     }
-  //   } catch (e) {
-  //     throw new Error(`From AuthService.login: ${e.message}`);
-  //   }
-  // }
-
-  // async verifyOtp(
-  //   otp: string,
-  //   entryTime: string,
-  //   userId: string,
-  // ): Promise<{ message: string; status: boolean }> {
-  //   try {
-  //     // get auth object
-  //     const auth: {
-  //       id: string;
-  //       account_verified: string;
-  //       verification_code: string;
-  //       verification_code_expiration: string;
-  //     } = await this.authRepository.findOne({
-  //       user_account_id: userId,
-  //     });
-
-  //     if (auth == null) {
-  //       throw new Error('User not found');
-  //     }
-
-  //     // logger the retrieved otp and verification code expiration
-  //     this.logger.log(
-  //       `otp: ${otp}, verification_code: ${auth.verification_code}`,
-  //     );
-
-  //     // logger the comparison
-  //     this.logger.log(
-  //       `tripple equal:: otp === verification_code: ${
-  //         otp === auth.verification_code
-  //       }`,
-  //     );
-
-  //     // logger the comparison
-  //     this.logger.log(
-  //       `double equal:: otp == verification_code: ${
-  //         otp == auth.verification_code
-  //       }`,
-  //     );
-
-  //     // check if otp matches
-  //     if (otp === auth.verification_code) {
-  //       // check if otp is expired
-  //       const expiryTime = auth.verification_code_expiration;
-
-  //       if (entryTime <= expiryTime) {
-  //         // update auth object
-  //         await this.authRepository.findByIdAndUpdate(auth.id, {
-  //           account_verified: true,
-  //         });
-
-  //         // return updated auth
-  //         return { message: 'OTP successfully verified', status: true };
-  //       } else {
-  //         // time elapsed
-  //         return { message: 'OTP has expired', status: false };
-  //       }
-  //     } else {
-  //       return { message: 'OTP does not match', status: false };
-  //     }
-  //   } catch (e) {
-  //     throw new Error(
-  //       `From AuthService.verifyOtp: Unable to verify otp with error message: ${e.message}`,
-  //     );
-  //   }
-  // }
+      return {
+        status: true,
+        message: 'login successful',
+        token,
+        user: { userAcct, authAcct },
+      };
+    } catch (e) {
+      throw new Error(`From AuthService.login: ${e.message}`);
+    }
+  }
 
   // /**
   //  * Update account by user_account_id
@@ -285,62 +275,6 @@ export class AuthService {
   //     throw new Error(`From AuthService.updateAccount: ${e.message}`);
   //   }
   // }
-
-  /**
-   * This method sends otp to user
-   * @param userID
-   * @param email
-   * @param phone_number
-   * @returns
-   */
-  async sendOtp(
-    email?: string,
-    mobile?: MobileDto,
-  ): Promise<{ message; code; expiryTime; token }> {
-    let response: { message; code; expiryTime };
-    let auth;
-
-    if (email) {
-      // use sendgrid to send otp
-      response = await this.sendgridService.sendOTPEmail(email);
-      auth = await this.authRepository.findOneBy({ email });
-    } else if (mobile) {
-      // use twilio to send otp
-      const phone_number = mobile?.phone_number || '';
-      response = await this.twilioService.sendSms(phone_number);
-      auth = await this.authRepository.findOneBy({ mobile });
-    }
-
-    if (auth) {
-      auth = await this.authRepository.update(auth.id, {
-        verification_code: response.code,
-        verification_code_expiration: response.expiryTime,
-      });
-    } else {
-      auth = await this.authRepository
-        .createQueryBuilder()
-        .insert()
-        .into(Auth)
-        .values({
-          mobile,
-          email,
-          verification_code: response.code,
-          verification_code_expiration: response.expiryTime,
-        })
-        .execute();
-    }
-
-    // generate jwt with the auth id
-    const privateKey = fs.readFileSync('./private_key.pem');
-    const token = jsonwebtoken.sign({ id: auth.id }, privateKey.toString(), {
-      expiresIn: '1d',
-    });
-
-    // add token to response
-    const otpResponse = { ...response, token };
-
-    return otpResponse;
-  }
 
   // /**
   //  * This method resends otp to user
@@ -395,25 +329,6 @@ export class AuthService {
   //   );
   // }
 
-  async findByEmailOrMobile(
-    email: string,
-    mobile: MobileDto,
-  ): Promise<Auth | null> {
-    try {
-      const auth = await this.authRepository
-        .createQueryBuilder('user')
-        .where('auth.email = :email', { email })
-        .orWhere('auth.mobile = :mobile', { mobile })
-        .getOne();
-      return auth || null;
-    } catch (e) {
-      throw new Error(
-        `Error from findByEmailOrMobile method in user.service.ts.
-        with error message: ${e.message}`,
-      );
-    }
-  }
-
   /**
    * This endpoint is to test twilio send sms feature
    * @param phone_number
@@ -459,4 +374,17 @@ export class AuthService {
   //   //   return { success: false, message: 'Reset failed from auth.service.ts' };
   //   // }
   // }
+
+  /**
+   * Generates jwt token with 1 day expiration
+   * @param id
+   * @returns jwt token
+   */
+  private generateJwt(id: string) {
+    const privateKey = fs.readFileSync('./private_key.pem');
+    const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
+      expiresIn: '1d',
+    });
+    return token;
+  }
 }

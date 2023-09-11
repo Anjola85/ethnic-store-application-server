@@ -14,13 +14,13 @@ export class Auth extends CommonEntity {
   @Column({ type: 'boolean', default: false })
   account_verified: boolean;
 
-  @Column()
-  verification_code: number;
+  @Column({ default: null })
+  verification_code: string;
 
   @Column()
   verification_code_expiration: Date;
 
-  @OneToOne(() => User, (user) => user.id, { nullable: true })
+  @OneToOne(() => User, (user) => user.id)
   @JoinColumn()
   user: User;
 }

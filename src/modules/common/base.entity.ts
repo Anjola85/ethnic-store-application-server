@@ -9,7 +9,7 @@ import {
 
 export class CommonEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({ type: 'boolean', default: false })
   deleted: boolean;

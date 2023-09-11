@@ -68,9 +68,9 @@ export class SendgridService {
 
       // log success repsonse
       this.logger.log(
-        'Email sent successfully to: \n' +
+        'Email sent successfully to: ' +
           maskedEmailAdd +
-          '\nwith expiry time: ' +
+          ' with expiry time: ' +
           expiryTime,
       );
 

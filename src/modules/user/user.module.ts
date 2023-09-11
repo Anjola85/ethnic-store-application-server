@@ -16,7 +16,6 @@ import { Auth } from '../auth/entities/auth.entity';
   controllers: [UserController],
   providers: [
     UserService,
-    UserAccountService,
     AuthService,
     SendgridService,
     OTPCodeGenerator,
