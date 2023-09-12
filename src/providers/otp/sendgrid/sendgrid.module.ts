@@ -9,6 +9,8 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Address } from 'src/modules/user/entities/address.entity';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Auth } from 'src/modules/auth/entities/auth.entity';
+import { UserFileService } from 'src/modules/files/user-files.service';
+import { AwsS3Service } from 'src/modules/files/aws-s3.service';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { Auth } from 'src/modules/auth/entities/auth.entity';
     TwilioService,
     OTPCodeGenerator,
     AuthService,
+    UserFileService,
+    AwsS3Service,
   ],
 })
 export class SendgridModule {}

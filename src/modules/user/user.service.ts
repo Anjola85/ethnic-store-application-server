@@ -14,6 +14,7 @@ import { Address } from './entities/address.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { Auth } from '../auth/entities/auth.entity';
 import { AuthService } from '../auth/auth.service';
+import { UserFileService } from '../files/user-files.service';
 
 @Injectable()
 export class UserService {
@@ -23,8 +24,7 @@ export class UserService {
     @InjectRepository(Address)
     private addressRepository: Repository<Address>,
     private readonly authService: AuthService,
-    private readonly sendgridService: SendgridService,
-    private readonly twilioService: TwilioService,
+    private userFileService: UserFileService,
   ) {}
   /**
    *
@@ -55,11 +55,8 @@ export class UserService {
         // console.log('address successfully created with object: ', addressId);
 
         if (!userData.profile_picture) {
-          const avatarFolder = 'avatars';
-          // assign random avatar from avatars folder in S3 bucket to user, this call should be made to image.service
-          const avatar =
-            'https://quickie-user-profile-pictures.s3.ca-central-1.amazonaws.com/avatars/1.png';
-          userData.profile_picture = avatar;
+          userData.profile_picture =
+            await this.userFileService.getRandomAvatar();
         } else {
           // upload image to S3 bucket and get url
         }

@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ImagesService } from './images.service';
 import { ImagesController } from './images.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Image, ImageSchema } from './entities/image.entity';
@@ -12,11 +11,6 @@ import { UserFileService } from './user-files.service';
     MongooseModule.forFeature([{ name: Image.name, schema: ImageSchema }]),
   ],
   controllers: [ImagesController],
-  providers: [
-    ImagesService,
-    BusinessFilesService,
-    AwsS3Service,
-    UserFileService,
-  ],
+  providers: [BusinessFilesService, AwsS3Service, UserFileService],
 })
 export class ImagesModule {}

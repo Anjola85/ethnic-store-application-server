@@ -99,6 +99,7 @@ export class AppModule implements NestModule {
         'images/upload-business-images',
         'images/upload-avatar',
         'images/get-random-avatar',
+        'images/upload-profile-picture',
       )
       .forRoutes('*');
   }

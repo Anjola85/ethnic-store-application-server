@@ -10,7 +10,7 @@ export interface BusinessImages {
 
 @Injectable()
 export class BusinessFilesService {
-  private readonly rootFolder = 'business_files';
+  private readonly rootFolder = 'business_assets';
   private readonly imageFolders: { [key: string]: string } = {
     background_blob: 'background_image',
     feature_image_blob: 'feature_image',

@@ -10,6 +10,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Address } from './entities/address.entity';
 import { Auth } from '../auth/entities/auth.entity';
+import { UserFileService } from '../files/user-files.service';
+import { AwsS3Service } from '../files/aws-s3.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Address, Auth])],
@@ -20,6 +22,8 @@ import { Auth } from '../auth/entities/auth.entity';
     SendgridService,
     OTPCodeGenerator,
     TwilioService,
+    UserFileService,
+    AwsS3Service,
   ],
 })
 export class UserModule {}

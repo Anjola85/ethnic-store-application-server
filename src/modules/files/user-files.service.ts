@@ -4,7 +4,7 @@ import { AwsS3Service } from './aws-s3.service';
 @Injectable()
 export class UserFileService {
   private readonly host_url = 'https://home-closer-assets-db.s3.amazonaws.com';
-  private readonly rootFolder = 'user_files';
+  private readonly rootFolder = 'user_assets';
   private readonly avatarFolder = 'avatar_images';
   private readonly profileFolder = 'profile_image';
   private readonly documentFolder = 'documents';
@@ -46,7 +46,7 @@ export class UserFileService {
 
   // endpoint to upload profile picture
   async uploadProfilePicture(user_id: string, imageBlob: Express.Multer.File) {
-    const folderPath = `${this.rootFolder}/${user_id}/${this.profileFolder}/${imageBlob.originalname}`;
+    const folderPath = `${this.rootFolder}/${user_id}/${this.profileFolder}`;
     const profilePictureUrl = await this.awsS3Service.uploadImgToFolder(
       folderPath,
       imageBlob.buffer,
