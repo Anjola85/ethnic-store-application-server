@@ -56,10 +56,12 @@ export class UserService {
 
         if (!userData.profile_picture) {
           const avatarFolder = 'avatars';
-          // assign random avatar from avatars folder in S3 bucket to user
+          // assign random avatar from avatars folder in S3 bucket to user, this call should be made to image.service
           const avatar =
             'https://quickie-user-profile-pictures.s3.ca-central-1.amazonaws.com/avatars/1.png';
           userData.profile_picture = avatar;
+        } else {
+          // upload image to S3 bucket and get url
         }
 
         user = await this.userRepository

@@ -17,7 +17,7 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
-import { ImagesModule } from './modules/images/images.module';
+import { ImagesModule } from './modules/files/images.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/user/entities/user.entity';
 import { Business } from './modules/business/entities/business.entity';
@@ -96,6 +96,9 @@ export class AppModule implements NestModule {
         'images/upload',
         'images/test',
         'images/upload-s3',
+        'images/upload-business-images',
+        'images/upload-avatar',
+        'images/get-random-avatar',
       )
       .forRoutes('*');
   }
