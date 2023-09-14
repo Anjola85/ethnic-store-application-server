@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AwsS3Service } from './aws-s3.service';
+import { ImagesDto } from '../business/dto/image.dto';
 
 export interface BusinessImages {
-  buiness_id: string;
+  business_id: string;
   background_blob?: Express.Multer.File;
   feature_image_blob?: Express.Multer.File;
   logo_blob?: Express.Multer.File;
@@ -24,10 +25,8 @@ export class BusinessFilesService {
    * @param data
    * @returns
    */
-  async uploadBusinessImages(
-    data: BusinessImages,
-  ): Promise<{ [k: string]: string }> {
-    const { buiness_id } = data;
+  async uploadBusinessImages(data: BusinessImages): Promise<ImagesDto> {
+    const { business_id } = data;
 
     const uploadPromises: Promise<string | null>[] = []; // Use null as the default value
 
@@ -36,7 +35,7 @@ export class BusinessFilesService {
         data[prop as keyof BusinessImages];
 
       if (imageBlob && typeof imageBlob !== 'string') {
-        const folderPath = `${this.rootFolder}/${buiness_id}/${folder}/${imageBlob.originalname}`;
+        const folderPath = `${this.rootFolder}/${business_id}/${folder}/${imageBlob.originalname}`;
         uploadPromises.push(
           this.awsS3Service.uploadImgToFolder(folderPath, imageBlob.buffer),
         );
@@ -45,11 +44,19 @@ export class BusinessFilesService {
 
     const uploadedImages = await Promise.all(uploadPromises);
 
-    return Object.fromEntries(
+    const result = Object.fromEntries(
       Object.keys(this.imageFolders).map((propName, index) => [
         propName,
         uploadedImages[index] || null, // Use null as the default value
       ]),
     );
+
+    const imagesUrl: ImagesDto = {
+      background: result.background_blob || null,
+      featured: result.feature_image_blob || null,
+      logo: result.logo_blob || null,
+    };
+
+    return imagesUrl;
   }
 }

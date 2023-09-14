@@ -12,6 +12,7 @@ import { Address } from './entities/address.entity';
 import { Auth } from '../auth/entities/auth.entity';
 import { UserFileService } from '../files/user-files.service';
 import { AwsS3Service } from '../files/aws-s3.service';
+import { AuthRepository } from '../auth/auth.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Address, Auth])],
@@ -24,6 +25,7 @@ import { AwsS3Service } from '../files/aws-s3.service';
     TwilioService,
     UserFileService,
     AwsS3Service,
+    AuthRepository,
   ],
 })
 export class UserModule {}

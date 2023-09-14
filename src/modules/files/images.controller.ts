@@ -172,9 +172,9 @@ export class ImagesController {
 
     // call businessFileServices.uploadBusinessImages
     try {
-      const buiness_id: string = body.business_id;
+      const business_id: string = body.business_id;
       const resp = await this.businessFileServices.uploadBusinessImages({
-        buiness_id,
+        business_id,
         background_blob: files.background_image[0],
         feature_image_blob: files.featured_image[0],
         logo_blob: files.logo_image[0],

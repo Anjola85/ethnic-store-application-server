@@ -8,13 +8,18 @@ import {
   OneToMany,
   OneToOne,
 } from 'typeorm';
-import { DayScheduleDto } from '../dto/schedule.dto';
+import { DayScheduleDto, ScheduleDto } from '../dto/schedule.dto';
 import { GeoLocationDto } from '../dto/geolocation.dto';
-import { MobileDto } from 'src/common/dto/mobile.dto';
+import {
+  EntityMobileDto,
+  MobileDto,
+  MobileGroupDto,
+} from 'src/common/dto/mobile.dto';
 import { User } from 'src/modules/user/entities/user.entity';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { Address } from 'src/modules/user/entities/address.entity';
+import { ImagesDto, UploadedImagesDto } from '../dto/image.dto';
 
 @Entity('business')
 export class Business extends CommonEntity {
@@ -28,7 +33,10 @@ export class Business extends CommonEntity {
 
   @OneToMany(() => Country, (country) => country.name)
   @JoinColumn()
-  countries: Country[];
+  other_countries: Country[];
+
+  @OneToMany(() => Category, (category) => category.name)
+  categories: Category[];
 
   @Column({ nullable: false })
   @Index({ unique: true })
@@ -40,41 +48,30 @@ export class Business extends CommonEntity {
   @OneToOne(() => Address, (address) => address.id)
   address: Address;
 
-  @Column({ nullable: true })
+  @Column()
   email: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  mobile: { primary: MobileDto; secondary: MobileDto };
+  mobile: { primary: EntityMobileDto; secondary: EntityMobileDto };
 
   @Column({ type: 'jsonb', nullable: true })
-  schedule: {
-    monday: DayScheduleDto;
-    tuesday: DayScheduleDto;
-    wednesday: DayScheduleDto;
-    thursday: DayScheduleDto;
-    friday: DayScheduleDto;
-    saturday: DayScheduleDto;
-    sunday: DayScheduleDto;
-  };
+  schedule: ScheduleDto;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'varchar', default: '' })
   website: string;
 
   @Column({ type: 'text', default: '3.0' })
   rating: string;
 
   @Column({ type: 'jsonb', nullable: false })
-  images: { logo: string; featured: string; background: string };
+  images: ImagesDto;
 
-  @Column({ type: 'text', nullable: true })
-  navigationUrl: string;
+  @Column()
+  navigation_url: string;
 
   @Column({ type: 'geometry', spatialFeatureType: 'Point', srid: 4326 })
   geolocation: GeoLocationDto;
 
-  @OneToMany(() => Category, (category) => category.name)
-  categories: Category[];
-
   @Column({ type: 'varchar', default: 'grocery' })
-  businessType: string;
+  business_type: string;
 }

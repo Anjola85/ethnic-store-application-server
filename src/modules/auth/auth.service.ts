@@ -17,13 +17,15 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { secureLoginDto } from './dto/secure-login.dto';
+import { AuthRepository } from './auth.repository';
+import { mapDtoToEntity } from './auth-mapper';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectRepository(Auth) private authRepository: Repository<Auth>,
+    private authRepository: AuthRepository,
     @InjectRepository(User) private userRepository: Repository<User>,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
@@ -51,29 +53,27 @@ export class AuthService {
       response = await this.sendgridService.sendOTPEmail(email);
       // auth = await this.authRepository.findOneBy({ email });
     } else if (mobile) {
-      // use twilio to send otp
-      const phone_number = mobile?.phone_number || '';
+      // use twilio to send otp to primary phone number
+      const phone_number = mobile?.phoneNumber || '';
       response = await this.twilioService.sendSms(phone_number);
       // auth = await this.authRepository.findOneBy({ mobile });
     }
 
-    // console.log('auth: ', auth);
+    // map auth object to authDto
+    const authModel: Auth = mapDtoToEntity({ email, mobile });
+
+    authModel.verification_code = response.code;
+    authModel.verification_code_expiration = response.expiryTime;
 
     // Try to find an existing authentication record by email or mobile
-    let auth = await this.authRepository.findOne({
-      where: [{ email }, { mobile }],
+    let auth = await this.authRepository.findByUniq({
+      email,
+      mobile,
     });
 
     // If no record exists, create a new one
     if (!auth) {
-      auth = this.authRepository.create({
-        ...auth,
-        mobile,
-        email,
-        verification_code: response.code,
-        verification_code_expiration: response.expiryTime,
-      });
-      await this.authRepository.save(auth);
+      auth = await this.authRepository.create(authModel).save();
     } else {
       // Update the existing record with the OTP code
       auth.verification_code = response.code;

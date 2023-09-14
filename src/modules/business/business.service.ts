@@ -1,33 +1,108 @@
-import { Injectable } from '@nestjs/common';
+import { BusinessRepository } from './business.repository';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateBusinessDto } from './dto/create-business.dto';
-import { UpdateBusinessDto } from './dto/update-business.dto';
-import { Business } from './entities/business.entity';
-import { Model } from 'mongoose';
-import { CategoryService } from '../category/category.service';
-import { CountryService } from '../country/country.service';
-import { ContinentService } from '../continent/continent.service';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import {
+  BusinessFilesService,
+  BusinessImages,
+} from '../files/business-files.service';
+import { ImagesDto } from './dto/image.dto';
+import { Address } from '../user/entities/address.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { MobileGroupDto } from 'src/common/dto/mobile.dto';
+import { mobileMapper } from 'src/common/mapper/mobile-mapper';
+import { Business } from './entities/business.entity';
+import { mapBusinessData } from './business-mapper';
 
 @Injectable()
 export class BusinessService {
   constructor(
-    @InjectRepository(Business)
-    private readonly businessRepository: Repository<Business>,
+    private businessRepository: BusinessRepository,
+    private businessFileService: BusinessFilesService,
+    @InjectRepository(Address)
+    private addressRepository: Repository<Address>,
   ) {}
 
-  // async create(createBusinessDto: CreateBusinessDto): Promise<any> {
-  //   try {
-  //     let business = new this.businessModel({ ...createBusinessDto });
-  //     business = await business.save();
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error adding new business in create method in business.service.ts file\n
-  //         error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+  async register(createBusinessDto: CreateBusinessDto): Promise<any> {
+    try {
+      console.log('recieved request in service with body: ', createBusinessDto);
+
+      // check if business exists
+      await this.checkBusinessExist(createBusinessDto);
+
+      const { featuredImage, backgroundImage, logoImage, ...businessData } =
+        createBusinessDto;
+
+      console.log('Got back images: ', {
+        featuredImage,
+        backgroundImage,
+        logoImage,
+      });
+
+      // data mapping for address
+      const addressData = new Address();
+      Object.assign(addressData, businessData.address);
+      addressData.postal_code = businessData.address.postalCode;
+      const address = await this.addressRepository.create(addressData);
+
+      // map business data
+      const businessEntity = mapBusinessData(createBusinessDto, address);
+
+      let business = await this.businessRepository.create(businessEntity);
+
+      // save the address id to the business table
+      address.business = business;
+      address.save();
+
+      let businessName = business.name;
+      // replace the space in the business name with underscore
+      businessName = businessName.replace(/\s/g, '_');
+
+      const businessImages: BusinessImages = {
+        business_id: businessName,
+        background_blob: backgroundImage,
+        logo_blob: logoImage,
+        feature_image_blob: featuredImage,
+      };
+      console.log('businessImages: ', businessImages);
+      // upload the images to s3 bucket and get the url
+      const imagesUrl: ImagesDto =
+        await this.businessFileService.uploadBusinessImages(businessImages);
+      console.log('imagesUrl: ', imagesUrl);
+
+      // save the image url to the database
+      business.images.background = imagesUrl.background;
+      business.images.logo = imagesUrl.logo;
+      business.images.featured = imagesUrl.featured;
+      business = await business.save();
+
+      console.log('DONE');
+      console.log(business);
+
+      return business;
+    } catch (error) {
+      throw new Error(
+        `Error adding new business in create method in business.service.ts file with
+          error message: ${error.message}`,
+      );
+    }
+  }
+
+  private async checkBusinessExist(
+    createBusinessDto: CreateBusinessDto,
+  ): Promise<void> {
+    const businessExists = await this.businessRepository.findByName(
+      createBusinessDto.name,
+    );
+
+    if (businessExists) {
+      // throw appropraite http error that signifies business exists
+      throw new HttpException(
+        `Business with name ${businessExists.name} already exists`,
+        HttpStatus.CONFLICT,
+      );
+    }
+  }
 
   // async findAll() {
   //   try {

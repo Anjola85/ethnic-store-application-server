@@ -28,7 +28,7 @@
     "@nestjs/jwt": "^10.0.3",
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^9.0.3",
-    "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/platform-express": "^9.4.3",
     "@nestjs/typeorm": "^10.0.0",
     "@sendgrid/mail": "^7.7.0",
     "aws-sdk": "^2.1409.0",

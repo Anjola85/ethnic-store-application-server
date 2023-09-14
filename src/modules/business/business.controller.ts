@@ -8,57 +8,64 @@ import {
   Delete,
   HttpStatus,
   Res,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { Response } from 'express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('business')
 export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}
 
-  // /**
-  //  * Register a new business
-  //  * @param createBusinessDto
-  //  * @param res
-  //  * @returns
-  //  */
-  // @Post('register')
-  // async create(
-  //   @Body() createBusinessDto: CreateBusinessDto,
-  //   @Res() res: Response,
-  // ): Promise<any> {
-  //   try {
-  //     // check if business exists
-  //     const businessExists = await this.businessService.findBusinessByName(
-  //       createBusinessDto.name,
-  //     );
+  /**
+   * Register a new business
+   * @param createBusinessDto
+   * @param res
+   * @returns
+   */
+  @Post('register')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'backgroundImage', maxCount: 1 },
+      { name: 'featuredImage', maxCount: 1 },
+      { name: 'logoImage', maxCount: 1 },
+    ]),
+  )
+  async create(
+    @Body() body: any,
+    @UploadedFiles()
+    files: {
+      backgroundImage: Express.Multer.File[];
+      featuredImage: Express.Multer.File[];
+      logoImage: Express.Multer.File[];
+    },
+    @Res() res: Response,
+  ): Promise<any> {
+    try {
+      console.log('uploaded files: ', files);
+      // assign the body fields to createBusinessDto
+      const createBusinessDto: CreateBusinessDto = new CreateBusinessDto();
+      Object.assign(createBusinessDto, body);
 
-  //     // business found
-  //     if (Object.keys(businessExists).length != 0) {
-  //       return res.status(HttpStatus.CONFLICT).json({
-  //         success: false,
-  //         message: ' business exists',
-  //         business: null,
-  //       });
-  //     }
+      const business = await this.businessService.register(createBusinessDto);
 
-  //     const business = await this.businessService.create(createBusinessDto);
-
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: 'business successfully added',
-  //       business: business,
-  //     });
-  //   } catch (err) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to register user',
-  //       error: err.message,
-  //     });
-  //   }
-  // }
+      return res.status(HttpStatus.CREATED).json({
+        success: true,
+        message: 'business successfully added',
+        business: business,
+      });
+    } catch (err) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'failed to register user',
+        error: err.message,
+      });
+    }
+  }
 
   // /**
   //  * Retrieve all businesses

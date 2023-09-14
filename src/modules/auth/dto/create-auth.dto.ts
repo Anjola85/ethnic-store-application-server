@@ -34,15 +34,15 @@ export class CreateAuthDto {
 
   @IsOptional()
   @IsBoolean()
-  account_verified?: boolean;
+  accountVerified?: boolean;
 
   @IsOptional()
   @IsString()
-  verification_code?: string;
+  verificationCode?: string;
 
   @IsOptional()
   @IsDateString()
-  verify_code_expiration?: Date;
+  verificationCodeExpiration?: Date;
 
   @IsOptional()
   user?: User;

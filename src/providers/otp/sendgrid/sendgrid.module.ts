@@ -11,6 +11,7 @@ import { AuthService } from 'src/modules/auth/auth.service';
 import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { UserFileService } from 'src/modules/files/user-files.service';
 import { AwsS3Service } from 'src/modules/files/aws-s3.service';
+import { AuthRepository } from 'src/modules/auth/auth.repository';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AwsS3Service } from 'src/modules/files/aws-s3.service';
     AuthService,
     UserFileService,
     AwsS3Service,
+    AuthRepository,
   ],
 })
 export class SendgridModule {}

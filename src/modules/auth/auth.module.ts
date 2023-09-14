@@ -13,6 +13,7 @@ import { Address } from '../user/entities/address.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserFileService } from '../files/user-files.service';
 import { AwsS3Service } from '../files/aws-s3.service';
+import { AuthRepository } from './auth.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Auth, User, Address])],
@@ -27,6 +28,7 @@ import { AwsS3Service } from '../files/aws-s3.service';
     AwsSecretKey,
     UserFileService,
     AwsS3Service,
+    AuthRepository,
   ],
 })
 export class AuthModule {}

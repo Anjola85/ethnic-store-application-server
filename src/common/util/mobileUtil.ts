@@ -20,12 +20,12 @@ export class MobileUtil {
     return this;
   }
 
-  formatMobileDto = (mobile: MobileDto) => {
-    this.country_code = mobile.country_code;
-    this.iso_type = mobile.iso_type;
-    this.phone_number = mobile.phone_number;
-    return this;
-  };
+  // formatMobileDto = (mobile: MobileDto) => {
+  //   this.country_code = mobile.country_code;
+  //   this.iso_type = mobile.iso_type;
+  //   this.phone_number = mobile.phone_number;
+  //   return this;
+  // };
 
   getPhoneNumber(): string {
     if (!this.phone_number) {
@@ -54,11 +54,11 @@ export class MobileUtil {
     this.iso_type = iso_type;
   }
 
-  getDto(): MobileDto {
-    return {
-      country_code: this.country_code,
-      iso_type: this.iso_type,
-      phone_number: this.phone_number,
-    };
-  }
+  // getDto(): MobileDto {
+  //   return {
+  //     country_code: this.country_code,
+  //     iso_type: this.iso_type,
+  //     phone_number: this.phone_number,
+  //   };
+  // }
 }
