@@ -9,9 +9,9 @@ export function mapBusinessData(
 ) {
   const businessEntity = new Business();
   businessEntity.user = businessData.user;
-  businessEntity.country = businessData.country;
-  businessEntity.other_countries = businessData.otherCountries;
-  businessEntity.categories = businessData.categories;
+  // businessEntity.country = businessData.country;
+  // businessEntity.other_countries = businessData.otherCountries;
+  // businessEntity.categories = businessData.categories;
   businessEntity.name = businessData.name;
   businessEntity.description = businessData.description;
   businessEntity.address = address;

@@ -66,10 +66,16 @@ export class Business extends CommonEntity {
   @Column({ type: 'jsonb', nullable: false })
   images: ImagesDto;
 
-  @Column()
+  @Column({ type: 'varchar', default: '' })
   navigation_url: string;
 
-  @Column({ type: 'geometry', spatialFeatureType: 'Point', srid: 4326 })
+  // change this to be nullable: false
+  @Column({
+    type: 'geometry',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
+  })
   geolocation: GeoLocationDto;
 
   @Column({ type: 'varchar', default: 'grocery' })

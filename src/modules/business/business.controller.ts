@@ -10,12 +10,20 @@ import {
   Res,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
+  Req,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
-import { Response } from 'express';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Request, Response } from 'express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
+import { AddressDto } from 'src/common/dto/address.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { ScheduleDto } from './dto/schedule.dto';
 
 @Controller('business')
 export class BusinessController {
@@ -30,42 +38,65 @@ export class BusinessController {
   @Post('register')
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'backgroundImage', maxCount: 1 },
       { name: 'featuredImage', maxCount: 1 },
+      { name: 'backgroundImage', maxCount: 1 },
       { name: 'logoImage', maxCount: 1 },
     ]),
   )
   async create(
-    @Body() body: any,
-    @UploadedFiles()
-    files: {
-      backgroundImage: Express.Multer.File[];
-      featuredImage: Express.Multer.File[];
-      logoImage: Express.Multer.File[];
-    },
-    @Res() res: Response,
-  ): Promise<any> {
+    @Body() createBusinessDto: CreateBusinessDto,
+    @UploadedFiles() files: any,
+  ) {
+    createBusinessDto.featuredImage = files?.featuredImage[0] || null;
+    createBusinessDto.backgroundImage = files?.backgroundImage[0] || null;
+    createBusinessDto.logoImage = files?.logoImage[0] || null;
+
     try {
-      console.log('uploaded files: ', files);
-      // assign the body fields to createBusinessDto
-      const createBusinessDto: CreateBusinessDto = new CreateBusinessDto();
-      Object.assign(createBusinessDto, body);
+      const createdBusiness = await this.businessService.register(
+        createBusinessDto,
+      );
 
-      const business = await this.businessService.register(createBusinessDto);
-
-      return res.status(HttpStatus.CREATED).json({
+      return {
         success: true,
-        message: 'business successfully added',
-        business: business,
-      });
-    } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'Business successfully registered',
+        business: createdBusiness,
+      };
+    } catch (error) {
+      return {
         success: false,
-        message: 'failed to register user',
-        error: err.message,
-      });
+        message: 'Failed to register business',
+        error: error.message,
+      };
     }
   }
+
+  // @Post('register')
+  // async create(
+  //   @Body() body: CreateBusinessDto,
+  //   @Res() res: Response,
+  // ): Promise<any> {
+  //   try {
+  //     console.log('body: ', body);
+  //     // console.log('uploaded files: ', files);
+  //     // assign the body fields to createBusinessDto
+  //     const createBusinessDto: CreateBusinessDto = new CreateBusinessDto();
+  //     Object.assign(createBusinessDto, body);
+
+  //     // const business = await this.businessService.register(createBusinessDto);
+
+  //     return res.status(HttpStatus.CREATED).json({
+  //       success: true,
+  //       message: 'business successfully added',
+  //       // business: business,
+  //     });
+  //   } catch (err) {
+  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+  //       success: false,
+  //       message: 'failed to register user',
+  //       error: err.message,
+  //     });
+  //   }
+  // }
 
   // /**
   //  * Retrieve all businesses

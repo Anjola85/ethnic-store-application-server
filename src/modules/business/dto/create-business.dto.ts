@@ -23,16 +23,16 @@ import { Category } from 'src/modules/category/entities/category.entity';
 export class CreateBusinessDto {
   @IsOptional() // remove this
   @ApiProperty()
-  @IsString()
+  @IsObject()
   user: User;
 
   @ApiProperty()
-  @IsString()
+  @IsObject()
   country: Country;
 
-  @ApiProperty() s;
+  @ApiProperty()
   @IsArray()
-  otherCountries: Country[] = [];
+  otherCountries: Country[];
 
   @ApiProperty()
   @IsString()
@@ -69,23 +69,26 @@ export class CreateBusinessDto {
   website: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
   rating: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'string', format: 'binary' })
   featuredImage: Express.Multer.File;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'string', format: 'binary' })
   backgroundImage: Express.Multer.File;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'string', format: 'binary' })
   logoImage: Express.Multer.File;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
   navigationUrl: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => GeoLocationDto)

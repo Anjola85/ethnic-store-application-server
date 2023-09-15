@@ -24,68 +24,56 @@ export class BusinessService {
   ) {}
 
   async register(createBusinessDto: CreateBusinessDto): Promise<any> {
-    try {
-      console.log('recieved request in service with body: ', createBusinessDto);
+    // console.log('recieved request in service with body: ', createBusinessDto);
 
-      // check if business exists
-      await this.checkBusinessExist(createBusinessDto);
+    // check if business exists
+    await this.checkBusinessExist(createBusinessDto);
 
-      const { featuredImage, backgroundImage, logoImage, ...businessData } =
-        createBusinessDto;
+    const { featuredImage, backgroundImage, logoImage, ...businessData } =
+      createBusinessDto;
 
-      console.log('Got back images: ', {
-        featuredImage,
-        backgroundImage,
-        logoImage,
-      });
+    // data mapping for address
+    const addressData = new Address();
+    Object.assign(addressData, businessData.address);
+    addressData.postal_code = businessData.address.postalCode;
+    const address = await this.addressRepository.create(addressData);
 
-      // data mapping for address
-      const addressData = new Address();
-      Object.assign(addressData, businessData.address);
-      addressData.postal_code = businessData.address.postalCode;
-      const address = await this.addressRepository.create(addressData);
+    // map business data
+    const businessEntity = mapBusinessData(createBusinessDto, address);
 
-      // map business data
-      const businessEntity = mapBusinessData(createBusinessDto, address);
+    let business = await this.businessRepository.create(businessEntity);
 
-      let business = await this.businessRepository.create(businessEntity);
+    // save the address id to the business table
+    address.business = business;
+    address.save();
 
-      // save the address id to the business table
-      address.business = business;
-      address.save();
+    let businessName = business.name;
+    // replace the space in the business name with underscore
+    businessName = businessName.replace(/\s/g, '_');
 
-      let businessName = business.name;
-      // replace the space in the business name with underscore
-      businessName = businessName.replace(/\s/g, '_');
+    const businessImages: BusinessImages = {
+      business_id: businessName,
+      background_blob: backgroundImage,
+      logo_blob: logoImage,
+      feature_image_blob: featuredImage,
+    };
+    //console.log('businessImages: ', businessImages);
+    // upload the images to s3 bucket and get the url
+    const imagesUrl: ImagesDto =
+      await this.businessFileService.uploadBusinessImages(businessImages);
 
-      const businessImages: BusinessImages = {
-        business_id: businessName,
-        background_blob: backgroundImage,
-        logo_blob: logoImage,
-        feature_image_blob: featuredImage,
-      };
-      console.log('businessImages: ', businessImages);
-      // upload the images to s3 bucket and get the url
-      const imagesUrl: ImagesDto =
-        await this.businessFileService.uploadBusinessImages(businessImages);
-      console.log('imagesUrl: ', imagesUrl);
+    const images: ImagesDto = {
+      background: imagesUrl.background,
+      featured: imagesUrl.featured,
+      logo: imagesUrl.logo,
+    };
 
-      // save the image url to the database
-      business.images.background = imagesUrl.background;
-      business.images.logo = imagesUrl.logo;
-      business.images.featured = imagesUrl.featured;
-      business = await business.save();
+    // save the image url to the database
+    business.images = images;
 
-      console.log('DONE');
-      console.log(business);
+    business = await business.save();
 
-      return business;
-    } catch (error) {
-      throw new Error(
-        `Error adding new business in create method in business.service.ts file with
-          error message: ${error.message}`,
-      );
-    }
+    return business;
   }
 
   private async checkBusinessExist(
@@ -96,7 +84,6 @@ export class BusinessService {
     );
 
     if (businessExists) {
-      // throw appropraite http error that signifies business exists
       throw new HttpException(
         `Business with name ${businessExists.name} already exists`,
         HttpStatus.CONFLICT,
