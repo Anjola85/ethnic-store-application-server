@@ -449,46 +449,46 @@ export class AuthController {
    * @param res
    * @returns
    */
-  // @Post('reset')
-  // async reset(@Query('clear') clear: boolean, @Res() res: Response) {
-  //   const requestTime = new Date();
-  //   this.logger.log(
-  //     '\n[QuickMart Server] - Request to ** sendOTPBySms endpoint ** With starttime: ' +
-  //       requestTime,
-  //   );
-  //   try {
-  //     // take in query param resetType to be true or false
-  //     if (clear === undefined || clear === null) {
-  //       return res.status(HttpStatus.BAD_REQUEST).json({
-  //         message: 'clear query param is required',
-  //       });
-  //     } else if (clear === false) {
-  //       return res.status(HttpStatus.OK).json({
-  //         message: 'clear query param must be true in order to reset',
-  //       });
-  //     }
-  //     // reset user account
-  //     const response = await this.authService.resetRegisteredUsers();
-  //     // log response and the time
-  //     const endTime = new Date();
-  //     this.logger.log(
-  //       '\n[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
-  //         endTime +
-  //         ' with response: ' +
-  //         JSON.stringify(response.message),
-  //     );
-  //     return res.status(HttpStatus.OK).json(createResponse('reset successful'));
-  //   } catch (error) {
-  //     return res
-  //       .status(HttpStatus.BAD_REQUEST)
-  //       .json(
-  //         createError(
-  //           `400 reset failed from auth.controller.ts`,
-  //           error.message,
-  //         ),
-  //       );
-  //   }
-  // }
+  @Post('reset')
+  async reset(@Query('clear') clear: boolean, @Res() res: Response) {
+    const requestTime = new Date();
+    this.logger.log(
+      '\n[QuickMart Server] - Request to ** sendOTPBySms endpoint ** With starttime: ' +
+        requestTime,
+    );
+    try {
+      // take in query param resetType to be true or false
+      if (clear === undefined || clear === null) {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          message: 'clear query param is required',
+        });
+      } else if (clear === false) {
+        return res.status(HttpStatus.OK).json({
+          message: 'clear query param must be true in order to reset',
+        });
+      }
+      // reset user account
+      const response = await this.authService.deleteRegisteredUsers();
+      // log response and the time
+      const endTime = new Date();
+      this.logger.log(
+        '\n[QuickMart Server] - Response from ** reset endpoint ** with endtime: ' +
+          endTime +
+          ' with response: ' +
+          JSON.stringify(response),
+      );
+      return res.status(HttpStatus.OK).json(createResponse('reset successful'));
+    } catch (error) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          createError(
+            `400 reset failed from auth.controller.ts`,
+            error.message,
+          ),
+        );
+    }
+  }
   // // remove - for testing
   // @Post('encrypt')
   // async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {

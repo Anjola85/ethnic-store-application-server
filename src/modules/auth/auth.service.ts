@@ -19,6 +19,7 @@ import { Repository } from 'typeorm';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { AuthRepository } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
+import { Address } from '../user/entities/address.entity';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,7 @@ export class AuthService {
   constructor(
     private authRepository: AuthRepository,
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Address) private addressRepository: Repository<Address>,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
   ) {
@@ -386,5 +388,27 @@ export class AuthService {
       expiresIn: '1d',
     });
     return token;
+  }
+
+  async deleteRegisteredUsers() {
+    // so for all accounts in the user and auth account, delete them
+    const last24Hours = new Date();
+    last24Hours.setHours(last24Hours.getHours() - 24);
+
+    const formattedLast24Hours = last24Hours
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+
+    try {
+      // Delete all auth accounts created in the last 24 hours
+      const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
+      const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
+      const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
+
+      await this.authRepository.createQueryBuilder(deleteAuthQuery);
+      await this.userRepository.createQueryBuilder(deleteUserQuery);
+      await this.addressRepository.createQueryBuilder(deleteAddQuery);
+    } catch (error) {}
   }
 }
