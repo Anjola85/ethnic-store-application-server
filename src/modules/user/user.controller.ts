@@ -39,7 +39,7 @@ export class UserController {
   @Post('register')
   async create(
     // @Body() createUserDto: CreateUserDto,
-    @Body() requestBody,
+    @Body() requestBody: any,
     @Res() res: Response,
   ): Promise<any> {
     try {

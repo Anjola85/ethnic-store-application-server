@@ -36,36 +36,7 @@ export class AuthController {
   ) {
     this.userController = new UserController(userService, authService);
   }
-  // /**
-  //  * Testing route
-  //  * @returns
-  //  */
-  // @Get('test')
-  // public test(@Res() res: Response) {
-  //   this.logger.log(
-  //     '\n[QuickMart Server] - Request to test endpoint at ' + new Date(),
-  //   );
-  //   // log the response of this method and the name of the method and class
-  //   this.logger.log(
-  //     '\n[QuickMart Server] - Response from ** test endpoint ** in ** auth.controller ** With endtime: ' +
-  //       new Date() +
-  //       ' with response: ' +
-  //       '\n' +
-  //       'This is the  test endpoint from the user controller',
-  //   );
-  //   return res
-  //     .status(HttpStatus.OK)
-  //     .json(
-  //       createResponse('This is the  test endpoint from AUTH on QUICKMART!!!!'),
-  //     );
-  // }
 
-  /**
-   * Login a user
-   * @param loginDto
-   * @param res
-   * @returns {*}
-   */
   @Post('login')
   async login(@Body() body: any, @Res() res: Response) {
     // log time of request
@@ -222,72 +193,6 @@ export class AuthController {
     }
   }
 
-  // /**
-  //  * Verify the OTP sent, update the auth collection
-  //  * @param body
-  //  * @param res
-  //  * @returns {*}
-  //  */
-  // @Post('verifyOtp')
-  // async confirmOtp(@Body() body: otpVerifyDto, @Res() res: Response) {
-  //   try {
-  //     // log the time of request and body of request
-  //     const requestTime = new Date();
-  //     this.logger.log(
-  //       '\n[QuickMart Server] - Request to ** verifyOtp endpoint ** With starttime: ' +
-  //         requestTime +
-  //         ' with payload: ' +
-  //         JSON.stringify(body),
-  //     );
-
-  //     const authId = res.locals.id;
-  //     const response = await this.authService.verifyOtp(
-  //       authId,
-  //       body.code,
-  //       body.entryTime,
-  //     );
-
-  //     // log the time of response and body of response
-  //     const endTime = new Date();
-  //     this.logger.log(
-  //       '\n[QuickMart Server] - Response from ** verifyOtp endpoint ** With endtime: ' +
-  //         endTime +
-  //         ' with response body ' +
-  //         JSON.stringify(response),
-  //     );
-  //     return res
-  //       .status(HttpStatus.OK)
-  //       .json(createResponse(response.message, null, response.status));
-  //   } catch (error) {
-  //     if (error instanceof InternalServerError) {
-  //       return res
-  //         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-  //         .json(
-  //           createError(
-  //             '500 confirm otp failed from auth.controller.ts',
-  //             error.message,
-  //           ),
-  //         );
-  //     } else {
-  //       return res
-  //         .status(HttpStatus.BAD_REQUEST)
-  //         .json(
-  //           createError(
-  //             '400 confirm otp failed from auth.controller.ts',
-  //             error.message,
-  //           ),
-  //         );
-  //     }
-  //   }
-  // }
-
-  /**
-   * This sends otp to the user's email or phone number
-   * and updates/creates the auth record with the new otp
-   * @param requestBody
-   * @param res
-   * @returns {jwt; message}
-   */
   @Post('sendOtp')
   async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     try {
@@ -333,86 +238,6 @@ export class AuthController {
     }
   }
 
-  // @Post('resendOtp')
-  // async resendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
-  //   const requestTime = new Date();
-  //   this.logger.log(
-  //     '\n[QuickMart Server] - Request to ** resendOtp endpoint ** With starttime: ' +
-  //       requestTime +
-  //       ' with payload: ' +
-  //       JSON.stringify(body),
-  //   );
-  //   try {
-  //     // decrypt request body
-  //     const decrypted = await decryptKms(body.payload);
-  //     const requestBody = new TempUserAccountDto();
-  //     Object.assign(requestBody, decrypted);
-  //     // check if user account already exists
-  //     let userId: string | null = await this.userAccountService.getUserId(
-  //       requestBody.email,
-  //       requestBody.mobile,
-  //     );
-  //     if (!userId) {
-  //       // repalce the userID with the temp user id
-  //       userId = await this.userAccountService.getTempUserId(
-  //         requestBody.email,
-  //         requestBody.mobile,
-  //       );
-  //     }
-  //     if (!userId) {
-  //       return res.status(HttpStatus.NOT_FOUND).json({
-  //         message: 'User not found, unable to send otp',
-  //       });
-  //     } else {
-  //       const otpResp = await this.authService.resendOtp(
-  //         userId,
-  //         requestBody.email,
-  //         requestBody.mobile,
-  //       );
-  //       this.authService.updateAuthOtp(
-  //         userId,
-  //         otpResp.code,
-  //         otpResp.expiryTime,
-  //       );
-  //       const logResponse = {
-  //         message: otpResp.message,
-  //         expiryTime: otpResp.expiryTime,
-  //       };
-  //       // log time of request
-  //       const endTime = new Date();
-  //       this.logger.log(
-  //         '[QuickMart Server] - Response from ** resendOtp endpoint ** With endpoint: ' +
-  //           endTime +
-  //           ' with response: ' +
-  //           JSON.stringify(logResponse),
-  //       );
-  //       return res.status(HttpStatus.OK).json(
-  //         createResponse(
-  //           otpResp.message,
-  //           {
-  //             token: otpResp.token,
-  //           },
-  //           otpResp.status,
-  //         ),
-  //       );
-  //     }
-  //   } catch (error) {
-  //     return res
-  //       .status(HttpStatus.BAD_REQUEST)
-  //       .json(
-  //         createError(
-  //           '400 resend otp failed from auth.controller.ts',
-  //           error.message,
-  //         ),
-  //       );
-  //   }
-  // }
-  /**
-   * This endpint is to test the sendOTPBySms method
-   * This endpoint sends an OTP code to the user's phone number.
-   * @param requestBody
-   * @returns
-   */
   @Post('sendOTPBySms')
   async sendOTPBySms(@Body() requestBody: any, @Res() res: Response) {
     const { phone_number } = requestBody;
@@ -442,13 +267,8 @@ export class AuthController {
         .json(createError('Failed to send SMS.', error.message));
     }
   }
-  /**
-   * TODO: To be deleted later
-   * THis endpoint is to test the sendOTPByEmail method
-   * @param reset
-   * @param res
-   * @returns
-   */
+
+  // to be deleted
   @Post('reset')
   async reset(@Query('clear') clear: boolean, @Res() res: Response) {
     const requestTime = new Date();
@@ -489,73 +309,4 @@ export class AuthController {
         );
     }
   }
-  // // remove - for testing
-  // @Post('encrypt')
-  // async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {
-  //   try {
-  //     const data = requestBody.payload;
-  //     // convert data to buffer
-  //     const buffer: Buffer = this.toBuffer(data);
-  //     const encryptedData = await encryptKms(buffer);
-  //     return res.status(HttpStatus.OK).json({
-  //       status: true,
-  //       data: encryptedData.toString('hex'),
-  //     });
-  //   } catch (error) {
-  //     return res.status(HttpStatus.BAD_REQUEST).json({
-  //       status: false,
-  //       message: `400 encrypt failed from auth.controller.ts`,
-  //       error: error.message,
-  //     });
-  //   }
-  // }
-  // // remove
-  // private toBuffer(data: any) {
-  //   let buffer: Buffer;
-  //   if (typeof data === 'string') {
-  //     buffer = Buffer.from(data);
-  //   } else if (typeof data === 'object' && data !== null) {
-  //     const json = JSON.stringify(data);
-  //     buffer = Buffer.from(json);
-  //   } else {
-  //     throw new Error('Invalid data type. Expected string or object.');
-  //   }
-  //   return buffer;
-  // }
-  // // for testing
-  // @Post('decrypt')
-  // async decrypt(@Body() requestBody: any, @Res() res: Response) {
-  //   try {
-  //     const decryptedData = await decryptKms(requestBody.payload);
-  //     return res.status(HttpStatus.OK).json({
-  //       status: true,
-  //       data: decryptedData,
-  //     });
-  //   } catch (error) {
-  //     return res.status(HttpStatus.BAD_REQUEST).json({
-  //       status: false,
-  //       message: `400 decrypt failed from auth.controller.ts`,
-  //       error: error.message,
-  //     });
-  //   }
-  // }
-  // // reset password
-  // @Post()
-  // async create(@Body() createAuthDto: CreateAuthDto, @Res() res: Response) {
-  //   try {
-  //     const resp = await this.authService.create(createAuthDto, '');
-  //     return res
-  //       .status(HttpStatus.CREATED)
-  //       .json(createResponse(resp.message, { token: resp.token }));
-  //   } catch (error) {
-  //     return res
-  //       .status(HttpStatus.BAD_REQUEST)
-  //       .json(
-  //         createError(
-  //           '400 create failed from auth.controller.ts',
-  //           error.message,
-  //         ),
-  //       );
-  //   }
-  // }
 }
