@@ -3,161 +3,102 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
-  IsNotEmpty,
   IsObject,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
 import { AddressDto } from 'src/common/dto/address.dto';
-import { ImagesDto } from 'src/modules/business/dto/image.dto';
-import { MobileDto } from 'src/common/dto/mobile.dto';
+import {
+  ImagesDto,
+  UploadedImagesDto,
+} from 'src/modules/business/dto/image.dto';
+import { MobileGroupDto } from 'src/common/dto/mobile.dto';
 import { ScheduleDto } from 'src/modules/business/dto/schedule.dto';
 import { GeoLocationDto } from './geolocation.dto';
-import { IdNameDto } from 'src/common/dto/IdNameDto.dto';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Country } from 'src/modules/country/entities/country.entity';
+import { Category } from 'src/modules/category/entities/category.entity';
 
 export class CreateBusinessDto {
-  @ApiProperty({
-    description: 'The merchantID this business belongs to',
-    required: false,
-  })
-  @IsNotEmpty()
-  @IsString()
-  readonly merchantId?: string;
-
-  @ApiProperty({
-    example: {
-      id: '',
-      name: '',
-    },
-  })
-  @IsNotEmpty()
+  @IsOptional() // remove this
+  @ApiProperty()
   @IsObject()
-  @Type(() => IdNameDto)
-  readonly category: IdNameDto;
+  user: User;
 
-  @ApiProperty({
-    example: {
-      id: '',
-      name: '',
-    },
-  })
-  @IsNotEmpty()
+  @ApiProperty()
   @IsObject()
-  @Type(() => IdNameDto)
-  continent: IdNameDto;
+  country: Country;
 
-  @IsNotEmpty()
-  @IsObject()
-  @Type(() => IdNameDto)
-  country: IdNameDto;
-
-  @IsNotEmpty()
+  @ApiProperty()
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => IdNameDto)
-  countries: IdNameDto[];
+  otherCountries: Country[];
 
-  @ApiProperty({
-    description: 'The reviewsID the business belongs to',
-    required: false,
-  })
-  @IsNotEmpty()
+  @ApiProperty()
   @IsString()
-  readonly reviewId?: string;
+  name: string;
 
-  @ApiProperty({
-    description: 'Business name',
-    required: true,
-  })
-  @IsNotEmpty()
+  @ApiProperty()
   @IsString()
-  readonly name: string;
+  description: string;
 
-  @ApiProperty({
-    description: 'Address of the business',
-    required: true,
-    type: () => AddressDto,
-  })
-  @Type(() => AddressDto)
-  readonly address: AddressDto;
-
-  @ApiProperty({
-    description: 'Email of the business',
-    required: false,
-  })
-  @IsNotEmpty()
-  @IsString()
-  @IsEmail()
-  readonly email: string;
-
+  @ApiProperty()
+  @IsObject()
   @ValidateNested()
-  @ApiProperty({
-    description: 'Mobile phone number of the business',
-    required: false,
-  })
-  @Type(() => MobileDto)
-  readonly mobile: MobileDto;
+  @Type(() => AddressDto)
+  address: AddressDto;
 
-  @ApiProperty({
-    description: 'Description of the business',
-    required: true,
-  })
-  @IsNotEmpty()
-  @IsString()
-  readonly description: string;
+  @ApiProperty()
+  @IsEmail()
+  email: string;
 
-  @ApiProperty({
-    description: 'Business schedule',
-    required: false,
-    type: () => ScheduleDto,
-  })
+  @ApiProperty()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => MobileGroupDto)
+  mobile: MobileGroupDto;
+
+  @ApiProperty()
+  @IsObject()
+  @ValidateNested()
   @Type(() => ScheduleDto)
-  readonly schedule?: ScheduleDto;
+  schedule: ScheduleDto;
 
-  @ApiProperty({
-    description: 'Website of the business',
-    required: false,
-  })
+  @ApiProperty()
   @IsString()
-  readonly website?: string;
+  website: string;
 
-  @ApiProperty({
-    description: 'Rating of the business',
-    required: false,
-  })
+  @ApiProperty()
+  @IsOptional()
   @IsString()
-  readonly rating: string;
+  rating: string;
 
-  @ApiProperty({
-    description: 'Images of the business',
-    required: false,
-    type: ImagesDto,
-  })
-  @Type(() => ImagesDto)
-  readonly images?: ImagesDto;
+  @ApiProperty({ type: 'string', format: 'binary' })
+  featuredImage: Express.Multer.File;
 
-  @ApiProperty({
-    description: 'Navigation URL of the business',
-    required: true,
-  })
-  @IsNotEmpty()
+  @ApiProperty({ type: 'string', format: 'binary' })
+  backgroundImage: Express.Multer.File;
+
+  @ApiProperty({ type: 'string', format: 'binary' })
+  logoImage: Express.Multer.File;
+
+  @ApiProperty()
+  @IsOptional()
   @IsString()
-  readonly navigationUrl: string;
+  navigationUrl: string;
 
-  @ApiProperty({
-    description: 'google place id of the business',
-    required: false,
-  })
-  @IsNotEmpty()
-  @IsString()
-  readonly googlePlaceId: string;
-
-  @ApiProperty({
-    description: 'coordinates of the business',
-    required: true,
-    type: () => GeoLocationDto,
-  })
+  @ApiProperty()
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
   @Type(() => GeoLocationDto)
-  @IsNotEmpty()
-  readonly geolocation: GeoLocationDto;
+  geolocation: GeoLocationDto;
+
+  @ApiProperty()
+  @IsArray()
+  categories: Category[];
+
+  @ApiProperty()
+  @IsString()
+  businessType: string;
 }

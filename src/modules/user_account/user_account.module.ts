@@ -5,7 +5,7 @@ import { UserAccount, UserAccountSchema } from './entities/user_account.entity';
 import {
   TempUserAccount,
   TempUserAccountSchema,
-} from './entities/temporary_user_account.entity';
+} from './entities/temporary-user-account.entity';
 
 @Module({
   imports: [

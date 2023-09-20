@@ -1,15 +1,26 @@
 import * as dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
 dotenv.config(); // Load environment variables from .env file
 
 async function bootstrap() {
-  const logger = new Logger();
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalPipes(new ValidationPipe());
+
+  const corsOptions: CorsOptions = {
+    origin: '*', // Allow requests from all origins
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  };
+
+  app.enableCors(corsOptions);
+
+  const logger = new Logger();
   const config = new DocumentBuilder()
     .setTitle('Quickmart Server')
     .setDescription('Server API description')

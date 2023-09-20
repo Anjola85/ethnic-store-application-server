@@ -5,6 +5,7 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -13,46 +14,38 @@ import {
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { PersonDTO } from 'src/modules/user/dto/person.dto';
 
-export class CreateAuthDto extends PersonDTO {
+export class CreateAuthDto {
   @IsOptional()
-  @IsString()
-  password: string;
-
-  @IsNotEmpty()
-  @IsOptional()
-  @IsString()
-  user_account_id: string;
-
-  @IsOptional()
-  @IsBoolean()
-  account_verified?: boolean;
+  @IsEmail()
+  @ApiProperty({
+    description: 'The email address of the person',
+    example: 'johndoe@quickie.com',
+  })
+  email: string;
 
   @IsOptional()
-  @IsString()
-  verification_code?: string;
-
-  @IsOptional()
-  @IsDateString()
-  verify_code_expiration?: Date;
-
-  @IsOptional()
-  @IsString()
-  password_reset?: string;
-
-  @IsOptional()
-  @IsString()
-  password_reset_code?: string;
-
-  @IsOptional()
-  @IsDateString()
-  reset_code_expiration?: Date;
+  @ValidateNested()
+  @Type(() => MobileDto)
+  @ApiProperty({
+    description: 'The mobile phone number of the person',
+    example: { phone_number: '1234567890', country_code: '+1', iso_type: 'CA' },
+  })
+  mobile: MobileDto;
 
   @IsOptional()
   @IsBoolean()
-  change_password?: boolean;
+  accountVerified?: boolean;
 
   @IsOptional()
-  user?: any | User;
+  @IsString()
+  verificationCode?: string;
+
+  @IsOptional()
+  @IsDateString()
+  verificationCodeExpiration?: Date;
+
+  @IsOptional()
+  user?: User;
 
   @IsOptional()
   @IsBoolean()

@@ -17,13 +17,34 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
-import { ImagesModule } from './modules/images/images.module';
+import { ImagesModule } from './modules/files/images.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './modules/user/entities/user.entity';
+import { Business } from './modules/business/entities/business.entity';
+import { Country } from './modules/country/entities/country.entity';
+import { Continent } from './modules/continent/entities/continent.entity';
+import { Category } from './modules/category/entities/category.entity';
+import { Address } from './modules/user/entities/address.entity';
+import { Auth } from './modules/auth/entities/auth.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['config/.env'],
+    }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.PG_HOST,
+      port: Number(process.env.PG_PORT),
+      username: process.env.PG_USER,
+      password: process.env.PG_PASSWORD,
+      database: process.env.PG_DATABASE,
+      entities: [User, Business, Country, Continent, Category, Address, Auth],
+      synchronize: true,
+      // ssl: {
+      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      // },
     }),
     BullModule.forRoot({
       redis: {
@@ -60,6 +81,9 @@ export class AppModule implements NestModule {
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        '/',
+        '/test-validation',
+        'user/register',
         'business/nearby',
         'business/register',
         'business/all',
@@ -74,6 +98,10 @@ export class AppModule implements NestModule {
         'images/upload',
         'images/test',
         'images/upload-s3',
+        'images/upload-business-images',
+        'images/upload-avatar',
+        'images/get-random-avatar',
+        'images/upload-profile-picture',
       )
       .forRoutes('*');
   }

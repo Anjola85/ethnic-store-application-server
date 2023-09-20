@@ -2,22 +2,14 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { Twilio } from 'twilio';
-import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
-import { InjectModel } from '@nestjs/mongoose';
-import { Auth, AuthDocument } from 'src/modules/auth/entities/auth.entity';
-import { Model } from 'mongoose';
+import { generateOtpCode } from 'src/providers/util/otp-code-util';
 
 @Injectable()
 export default class TwilioService {
   logger = new Logger(TwilioService.name);
   client: Twilio;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly otpCodeGenerator: OTPCodeGenerator,
-    @InjectModel(Auth.name)
-    private authModel: Model<AuthDocument> & any,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     const twilioAccountSid =
       this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const twilioAuthToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
@@ -30,23 +22,21 @@ export default class TwilioService {
   }
 
   public async sendSms(
-    phoneNumber: string,
+    phone_number: string,
     codeLength = 4,
     expirationMinutes = 6,
   ) {
+    console.log('phone number is: ', phone_number);
     // phone number of sender is quickmartdev
     const senderPhoneNumber = '+14318133976';
 
     // generate otp code
-    const otpResponse = await this.otpCodeGenerator.generateCode(
-      codeLength,
-      expirationMinutes,
-    );
+    const otpResponse = generateOtpCode(codeLength, expirationMinutes);
     const otpCode: string = otpResponse.code;
     const expiryTime: string = otpResponse.expiryTime;
 
     const options: MessageListInstanceCreateOptions = {
-      to: phoneNumber,
+      to: phone_number,
       body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
       from: senderPhoneNumber,
     };
@@ -55,7 +45,7 @@ export default class TwilioService {
       this.client.messages.create(options);
 
       // mask phone number
-      const maskedNumber = phoneNumber;
+      const maskedNumber = phone_number;
       // replace first 5 digits with *
       const maskedPhoneNumber = maskedNumber.replace(
         maskedNumber.substring(0, 5),
@@ -87,68 +77,4 @@ export default class TwilioService {
       );
     }
   }
-
-  public async sendSmsTest(
-    phoneNumber: string,
-    codeLength = 4,
-    expirationMinutes = 6,
-  ) {
-    // phone number of sender is quickmartdev
-    const senderPhoneNumber = '+14318133976';
-
-    // generate otp code
-    const otpResponse = await this.otpCodeGenerator.generateCode(
-      codeLength,
-      expirationMinutes,
-    );
-    const otpCode: string = otpResponse.code;
-    const expiryTime: string = otpResponse.expiryTime;
-
-    const options: MessageListInstanceCreateOptions = {
-      to: phoneNumber,
-      body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
-      from: senderPhoneNumber,
-    };
-    try {
-      // send otp code to phone number
-      const response = this.client.messages.create(options);
-
-      // log success repsonse
-      this.logger.log('SMS sent successfully\n' + response + '\n');
-
-      // return success response to client
-      return {
-        message: 'SMS sent successfully',
-        code: otpCode,
-        expiryTime: expiryTime,
-      };
-    } catch (error) {
-      // log error response
-      this.logger.error('Error sending sms:', error);
-      // return error response to client
-      throw new HttpException(
-        'Failed to send email',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  // async send(options: MessageListInstanceCreateOptions): Promise<any> {
-  //   // adds a job to the queue, returns a promise from method sendSms
-  //   const job = await this.queue.add('sendSms', options);
-
-  //   return job.finished();
-  // }
-
-  // async processSendSmsJob(job: Job<MessageListInstanceCreateOptions>) {
-  //   try {
-  //     await this.sendSms(job.data);
-  //   } catch (error) {
-  //     this.logger.debug(
-  //       `SMS to ${job.data.to} failed, retrying (${job.attemptsMade} attempts left)`,
-  //       error,
-  //     );
-  //     throw error;
-  //   }
-  // }
 }

@@ -1,227 +1,83 @@
-import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
-import { Grocery } from './grocery.entity';
-import { Restaurant } from './restaurant.entity';
-import { Service } from './service.entity';
-import { Types } from 'mongoose';
-import { Merchant } from 'src/modules/user/entities/merchant.entity';
-import { Category } from 'src/modules/category/entities/category.entity';
-import { Continent } from 'src/modules/continent/entities/continent.entity';
-import { ContinentType } from 'src/modules/continent/continentType.enum';
-import { Review } from 'src/modules/reviews/entities/review.entity';
-import { CategoryType } from 'src/modules/category/categoryType.enum';
+import { Country } from 'src/modules/country/entities/country.entity';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
+import { DayScheduleDto, ScheduleDto } from '../dto/schedule.dto';
 import { GeoLocationDto } from '../dto/geolocation.dto';
+import {
+  EntityMobileDto,
+  MobileDto,
+  MobileGroupDto,
+} from 'src/common/dto/mobile.dto';
+import { User } from 'src/modules/user/entities/user.entity';
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { Category } from 'src/modules/category/entities/category.entity';
+import { Address } from 'src/modules/user/entities/address.entity';
+import { ImagesDto, UploadedImagesDto } from '../dto/image.dto';
 
-export type BusinessDocument = Business & Document;
-export type CategoryTypes = Grocery | Restaurant | Service;
+@Entity('business')
+export class Business extends CommonEntity {
+  @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn()
+  user: User;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class Business {
-  @Prop({
-    type: Types.ObjectId,
-    default: null,
-    required: false,
-    ref: 'Merchant',
-  })
-  merchantId: string | Merchant;
+  @ManyToOne(() => Country, (country) => country.name)
+  @JoinColumn()
+  country: Country;
 
-  @Prop({
-    type: {
-      id: { type: Types.ObjectId, required: true, refpath: 'Category' },
-      name: {
-        type: String,
-        required: true,
-        enum: Object.values(CategoryType),
-      },
-    },
-  })
-  category: { id: string; name: string };
+  @OneToMany(() => Country, (country) => country.name)
+  @JoinColumn()
+  other_countries: Country[];
 
-  @Prop({
-    type: {
-      id: { type: Types.ObjectId, required: true, ref: 'Continent' },
-      name: {
-        type: String,
-        required: true,
-        enum: Object.values(ContinentType),
-      },
-    },
-  })
-  continent: { id: string; name: string };
+  @OneToMany(() => Category, (category) => category.name)
+  categories: Category[];
 
-  @Prop({
-    type: {
-      id: { type: Types.ObjectId, required: true, ref: 'Country' },
-      name: { type: String, required: true },
-    },
-  })
-  country: { id: string; name: string };
-
-  /**
-   * This field allows a business to be associated with one or more countries.
-   * It takes in a list of country objects, where each object has an ID and a name.
-   * The ID is a reference to the unique identifier of a country in the 'Country' collection.
-   * The name is the name of the country.
-   */
-  @Prop({
-    type: [
-      {
-        id: { type: Types.ObjectId, required: true, ref: 'Country' },
-        name: { type: String, required: true },
-      },
-    ],
-    default: [],
-  })
-  countries: {
-    id: string;
-    name: string;
-  }[];
-
-  /**
-   * The reviewsID the business belongs to
-   */
-  @Prop({
-    type: Types.ObjectId,
-    default: null,
-    required: false,
-    ref: 'Review',
-  })
-  reviewId: string | Review;
-
-  /**
-   * Business name
-   */
-  @Prop({
-    type: String,
-    required: true,
-  })
+  @Column({ nullable: false })
+  @Index({ unique: true })
   name: string;
 
-  /**
-   * Address of the business
-   */
-  @Prop({
-    type: {
-      unit: { type: String, required: false, default: '' },
-      street: { type: String, required: true, default: '' },
-      city: { type: String, required: true, default: '' },
-      province: { type: String, required: true, default: '' },
-      postalCode: { type: String, required: true, default: '' },
-      country: { type: String, required: true, default: '' },
-    },
-    required: true,
-  })
-  address: {
-    street: string;
-    city: string;
-    province: string;
-    postalCode: string;
-    country: string;
-  };
-
-  @Prop({
-    type: String,
-    required: false,
-  })
-  email: string;
-
-  @Prop(
-    raw({
-      phoneNumber: { type: String, required: true },
-      iso_code: { type: String, required: true, default: '+1' },
-    }),
-  )
-  mobile: { phoneNumber: string; iso_code?: string };
-
-  @Prop({
-    type: String,
-    required: false,
-  })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Prop({
-    type: {
-      monday: { open: String, close: String },
-      tuesday: { open: String, close: String },
-      wednesday: { open: String, close: String },
-      thursday: { open: String, close: String },
-      friday: { open: String, close: String },
-      saturday: { open: String, close: String },
-      sunday: { open: String, close: String },
-    },
-    default: {},
-  })
-  schedule: {
-    monday?: { open: string; close: string };
-    tuesday?: { open: string; close: string };
-    wednesday?: { open: string; close: string };
-    thursday?: { open: string; close: string };
-    friday?: { open: string; close: string };
-    saturday?: { open: string; close: string };
-    sunday?: { open: string; close: string };
-  };
+  @OneToOne(() => Address, (address) => address.id)
+  address: Address;
 
-  @Prop({
-    type: String,
-    required: false,
-  })
+  @Column()
+  email: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  mobile: { primary: EntityMobileDto; secondary: EntityMobileDto };
+
+  @Column({ type: 'jsonb', nullable: true })
+  schedule: ScheduleDto;
+
+  @Column({ type: 'varchar', default: '' })
   website: string;
 
-  @Prop({
-    type: String,
-    default: '4.5',
-  })
+  @Column({ type: 'text', default: '3.0' })
   rating: string;
 
-  @Prop({
-    type: {
-      featured: { type: String },
-      background: { type: String },
-    },
-    default: {},
-  })
-  images: { featured?: string; background?: string };
+  @Column({ type: 'jsonb', nullable: false })
+  images: ImagesDto;
 
-  @Prop({
-    type: String,
-    required: true,
-  })
-  navigationUrl: string;
+  @Column({ type: 'varchar', default: '' })
+  navigation_url: string;
 
-  @Prop({
-    type: String,
-    required: true,
-  })
-  googlePlaceId: string;
-
-  @Prop({
-    required: true,
-    index: '2dsphere',
-    type: GeoLocationDto,
+  // change this to be nullable: false
+  @Column({
+    type: 'geometry',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
   })
   geolocation: GeoLocationDto;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-    select: false,
-  })
-  deleted: boolean;
+  @Column({ type: 'varchar', default: 'grocery' })
+  business_type: string;
 }
-
-const BusinessSchema = SchemaFactory.createForClass(Business);
-
-BusinessSchema.statics.config = () => {
-  return {
-    idToken: 'business',
-    hiddenFields: ['deleted'],
-  };
-};
-
-BusinessSchema.index({ geolocation: '2dsphere' });
-
-export { BusinessSchema };

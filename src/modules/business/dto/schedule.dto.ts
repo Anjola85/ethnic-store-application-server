@@ -1,12 +1,10 @@
 import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class DayScheduleDto {
-  @IsOptional()
-  open?: string;
+export class DayScheduleDto {
+  open: string;
 
-  @IsOptional()
-  close?: string;
+  close: string;
 }
 
 export class ScheduleDto {

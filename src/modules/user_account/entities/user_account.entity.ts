@@ -73,12 +73,12 @@ export class UserAccount {
 
   @Prop(
     raw({
-      phoneNumber: { type: String },
-      isoCode: { type: String, required: false, default: '+1' },
-      isoType: { type: String, required: false, default: 'CA' },
+      phone_number: { type: String },
+      country_code: { type: String, required: false, default: '+1' },
+      iso_type: { type: String, required: false, default: 'CA' },
     }),
   )
-  mobile: { phoneNumber: string; isoCode?: string; isoType?: string };
+  mobile: { phone_number: string; country_code?: string; iso_type?: string };
 
   @Prop({
     type: Boolean,

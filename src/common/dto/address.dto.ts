@@ -5,6 +5,10 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
  * Defining the structire for the address field
  */
 export class AddressDto {
+  @ApiProperty()
+  @IsOptional()
+  primary: boolean;
+
   @ApiProperty({ example: '123' })
   @IsOptional()
   @IsString()
