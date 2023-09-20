@@ -23,10 +23,6 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  entryTime: string;
-
-  @IsNotEmpty()
-  @IsString()
   @ApiProperty({ description: 'The first name of the person', example: 'John' })
   firstName: string;
 

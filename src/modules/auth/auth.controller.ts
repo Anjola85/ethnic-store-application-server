@@ -25,6 +25,7 @@ import Api from 'twilio/lib/rest/Api';
 import { ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { UserDto } from '../user/dto/user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -41,16 +42,13 @@ export class AuthController {
   async login(@Body() body: any, @Res() res: Response) {
     try {
       if (body.payload && body.payload !== '') {
-        // decrypt request body
         const decryptedData = await decryptKms(body.payload);
-
-        // convert decrypted data to loginDto
-        const secLoginDto = new secureLoginDto();
-        Object.assign(secLoginDto, decryptedData);
+        const loginDto = new secureLoginDto();
+        Object.assign(loginDto, decryptedData);
 
         const auth = await this.authService.findByEmailOrMobile(
-          secLoginDto.email,
-          secLoginDto.mobile,
+          loginDto.email,
+          loginDto.mobile,
         );
 
         if (!auth) {
@@ -59,26 +57,21 @@ export class AuthController {
             .json(createError('user not found'));
         }
 
-        await this.authService.verifyOtp(
-          auth.id,
-          secLoginDto.code,
-          secLoginDto.entryTime,
-        );
+        await this.authService.verifyOtp(auth.id, loginDto.code);
 
-        // call login method
-        const response: any = await this.authService.login(secLoginDto);
-        const { token, ...userResponse } = response;
+        const loginResponse: { token: string; user: UserDto } =
+          await this.authService.login(loginDto);
 
-        return res.status(HttpStatus.OK).json(
-          createResponse(
-            response.message,
-            {
-              token,
-              user: userResponse.user,
-            },
-            response.status,
-          ),
-        );
+        const payload = {
+          payload: loginResponse,
+        };
+        const payloadToEncryptBuffer = toBuffer(payload);
+        const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+        const encryptedUser = encryptedUserBlob.toString('base64');
+
+        return res
+          .status(HttpStatus.OK)
+          .json(createResponse('login successful', encryptedUser, true));
       } else {
         return res
           .status(HttpStatus.BAD_REQUEST)
@@ -88,18 +81,11 @@ export class AuthController {
       if (error instanceof InternalServerError) {
         return res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(
-            createResponse(
-              'login failed from auth.controller.ts',
-              error.message,
-            ),
-          );
+          .json(createResponse('login failed', error.message));
       } else {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json(
-            createError('login failed from auth.controller.ts', error.message),
-          );
+          .json(createError('login failed', error.message));
       }
     }
   }
@@ -120,7 +106,6 @@ export class AuthController {
       const isOtpVerified = await this.authService.verifyOtp(
         authId,
         decryptedBody.code,
-        decryptedBody.entryTime,
       );
 
       if (!isOtpVerified.status) {
@@ -254,7 +239,7 @@ export class AuthController {
       const encryptedData = await encryptKms(buffer);
       return res.status(HttpStatus.OK).json({
         status: true,
-        data: encryptedData.toString('hex'),
+        data: encryptedData.toString('base64'),
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({

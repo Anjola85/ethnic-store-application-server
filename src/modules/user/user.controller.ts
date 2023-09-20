@@ -57,7 +57,7 @@ export class UserController {
       };
       const payloadToEncryptBuffer = toBuffer(payload);
       const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-      const encryptedUser = encryptedUserBlob.toString('hex');
+      const encryptedUser = encryptedUserBlob.toString('base64');
 
       if (response.userExists) {
         return res

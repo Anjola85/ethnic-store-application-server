@@ -16,6 +16,8 @@ import { secureLoginDto } from './dto/secure-login.dto';
 import { AuthRepository, InputObject } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
 import { Address } from '../user/entities/address.entity';
+import { UserDto } from '../user/dto/user.dto';
+import { mapAuthToUser } from '../user/user-mapper';
 
 @Injectable()
 export class AuthService {
@@ -68,7 +70,6 @@ export class AuthService {
   async verifyOtp(
     authId: string,
     otp: string,
-    entryTime: string,
   ): Promise<{ message: string; status: boolean }> {
     const auth = await this.authRepository.findOneBy({ id: authId });
 
@@ -78,7 +79,8 @@ export class AuthService {
       auth.verification_code_expiration,
     ).toISOString();
 
-    entryTime = new Date(Date.now()).toISOString();
+    const entryTime = new Date(Date.now()).toISOString();
+
     if (entryTime <= expiryTime) {
       if (otp === auth.verification_code) {
         await this.authRepository.update(authId, {
@@ -137,30 +139,27 @@ export class AuthService {
    */
   async login(loginDto: secureLoginDto): Promise<any> {
     try {
-      const authAcct = await this.findByEmailOrMobile(
-        loginDto.email,
-        loginDto.mobile,
-      );
+      const input: InputObject = {
+        email: loginDto.email,
+        mobile: loginDto.mobile,
+      };
+      const authAcct = await this.getUserWithAuth(input);
 
       if (!authAcct) throw new Error('Invalid credentials');
 
-      // incomplete registeration if userId is null
-      if (!authAcct.user) throw new Error('User has incomlete registeration');
+      if (!authAcct.user)
+        throw new Error(
+          'User has incomlete registeration, please complete registeration',
+        );
 
-      // retrieve user from user database
-      const userAcct = await this.userRepository.findOneBy({
-        id: authAcct.user.id,
-      });
+      const userAcct = authAcct.user;
 
       // generate token with userID
       const token = this.generateJwt(userAcct.id);
 
-      return {
-        status: true,
-        message: 'login successful',
-        token,
-        user: { userAcct, authAcct },
-      };
+      const user: UserDto = mapAuthToUser(authAcct);
+
+      return { token, user };
     } catch (e) {
       throw new Error(`From AuthService.login: ${e.message}`);
     }
