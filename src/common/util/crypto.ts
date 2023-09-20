@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as aws from 'aws-sdk';
 import { AwsSecretKey } from './secret';
 
-const iv = Buffer.from('00000000000000000000000000000000', 'hex');
+const iv = Buffer.from('EjRWeJ_aZpQ0TEhKT0dKSg==', 'base64');
 const algorithm = 'AES-256-CBC';
 
 export const encryptKms = async (buffer: Buffer) => {
@@ -37,7 +37,7 @@ export const encryptKms = async (buffer: Buffer) => {
  * @returns
  */
 export const decryptKms = async (data: string) => {
-  const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'hex');
+  const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'base64');
 
   const kmsClient = new aws.KMS({
     region: 'us-east-1',
@@ -74,7 +74,7 @@ export const decryptKms = async (data: string) => {
 };
 
 export const encryptData = (keyIn: string, data: any): string => {
-  const key: Buffer = Buffer.from(keyIn, 'hex');
+  const key: Buffer = Buffer.from(keyIn, 'base64');
 
   // create encryptor
   const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -83,19 +83,19 @@ export const encryptData = (keyIn: string, data: any): string => {
     data = JSON.stringify(data);
   }
 
-  let encryptedData = cipher.update(data, 'utf8', 'hex');
+  let encryptedData = cipher.update(data, 'utf8', 'base64');
 
-  encryptedData += cipher.final('hex');
+  encryptedData += cipher.final('base64');
 
   return encryptedData;
 };
 
 export const decryptData = (keyIn: string, cipherText: string): string => {
-  const key: Buffer = Buffer.from(keyIn, 'hex');
+  const key: Buffer = Buffer.from(keyIn, 'base64');
 
   const decipher = crypto.createDecipheriv(algorithm, key, iv);
 
-  let decryptedData = decipher.update(cipherText, 'hex', 'utf-8');
+  let decryptedData = decipher.update(cipherText, 'base64', 'utf-8');
 
   decryptedData += decipher.final('utf8');
 

@@ -38,6 +38,7 @@ export class AuthService {
     let response: { message; code; expiryTime };
 
     if (email) {
+      console.log(':sending email');
       response = await this.sendgridService.sendOTPEmail(email);
     } else if (mobile) {
       const phone_number = mobile?.phoneNumber || '';
@@ -61,6 +62,7 @@ export class AuthService {
       auth.verification_code_expiration = response.expiryTime;
       await this.authRepository.save(auth);
     }
+
     const token = this.generateJwt(auth.id);
     const otpResponse = { ...response, token };
 

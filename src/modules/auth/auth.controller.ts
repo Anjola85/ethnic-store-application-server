@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -18,7 +19,6 @@ import { UserService } from '../user/user.service';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
-import { decryptKms, encryptKms, toBuffer } from '../../common/util/crypto';
 import { createError, createResponse } from '../../common/util/response';
 import { secureLoginDto } from './dto/secure-login.dto';
 import Api from 'twilio/lib/rest/Api';
@@ -26,9 +26,11 @@ import { ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { UserDto } from '../user/dto/user.dto';
+import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthService.name);
   private readonly userController: UserController;
   constructor(
     private readonly authService: AuthService,
@@ -160,14 +162,13 @@ export class AuthController {
           createResponse(authResponse.message, { token: authResponse.token }),
         );
     } catch (error) {
+      this.logger.error(
+        'Auth Controller with error message: ' + error.message,
+        ' with error: ' + error,
+      );
       return res
         .status(HttpStatus.BAD_REQUEST)
-        .json(
-          createError(
-            '400 send otp failed from auth.controller.ts',
-            error.message,
-          ),
-        );
+        .json(createError('400 send otp failed'));
     }
   }
 
