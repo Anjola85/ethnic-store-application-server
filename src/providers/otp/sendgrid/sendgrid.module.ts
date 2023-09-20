@@ -3,7 +3,6 @@ import { SendgridService } from './sendgrid.service';
 import { UserService } from 'src/modules/user/user.service';
 import TwilioService from '../twilio/twilio.service';
 import { BullModule } from '@nestjs/bull';
-import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Address } from 'src/modules/user/entities/address.entity';
@@ -12,6 +11,7 @@ import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { UserFileService } from 'src/modules/files/user-files.service';
 import { AwsS3Service } from 'src/modules/files/aws-s3.service';
 import { AuthRepository } from 'src/modules/auth/auth.repository';
+import { UserRepository } from 'src/modules/user/user.repository';
 
 @Module({
   imports: [
@@ -27,11 +27,11 @@ import { AuthRepository } from 'src/modules/auth/auth.repository';
     SendgridService,
     UserService,
     TwilioService,
-    OTPCodeGenerator,
     AuthService,
     UserFileService,
     AwsS3Service,
     AuthRepository,
+    UserRepository,
   ],
 })
 export class SendgridModule {}

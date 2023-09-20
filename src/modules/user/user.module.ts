@@ -4,7 +4,6 @@ import { UserController } from './user.controller';
 import { UserAccountService } from '../user_account/user_account.service';
 import { AuthService } from '../auth/auth.service';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
-import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
@@ -13,6 +12,7 @@ import { Auth } from '../auth/entities/auth.entity';
 import { UserFileService } from '../files/user-files.service';
 import { AwsS3Service } from '../files/aws-s3.service';
 import { AuthRepository } from '../auth/auth.repository';
+import { UserRepository } from './user.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Address, Auth])],
@@ -21,11 +21,11 @@ import { AuthRepository } from '../auth/auth.repository';
     UserService,
     AuthService,
     SendgridService,
-    OTPCodeGenerator,
     TwilioService,
     UserFileService,
     AwsS3Service,
     AuthRepository,
+    UserRepository,
   ],
 })
 export class UserModule {}

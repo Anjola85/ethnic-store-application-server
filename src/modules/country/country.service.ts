@@ -1,29 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { Country } from './entities/country.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCountryDto } from './dto/create-country.dto';
-import { UpdateCountryDto } from './dto/update-country.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { Country, CountryDocument } from './entities/country.entity';
-import { Model } from 'mongoose';
 
 @Injectable()
 export class CountryService {
-  // constructor(
-  //   @InjectModel(Country.name)
-  //   protected countryModel: Model<CountryDocument> & any,
-  // ) {}
-  // async create(createCountryDto: CreateCountryDto): Promise<any> {
-  //   try {
-  //     let country = new this.countryModel({ ...createCountryDto });
-  //     country = await country.save();
-  //     return country;
-  //   } catch (error) {
-  //     throw new Error(
-  //       'Error adding new country in create methid in country.service.ts file' +
-  //         '\n' +
-  //         `error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+  constructor(
+    @InjectRepository(Country)
+    protected countryRepository: Repository<Country>,
+  ) {}
+
+  async create(createCountryDto: CreateCountryDto) {
+    const country = await this.countryRepository
+      .create(createCountryDto)
+      .save();
+    return country;
+  }
   // async findAll() {
   //   try {
   //     const categories = await this.countryModel.find().exec();

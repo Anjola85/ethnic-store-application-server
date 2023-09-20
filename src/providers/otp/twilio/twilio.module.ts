@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
-import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import TwilioService from './twilio.service';
 
 @Module({
@@ -20,6 +19,6 @@ import TwilioService from './twilio.service';
       },
     }),
   ],
-  providers: [ConfigService, OTPCodeGenerator, TwilioService],
+  providers: [ConfigService, TwilioService],
 })
 export class TwilioModule {}

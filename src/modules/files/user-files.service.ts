@@ -33,7 +33,7 @@ export class UserFileService {
   /**
    * @returns - a random avatar url
    */
-  async getRandomAvatar() {
+  async getRandomAvatar(): Promise<string> {
     const imageCount = await this.awsS3Service.countFilesInFolder(
       `${this.rootFolder}/${this.avatarFolder}`,
     );
@@ -45,7 +45,10 @@ export class UserFileService {
   }
 
   // endpoint to upload profile picture
-  async uploadProfilePicture(user_id: string, imageBlob: Express.Multer.File) {
+  async uploadProfileImage(
+    user_id: string,
+    imageBlob: Express.Multer.File,
+  ): Promise<string> {
     const folderPath = `${this.rootFolder}/${user_id}/${this.profileFolder}`;
     const profilePictureUrl = await this.awsS3Service.uploadImgToFolder(
       folderPath,
@@ -65,7 +68,7 @@ export class UserFileService {
     user_id: string,
     imageBlob: Express.Multer.File,
     docName: string,
-  ) {
+  ): Promise<string> {
     const folderPath = `${this.rootFolder}/${user_id}/${this.documentFolder}/${docName}/${imageBlob.originalname}`;
     const documentUrl = await this.awsS3Service.uploadImgToFolder(
       folderPath,

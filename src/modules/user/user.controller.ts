@@ -18,6 +18,10 @@ import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dt
 import { AuthService } from '../auth/auth.service';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
 import { createError, createResponse } from '../../common/util/response';
+import { encryptKms, toBuffer } from 'src/common/util/crypto';
+import { User } from './entities/user.entity';
+import { EntityMobileDto, MobileDto } from 'src/common/dto/mobile.dto';
+import { UserDto } from './dto/user.dto';
 
 @Controller('user')
 export class UserController {
@@ -38,25 +42,32 @@ export class UserController {
    */
   @Post('register')
   async create(
-    // @Body() createUserDto: CreateUserDto,
-    @Body() requestBody: any,
+    @Body() createUserDto: CreateUserDto,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      const createUserDto = new CreateUserDto();
-      Object.assign(createUserDto, { ...requestBody });
+      const response: {
+        token: string;
+        user: UserDto;
+        userExists: boolean;
+      } = await this.userService.create(createUserDto);
 
-      const user = await this.userService.create(requestBody);
+      const payload = {
+        payload: response,
+      };
+      const payloadToEncryptBuffer = toBuffer(payload);
+      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+      const encryptedUser = encryptedUserBlob.toString('hex');
 
-      if (user.exist) {
+      if (response.userExists) {
         return res
           .status(HttpStatus.OK)
-          .json(createResponse('user already exists', user));
+          .json(createResponse('user already exists: ', encryptedUser));
       }
 
       return res
         .status(HttpStatus.CREATED)
-        .json(createResponse('user successfully registered', user));
+        .json(createResponse('user successfully registered', encryptedUser));
     } catch (err) {
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)

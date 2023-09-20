@@ -11,7 +11,6 @@ import { SendgridService } from './sendgrid/sendgrid.service';
 import { Response } from 'express';
 import TwilioService from './twilio/twilio.service';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
-import { OTPCodeGenerator } from '../util/OTPCodeGenerator';
 
 @Controller('verify')
 export class SendgridController {

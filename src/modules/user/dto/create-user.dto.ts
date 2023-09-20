@@ -10,6 +10,7 @@ import { Type } from 'class-transformer';
 import { AddressDto } from 'src/common/dto/address.dto';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { UserProfile } from '../user.enums';
+import { Address } from '../entities/address.entity';
 
 /**
  * Generic DTO
@@ -18,13 +19,21 @@ import { UserProfile } from '../user.enums';
 export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
+  code: string;
+
+  @IsNotEmpty()
+  @IsString()
+  entryTime: string;
+
+  @IsNotEmpty()
+  @IsString()
   @ApiProperty({ description: 'The first name of the person', example: 'John' })
-  first_name: string;
+  firstName: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ description: 'The last name of the person', example: 'Doe' })
-  last_name: string;
+  lastName: string;
 
   @IsNotEmpty()
   @ApiProperty({
@@ -63,11 +72,18 @@ export class CreateUserDto {
     description: 'The type of user being resgistered',
     example: 'customer',
   })
-  user_profile: UserProfile;
+  userProfile: UserProfile;
 
   @IsOptional()
   dob: string;
 
+  @ApiProperty({ type: 'string', format: 'binary' })
+  profileImage: Express.Multer.File;
+
   @IsOptional()
-  profile_picture: string;
+  @IsString()
+  profileImageUrl: string;
+
+  @IsOptional()
+  addresses: Address[];
 }

@@ -22,7 +22,7 @@ export class User extends CommonEntity {
   dob: string;
 
   @Column({ type: 'varchar', nullable: true })
-  profile_picture: string;
+  profile_image: string;
 
   @Column({ type: 'boolean', default: true })
   active: boolean;

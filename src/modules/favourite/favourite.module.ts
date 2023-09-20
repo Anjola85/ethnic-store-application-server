@@ -16,7 +16,6 @@ import {
   UserAccount,
   UserAccountSchema,
 } from '../user_account/entities/user_account.entity';
-import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
 import { AuthService } from '../auth/auth.service';
 import { UserAccountService } from '../user_account/user_account.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';

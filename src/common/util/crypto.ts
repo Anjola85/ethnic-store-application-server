@@ -106,3 +106,16 @@ export const decryptData = (keyIn: string, cipherText: string): string => {
 
   return decryptedData;
 };
+
+export const toBuffer = (data: any) => {
+  let buffer: Buffer;
+  if (typeof data === 'string') {
+    buffer = Buffer.from(data);
+  } else if (typeof data === 'object' && data !== null) {
+    const json = JSON.stringify(data);
+    buffer = Buffer.from(json);
+  } else {
+    throw new Error('Invalid data type. Expected string or object.');
+  }
+  return buffer;
+};

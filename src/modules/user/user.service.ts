@@ -1,3 +1,4 @@
+import { InputObject } from './../auth/auth.repository';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
@@ -15,12 +16,14 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 import { Auth } from '../auth/entities/auth.entity';
 import { AuthService } from '../auth/auth.service';
 import { UserFileService } from '../files/user-files.service';
+import { mapAuthToUser, mapUserData } from './user-mapper';
+import { UserRepository } from './user.repository';
+import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private userRepository: UserRepository,
     @InjectRepository(Address)
     private addressRepository: Repository<Address>,
     private readonly authService: AuthService,
@@ -32,64 +35,65 @@ export class UserService {
    * @returns
    */
   async create(userDto: CreateUserDto): Promise<any> {
-    try {
-      // check if user already exists
-      let user;
-      let exists = true;
+    let userModel: User;
+    let userExists: boolean;
 
-      const auth = await this.authService.findByEmailOrMobile(
-        userDto.email,
-        userDto.mobile,
-      );
+    const auth = await this.authService.findByEmailOrMobile(
+      userDto.email,
+      userDto.mobile,
+    );
 
-      if (!auth.user) {
-        // if user doesnt exist, create user
-        exists = false;
-        const { address, ...userData } = userDto;
+    if (!auth.user || auth.user == null) {
+      userExists = false;
+    } else {
+      userExists = true;
+      userModel = auth.user;
+    }
 
-        const addressId = await this.addressRepository.create({
-          primary: true,
-          ...address,
-        });
+    if (!userExists) {
+      const { address, ...userData } = userDto;
 
-        // console.log('address successfully created with object: ', addressId);
-
-        if (!userData.profile_picture) {
-          userData.profile_picture =
-            await this.userFileService.getRandomAvatar();
-        } else {
-          // upload image to S3 bucket and get url
-        }
-
-        user = await this.userRepository
-          .create({
-            ...userData,
-            addresses: [addressId],
-            user_profile: userData.user_profile || UserProfile.CUSTOMER,
-          })
-          .save();
-
-        // update auth table with user id
-        await this.authService.updateAuthUserId(auth.id, user);
-
-        addressId.user = user;
-        await this.addressRepository.save(addressId);
-      } else {
-        user = auth.user;
-      }
-
-      // create jwt token with user id and set expiry to 1 day
-      const privateKey = fs.readFileSync('./private_key.pem');
-      const token = jsonwebtoken.sign({ id: user.id }, privateKey.toString(), {
-        expiresIn: '1d',
+      const addressId = await this.addressRepository.create({
+        primary: true,
+        ...address,
       });
 
-      return { token, user, exists };
-    } catch (error) {
-      throw new Error(
-        `Error registering user from create method in user.service.ts. With error message: ${error.message}`,
-      );
+      userDto.addresses = [addressId];
+
+      let userId: string;
+
+      if (!userData.profileImage) {
+        userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
+      } else {
+        userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
+          userId,
+          userData.profileImage,
+        );
+      }
+
+      const newUser: User = mapUserData(userDto);
+
+      userModel = await this.userRepository.create(newUser).save();
+
+      await this.authService.updateAuthUserId(auth.id, userModel);
+      addressId.user = userModel;
+      await this.addressRepository.save(addressId);
     }
+
+    const input: InputObject = { id: auth.id };
+    const authObj = await this.authService.getUserWithAuth(input);
+    const user: UserDto = mapAuthToUser(authObj);
+
+    const privateKey = fs.readFileSync('./private_key.pem');
+    const token = jsonwebtoken.sign(
+      { id: userModel.id },
+      privateKey.toString(),
+      {
+        expiresIn: '1d',
+      },
+    );
+
+    return { token, user, userExists };
   }
 
   // /**

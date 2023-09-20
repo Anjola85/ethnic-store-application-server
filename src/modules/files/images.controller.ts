@@ -106,7 +106,7 @@ export class ImagesController {
 
     try {
       const user_id: string = body.user_id;
-      const resp = await this.userFileService.uploadProfilePicture(
+      const resp = await this.userFileService.uploadProfileImage(
         user_id,
         files.profile_picture[0],
       );

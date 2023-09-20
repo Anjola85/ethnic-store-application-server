@@ -1,23 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsPhoneNumber,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class EntityMobileDto {
   @ApiProperty({ example: '+6473334839' })
-  @IsString()
   phone_number: string;
 
   @ApiProperty({ example: '+1' })
-  @IsString()
   country_code: string;
 
   @ApiProperty({ example: 'CA' })
-  @IsString()
   iso_code: string;
 }
 

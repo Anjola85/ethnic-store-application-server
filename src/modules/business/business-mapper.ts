@@ -1,4 +1,4 @@
-import { mobileMapper } from 'src/common/mapper/mobile-mapper';
+import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 import { Business } from './entities/business.entity';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { Address } from '../user/entities/address.entity';
@@ -6,9 +6,10 @@ import { Address } from '../user/entities/address.entity';
 export function mapBusinessData(
   businessData: CreateBusinessDto,
   address: Address,
-) {
+): Business {
   const businessEntity = new Business();
   businessEntity.user = businessData.user;
+  //TODO: fix the mappings below
   // businessEntity.country = businessData.country;
   // businessEntity.other_countries = businessData.otherCountries;
   // businessEntity.categories = businessData.categories;
@@ -20,8 +21,8 @@ export function mapBusinessData(
   businessEntity.website = businessData.website;
   businessEntity.rating = businessData.rating;
   businessEntity.mobile = {
-    primary: mobileMapper(businessData.mobile.primary),
-    secondary: mobileMapper(businessData.mobile.secondary),
+    primary: mobileToEntity(businessData.mobile.primary),
+    secondary: mobileToEntity(businessData.mobile.secondary),
   };
   businessEntity.navigation_url = businessData.navigationUrl;
   businessEntity.geolocation = businessData.geolocation;

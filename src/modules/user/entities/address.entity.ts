@@ -3,6 +3,16 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { User } from './user.entity';
 import { Business } from 'src/modules/business/entities/business.entity';
 
+export interface AddressEntity {
+  primary: boolean;
+  unit: string;
+  street: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  country: string;
+}
+
 @Entity('address')
 export class Address extends CommonEntity {
   @OneToOne(() => Business, (business) => business.id, { nullable: true })

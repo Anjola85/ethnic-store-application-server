@@ -9,15 +9,11 @@ import { Auth } from './entities/auth.entity';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { User } from '../user/entities/user.entity';
-import {
-  TempUserAccount,
-  TempUserAccountDocument,
-} from '../user_account/entities/temporary-user-account.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { secureLoginDto } from './dto/secure-login.dto';
-import { AuthRepository } from './auth.repository';
+import { AuthRepository, InputObject } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
 import { Address } from '../user/entities/address.entity';
 
@@ -31,72 +27,39 @@ export class AuthService {
     @InjectRepository(Address) private addressRepository: Repository<Address>,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
-  ) {
-    // @InjectModel(TempUserAccount.name)
-    // private tempUserAccountModel: Model<TempUserAccountDocument> & any,
-  }
+  ) {}
 
-  /**
-   * This method sends otp to user
-   * @param userID
-   * @param email
-   * @param phone_number
-   * @returns
-   */
   async sendOtp(
     email?: string,
     mobile?: MobileDto,
   ): Promise<{ message; code; expiryTime; token }> {
     let response: { message; code; expiryTime };
-    // let auth;
 
     if (email) {
-      // use sendgrid to send otp
       response = await this.sendgridService.sendOTPEmail(email);
-      // auth = await this.authRepository.findOneBy({ email });
     } else if (mobile) {
-      // use twilio to send otp to primary phone number
       const phone_number = mobile?.phoneNumber || '';
       response = await this.twilioService.sendSms(phone_number);
-      // auth = await this.authRepository.findOneBy({ mobile });
     }
 
-    // map auth object to authDto
     const authModel: Auth = mapDtoToEntity({ email, mobile });
 
     authModel.verification_code = response.code;
     authModel.verification_code_expiration = response.expiryTime;
 
-    // Try to find an existing authentication record by email or mobile
     let auth = await this.authRepository.findByUniq({
       email,
       mobile,
     });
 
-    // If no record exists, create a new one
     if (!auth) {
       auth = await this.authRepository.create(authModel).save();
     } else {
-      // Update the existing record with the OTP code
       auth.verification_code = response.code;
       auth.verification_code_expiration = response.expiryTime;
       await this.authRepository.save(auth);
     }
-
-    // auth = await this.authRepository.preload({
-    //   ...auth,
-    //   mobile,
-    //   email,
-    //   verification_code: response.code,
-    //   verification_code_expiration: response.expiryTime,
-    // });
-
-    // auth = await this.authRepository.save(auth);
-
-    // generate jwt with the auth id
     const token = this.generateJwt(auth.id);
-
-    // add token to response
     const otpResponse = { ...response, token };
 
     return otpResponse;
@@ -107,56 +70,43 @@ export class AuthService {
     otp: string,
     entryTime: string,
   ): Promise<{ message: string; status: boolean }> {
-    try {
-      // console.log('authId: ', authId);
-      const auth = await this.authRepository.findOneBy({ id: authId });
+    const auth = await this.authRepository.findOneBy({ id: authId });
 
-      if (auth == null) throw new Error('Could not find associated account');
+    if (auth == null) throw new Error('Could not find associated account');
 
+    const expiryTime = new Date(
+      auth.verification_code_expiration,
+    ).toISOString();
+
+    entryTime = new Date(Date.now()).toISOString();
+    if (entryTime <= expiryTime) {
       if (otp === auth.verification_code) {
-        const expiryTime = new Date(
-          auth.verification_code_expiration,
-        ).toISOString();
+        await this.authRepository.update(authId, {
+          ...auth,
+          account_verified: true,
+        });
 
-        if (entryTime <= expiryTime) {
-          await this.authRepository.update(authId, {
-            ...auth,
-            account_verified: true,
-          });
-
-          return { message: 'OTP successfully verified', status: true };
-        } else {
-          return { message: 'OTP has expired', status: false };
-        }
+        return { message: 'OTP successfully verified', status: true };
       } else {
-        return { message: 'OTP does not match', status: false };
+        // return { message: 'OTP has expired', status: false };
+        throw new UnauthorizedException('OTP does not match');
       }
-    } catch (e) {
-      throw new Error(
-        `From AuthService.verifyOtp: Unable to verify otp with error message: ${e.message}`,
-      );
+    } else {
+      //return { message: 'OTP does not match', status: false };
+      throw new UnauthorizedException('OTP has expired');
     }
   }
 
   async findByEmailOrMobile(email: string, mobile: MobileDto): Promise<Auth> {
     try {
-      // console.log('email: ', email);
-      // console.log('mobile: ', mobile);
-
       const auth = await this.authRepository
         .createQueryBuilder('auth')
-        .leftJoinAndSelect('auth.user', 'user') // Include the user relationship
-        .leftJoinAndSelect('user.addresses', 'addresses') // Include the addresses relationship
         .where('auth.email = :email', { email })
         .orWhere('auth.mobile = :mobile', { mobile })
+        .leftJoinAndSelect('auth.user', 'user')
         .getOne();
 
-      if (!auth)
-        throw new UnauthorizedException(
-          'no auth account found with provided credentials',
-        );
-
-      return auth;
+      return auth || null;
     } catch (e) {
       throw new Error(
         `Error from findByEmailOrMobile method in auth.service.ts.
@@ -179,36 +129,6 @@ export class AuthService {
       );
     }
   }
-
-  // async create(
-  //   authDto: CreateAuthDto,
-  //   userID: string,
-  // ): Promise<{ token; message }> {
-  //   try {
-  //     const { email, mobile } = authDto;
-  //     const response: { message; code; expiryTime; token } = await this.sendOTP(
-  //       userID,
-  //       email,
-  //       mobile,
-  //     );
-
-  //     // create new auth object
-  //     const auth = await this.authRepository
-  //       .create({
-  //         ...authDto,
-  //         user: userID,
-  //       })
-  //       .save();
-
-  //     // save auth object
-  //     await auth.save();
-
-  //     // send back token
-  //     return { token: response.token, message: response.message };
-  //   } catch (e) {
-  //     throw new Error(`From AuthService.create method: ${e.message}`);
-  //   }
-  // }
 
   /**
    *
@@ -244,6 +164,46 @@ export class AuthService {
     } catch (e) {
       throw new Error(`From AuthService.login: ${e.message}`);
     }
+  }
+
+  async getUserWithAuth(input: InputObject): Promise<Auth> {
+    const auth = await this.authRepository.getUserWithAuth(input);
+    return auth || null;
+  }
+
+  /**
+   * Generates jwt token with 1 day expiration
+   * @param id
+   * @returns jwt token
+   */
+  private generateJwt(id: string) {
+    const privateKey = fs.readFileSync('./private_key.pem');
+    const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
+      expiresIn: '1d',
+    });
+    return token;
+  }
+
+  async deleteRegisteredUsers() {
+    // so for all accounts in the user and auth account, delete them
+    const last24Hours = new Date();
+    last24Hours.setHours(last24Hours.getHours() - 24);
+
+    const formattedLast24Hours = last24Hours
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+
+    try {
+      // Delete all auth accounts created in the last 24 hours
+      const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
+      const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
+      const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
+
+      await this.authRepository.createQueryBuilder(deleteAuthQuery);
+      await this.userRepository.createQueryBuilder(deleteUserQuery);
+      await this.addressRepository.createQueryBuilder(deleteAddQuery);
+    } catch (error) {}
   }
 
   // /**
@@ -331,20 +291,6 @@ export class AuthService {
   //   );
   // }
 
-  /**
-   * This endpoint is to test twilio send sms feature
-   * @param phone_number
-   * @returns
-   */
-  async sendOTPBySmsTest(phone_number: string) {
-    try {
-      await this.twilioService.sendSmsTest(phone_number);
-      return { success: true, message: 'SMS sent successfully.' };
-    } catch (error) {
-      return { success: false, message: 'Failed to send SMS.' };
-    }
-  }
-
   // /**
   //  * TODO: to be deleted after testing auth
   //  * THis method deletes registered users on that current day for testing purposes
@@ -376,39 +322,4 @@ export class AuthService {
   //   //   return { success: false, message: 'Reset failed from auth.service.ts' };
   //   // }
   // }
-
-  /**
-   * Generates jwt token with 1 day expiration
-   * @param id
-   * @returns jwt token
-   */
-  private generateJwt(id: string) {
-    const privateKey = fs.readFileSync('./private_key.pem');
-    const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
-      expiresIn: '1d',
-    });
-    return token;
-  }
-
-  async deleteRegisteredUsers() {
-    // so for all accounts in the user and auth account, delete them
-    const last24Hours = new Date();
-    last24Hours.setHours(last24Hours.getHours() - 24);
-
-    const formattedLast24Hours = last24Hours
-      .toISOString()
-      .slice(0, 19)
-      .replace('T', ' ');
-
-    try {
-      // Delete all auth accounts created in the last 24 hours
-      const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
-      const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
-      const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
-
-      await this.authRepository.createQueryBuilder(deleteAuthQuery);
-      await this.userRepository.createQueryBuilder(deleteUserQuery);
-      await this.addressRepository.createQueryBuilder(deleteAddQuery);
-    } catch (error) {}
-  }
 }

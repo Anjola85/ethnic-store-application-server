@@ -1,16 +1,13 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as SendGrid from '@sendgrid/mail';
-import { OTPCodeGenerator } from 'src/providers/util/OTPCodeGenerator';
+import { generateOtpCode } from 'src/providers/util/otp-code-util';
 
 @Injectable()
 export class SendgridService {
   private readonly logger = new Logger(SendgridService.name);
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly otpCodeGenerator: OTPCodeGenerator,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     SendGrid.setApiKey(this.configService.get<string>('SENDGRID_API_KEY'));
   }
 
@@ -24,16 +21,13 @@ export class SendgridService {
   async sendOTPEmail(
     receiverEmail: string,
     codeLength = 4,
-    expirationMinutes = 6,
+    expirationMinutes = 5,
   ): Promise<any> {
     // email address of sender is quickmartdev
     const senderEmailAddress = 'quickmartdev@gmail.com';
 
     // generate otp code
-    const otpResponse = await this.otpCodeGenerator.generateCode(
-      codeLength,
-      expirationMinutes,
-    );
+    const otpResponse = generateOtpCode(codeLength, expirationMinutes);
 
     // set otp code and expiry time
     const otpCode: string = otpResponse.code;
@@ -99,7 +93,9 @@ export class SendgridService {
    */
   async send(mail: SendGrid.MailDataRequired) {
     const transport = await SendGrid.send(mail);
-    this.logger.log(`E-Mail sent to ${mail.to}`);
+    const mailTo = mail.to.toString();
+    const maskedEmail = (mailTo.substring(0, 5), '*****');
+    this.logger.log(`E-Mail sent to ${maskedEmail}`);
     return transport;
   }
 }
