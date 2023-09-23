@@ -15,9 +15,9 @@ import { Repository } from 'typeorm';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { AuthRepository, InputObject } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
-import { Address } from '../user/entities/address.entity';
-import { UserDto } from '../user/dto/user.dto';
+import { Address } from '../address/entities/address.entity';
 import { mapAuthToUser } from '../user/user-mapper';
+import { UserDto } from '../user/dto/user.dto';
 
 @Injectable()
 export class AuthService {

@@ -8,17 +8,13 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { AddressDto } from 'src/common/dto/address.dto';
-import {
-  ImagesDto,
-  UploadedImagesDto,
-} from 'src/modules/business/dto/image.dto';
 import { MobileGroupDto } from 'src/common/dto/mobile.dto';
 import { ScheduleDto } from 'src/modules/business/dto/schedule.dto';
 import { GeoLocationDto } from './geolocation.dto';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
+import { AddressDto } from 'src/modules/address/dto/address.dto';
 
 export class CreateBusinessDto {
   @IsOptional() // remove this

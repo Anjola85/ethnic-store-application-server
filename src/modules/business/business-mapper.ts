@@ -1,7 +1,7 @@
 import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 import { Business } from './entities/business.entity';
 import { CreateBusinessDto } from './dto/create-business.dto';
-import { Address } from '../user/entities/address.entity';
+import { Address } from '../address/entities/address.entity';
 
 export function mapBusinessData(
   businessData: CreateBusinessDto,

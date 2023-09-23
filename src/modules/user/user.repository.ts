@@ -10,8 +10,6 @@ export class UserRepository extends Repository<User> {
 
   async getUserById(id: string): Promise<User> {
     try {
-      // const user = await this.findBy({ id });
-      // get user and join with address
       const user = await this.createQueryBuilder('user')
         .leftJoinAndSelect('user.addresses', 'address')
         .where('user.id = :id', { id })
@@ -24,4 +22,6 @@ export class UserRepository extends Repository<User> {
       );
     }
   }
+
+  // update user method
 }

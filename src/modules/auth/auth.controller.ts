@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { loginDto } from './dto/login.dto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { UserController } from '../user/user.controller';
 import { UserService } from '../user/user.service';
@@ -21,10 +20,8 @@ import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { createError, createResponse } from '../../common/util/response';
 import { secureLoginDto } from './dto/secure-login.dto';
-import Api from 'twilio/lib/rest/Api';
 import { ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { CreateUserDto } from '../user/dto/create-user.dto';
 import { UserDto } from '../user/dto/user.dto';
 import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
 
@@ -119,7 +116,7 @@ export class AuthController {
       }
 
       // convert decrypted to createuserDto
-      const userDto = new CreateUserDto();
+      const userDto = new UserDto();
       Object.assign(userDto, decryptedBody);
       userDto.profileImage = files?.profileImage[0] || null;
 
@@ -206,7 +203,7 @@ export class AuthController {
         });
       }
       // reset user account
-      const response = await this.authService.deleteRegisteredUsers();
+      await this.authService.deleteRegisteredUsers();
       return res.status(HttpStatus.OK).json(createResponse('reset successful'));
     } catch (error) {
       return res

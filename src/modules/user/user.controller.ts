@@ -1,27 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Res,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
 import { Response } from 'express';
-import { UserAccountService } from '../user_account/user_account.service';
-import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
-import { CreateAuthDto } from '../auth/dto/create-auth.dto';
 import { createError, createResponse } from '../../common/util/response';
 import { encryptKms, toBuffer } from 'src/common/util/crypto';
-import { User } from './entities/user.entity';
-import { EntityMobileDto, MobileDto } from 'src/common/dto/mobile.dto';
-import { UserDto } from './dto/user.dto';
 
 @Controller('user')
 export class UserController {
@@ -42,7 +25,7 @@ export class UserController {
    */
   @Post('register')
   async create(
-    @Body() createUserDto: CreateUserDto,
+    @Body() createUserDto: UserDto,
     @Res() res: Response,
   ): Promise<any> {
     try {

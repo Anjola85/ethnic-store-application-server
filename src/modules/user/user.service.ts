@@ -1,6 +1,7 @@
+import { AddressService } from './../address/address.service';
 import { InputObject } from './../auth/auth.repository';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UserProfile } from './user.enums';
 import { Model } from 'mongoose';
@@ -11,22 +12,21 @@ import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Address } from './entities/address.entity';
+import { Address } from '../address/entities/address.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { Auth } from '../auth/entities/auth.entity';
 import { AuthService } from '../auth/auth.service';
 import { UserFileService } from '../files/user-files.service';
-import { mapAuthToUser, mapUserData } from './user-mapper';
+import { mapAuthToUser, userDtoToEntity } from './user-mapper';
 import { UserRepository } from './user.repository';
-import { UserDto } from './dto/user.dto';
+import { AddressDto } from '../address/dto/address.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     private userRepository: UserRepository,
-    @InjectRepository(Address)
-    private addressRepository: Repository<Address>,
-    private readonly authService: AuthService,
+    private addressService: AddressService,
+    private authService: AuthService,
     private userFileService: UserFileService,
   ) {}
   /**
@@ -34,7 +34,7 @@ export class UserService {
    * @param CreateUserDto - parsed request body
    * @returns
    */
-  async create(userDto: CreateUserDto): Promise<any> {
+  async create(userDto: UserDto): Promise<any> {
     let userModel: User;
     let userExists: boolean;
 
@@ -51,33 +51,33 @@ export class UserService {
     }
 
     if (!userExists) {
-      const { address, ...userData } = userDto;
+      const address: AddressDto[] = await this.addressService.addUserAddress(
+        userDto.address[0],
+      );
 
-      const addressId = await this.addressRepository.create({
-        primary: true,
-        ...address,
-      });
+      // reassigned address to the first address in the array
+      userDto.address = address;
 
-      userDto.addresses = [addressId];
+      const newUserEntity = new User();
 
-      let userId: string;
-
-      if (!userData.profileImage) {
+      if (!userDto.profileImage) {
+        // if image provided
         userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
       } else {
+        // if image not provided
         userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
-          userId,
-          userData.profileImage,
+          newUserEntity.id,
+          userDto.profileImage,
         );
       }
 
-      const newUser: User = mapUserData(userDto);
+      userDtoToEntity(userDto, newUserEntity);
 
-      userModel = await this.userRepository.create(newUser).save();
+      userModel = await this.userRepository.create(newUserEntity).save();
 
       await this.authService.updateAuthUserId(auth.id, userModel);
-      addressId.user = userModel;
-      await this.addressRepository.save(addressId);
+      address[0].user = userModel;
+      await this.addressService.updateAddress(address[0].id, address[0]);
     }
 
     const input: InputObject = { id: auth.id };

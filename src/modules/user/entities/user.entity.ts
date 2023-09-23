@@ -1,7 +1,8 @@
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
 import { UserProfile } from '../user.enums';
-import { Address } from './address.entity';
+import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
+import { Address } from 'src/modules/address/entities/address.entity';
 
 @Entity('users')
 export class User extends CommonEntity {
@@ -14,6 +15,10 @@ export class User extends CommonEntity {
   @OneToMany(() => Address, (address) => address.user)
   @JoinColumn()
   addresses: Address[];
+
+  @OneToMany(() => Favourite, (favourite) => favourite.business)
+  @JoinColumn()
+  favourites: Favourite[];
 
   @Column({ type: 'varchar', default: UserProfile.CUSTOMER })
   user_profile: string;
