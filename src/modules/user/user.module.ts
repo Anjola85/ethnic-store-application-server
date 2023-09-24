@@ -15,6 +15,7 @@ import { UserRepository } from './user.repository';
 import { Favourite } from '../favourite/entities/favourite.entity';
 import { AddressService } from '../address/address.service';
 import { AddressRepository } from '../address/address.respository';
+import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Address, Auth, Favourite])],
@@ -30,6 +31,7 @@ import { AddressRepository } from '../address/address.respository';
     UserRepository,
     AddressService,
     AddressRepository,
+    GeocodingService,
   ],
 })
 export class UserModule {}

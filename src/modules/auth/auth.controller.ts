@@ -24,6 +24,7 @@ import { ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UserDto } from '../user/dto/user.dto';
 import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
+import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Controller('auth')
 export class AuthController {
@@ -33,6 +34,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly awsSecretKey: AwsSecretKey,
+    private readonly geocodingService: GeocodingService,
   ) {
     this.userController = new UserController(userService, authService);
   }

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNotEmpty,
+  IsLongitude,
+  IsLatitude,
+} from 'class-validator';
 import { BaseDto } from 'src/common/dto/base.dto';
 import { Business } from 'src/modules/business/entities/business.entity';
 import { User } from 'src/modules/user/entities/user.entity';
@@ -44,4 +50,9 @@ export class AddressDto extends BaseDto {
 
   @IsOptional()
   business: Business = null;
+
+  @IsOptional()
+  @IsLatitude()
+  @IsLongitude()
+  location: string;
 }

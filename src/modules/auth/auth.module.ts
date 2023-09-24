@@ -16,6 +16,7 @@ import { AuthRepository } from './auth.repository';
 import { UserRepository } from '../user/user.repository';
 import { AddressRepository } from '../address/address.respository';
 import { AddressService } from '../address/address.service';
+import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Auth, User, Address])],
@@ -32,6 +33,7 @@ import { AddressService } from '../address/address.service';
     AwsS3Service,
     AuthRepository,
     UserRepository,
+    GeocodingService,
   ],
 })
 export class AuthModule {}

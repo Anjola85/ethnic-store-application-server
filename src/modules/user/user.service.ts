@@ -80,7 +80,7 @@ export class UserService {
 
     const input: InputObject = { id: auth.id };
     const authObj = await this.authService.getUserWithAuth(input);
-    const user: UserDto = mapAuthToUser(authObj);
+    const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
 
     const privateKey = fs.readFileSync('./private_key.pem');
     const token = jsonwebtoken.sign(

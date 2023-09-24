@@ -14,6 +14,7 @@ import { AuthRepository } from 'src/modules/auth/auth.repository';
 import { UserRepository } from 'src/modules/user/user.repository';
 import { AddressService } from 'src/modules/address/address.service';
 import { AddressRepository } from 'src/modules/address/address.respository';
+import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AddressRepository } from 'src/modules/address/address.respository';
     UserRepository,
     AddressService,
     AddressRepository,
+    GeocodingService,
   ],
 })
 export class SendgridModule {}

@@ -13,6 +13,7 @@ export function addressDtoToEntity(address: AddressDto): Address {
   addressEntity.country = address.country;
   addressEntity.user = address.user;
   addressEntity.business = address.business;
+  addressEntity.location = address.location;
 
   return addressEntity;
 }
@@ -29,6 +30,7 @@ export function entityToAddressDto(address: Address): AddressDto {
   addressDto.country = address.country;
   addressDto.user = address.user;
   addressDto.business = address.business;
+  addressDto.location = address.location;
 
   return addressDto;
 }

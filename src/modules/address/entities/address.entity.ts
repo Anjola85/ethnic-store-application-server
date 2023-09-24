@@ -33,4 +33,7 @@ export class Address extends CommonEntity {
 
   @Column()
   country: string;
+
+  @Column({ type: 'point', nullable: true })
+  location: string;
 }
