@@ -46,10 +46,10 @@ export class UserFileService {
 
   // endpoint to upload profile picture
   async uploadProfileImage(
-    user_id: string,
+    userId: string,
     imageBlob: Express.Multer.File,
   ): Promise<string> {
-    const folderPath = `${this.rootFolder}/${user_id}/${this.profileFolder}`;
+    const folderPath = `${this.rootFolder}/${userId}/${this.profileFolder}`;
     const profilePictureUrl = await this.awsS3Service.uploadImgToFolder(
       folderPath,
       imageBlob.buffer,
@@ -59,17 +59,17 @@ export class UserFileService {
 
   /**
    *
-   * @param user_id
+   * @param userId
    * @param imageBlob
    * @param docName
    * @returns
    */
   async uploadDocument(
-    user_id: string,
+    userId: string,
     imageBlob: Express.Multer.File,
     docName: string,
   ): Promise<string> {
-    const folderPath = `${this.rootFolder}/${user_id}/${this.documentFolder}/${docName}/${imageBlob.originalname}`;
+    const folderPath = `${this.rootFolder}/${userId}/${this.documentFolder}/${docName}/${imageBlob.originalname}`;
     const documentUrl = await this.awsS3Service.uploadImgToFolder(
       folderPath,
       imageBlob.buffer,

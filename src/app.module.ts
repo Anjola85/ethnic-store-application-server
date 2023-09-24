@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
-import { UserAccountModule } from './modules/user_account/user_account.module';
 import { DatabseModule } from './modules/database/database.module';
 import { CategoryModule } from './modules/category/category.module';
 import { BusinessModule } from './modules/business/business.module';
@@ -24,8 +23,10 @@ import { Business } from './modules/business/entities/business.entity';
 import { Country } from './modules/country/entities/country.entity';
 import { Continent } from './modules/continent/entities/continent.entity';
 import { Category } from './modules/category/entities/category.entity';
-import { Address } from './modules/user/entities/address.entity';
 import { Auth } from './modules/auth/entities/auth.entity';
+import { Favourite } from './modules/favourite/entities/favourite.entity';
+import { AddressModule } from './modules/address/address.module';
+import { Address } from './modules/address/entities/address.entity';
 
 @Module({
   imports: [
@@ -40,7 +41,16 @@ import { Auth } from './modules/auth/entities/auth.entity';
       username: process.env.PG_USER,
       password: process.env.PG_PASSWORD,
       database: process.env.PG_DATABASE,
-      entities: [User, Business, Country, Continent, Category, Address, Auth],
+      entities: [
+        User,
+        Business,
+        Country,
+        Continent,
+        Category,
+        Address,
+        Auth,
+        Favourite,
+      ],
       synchronize: true,
       // ssl: {
       //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
@@ -64,7 +74,6 @@ import { Auth } from './modules/auth/entities/auth.entity';
     DatabseModule,
     AuthModule,
     UserModule,
-    UserAccountModule,
     BusinessModule,
     CategoryModule,
     CountryModule,
@@ -72,6 +81,8 @@ import { Auth } from './modules/auth/entities/auth.entity';
     ReviewsModule,
     FavouriteModule,
     ImagesModule,
+    FavouriteModule,
+    AddressModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService],

@@ -15,9 +15,9 @@ import { Repository } from 'typeorm';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { AuthRepository, InputObject } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
-import { Address } from '../user/entities/address.entity';
-import { UserDto } from '../user/dto/user.dto';
+import { Address } from '../address/entities/address.entity';
 import { mapAuthToUser } from '../user/user-mapper';
+import { UserDto } from '../user/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,7 +38,6 @@ export class AuthService {
     let response: { message; code; expiryTime };
 
     if (email) {
-      console.log(':sending email');
       response = await this.sendgridService.sendOTPEmail(email);
     } else if (mobile) {
       const phone_number = mobile?.phoneNumber || '';
@@ -122,6 +121,9 @@ export class AuthService {
   // method to update auth account user id
   async updateAuthUserId(authId: string, user: User): Promise<any> {
     try {
+      if (!authId) throw new Error('authId is required');
+      if (!user) throw new Error('user is required');
+
       const auth = await this.authRepository.update(authId, {
         user,
       });

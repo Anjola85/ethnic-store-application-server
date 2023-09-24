@@ -7,7 +7,7 @@ import {
   BusinessImages,
 } from '../files/business-files.service';
 import { ImagesDto } from './dto/image.dto';
-import { Address } from '../user/entities/address.entity';
+import { Address } from '../address/entities/address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { mapBusinessData } from './business-mapper';
 

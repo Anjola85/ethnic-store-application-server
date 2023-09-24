@@ -1,29 +1,13 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  HttpStatus,
-  Res,
   UseInterceptors,
   UploadedFiles,
-  UploadedFile,
-  Req,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
-import { UpdateBusinessDto } from './dto/update-business.dto';
-import { Request, Response } from 'express';
-import {
-  FileFieldsInterceptor,
-  FileInterceptor,
-} from '@nestjs/platform-express';
-import { AddressDto } from 'src/common/dto/address.dto';
-import { MobileDto } from 'src/common/dto/mobile.dto';
-import { ScheduleDto } from './dto/schedule.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('business')
 export class BusinessController {
