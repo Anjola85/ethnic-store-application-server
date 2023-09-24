@@ -6,11 +6,11 @@ import { User } from 'src/modules/user/entities/user.entity';
 
 export class AddressDto extends BaseDto {
   @ApiProperty()
-  @IsOptional()
-  primary: boolean;
+  @IsNotEmpty()
+  primary = true;
 
   @ApiProperty({ example: '123' })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   unit: string;
 

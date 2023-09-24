@@ -9,7 +9,7 @@ export class EntityMobileDto {
   country_code: string;
 
   @ApiProperty({ example: 'CA' })
-  iso_code: string;
+  iso_type: string;
 }
 
 /**
@@ -26,7 +26,7 @@ export class MobileDto {
 
   @ApiProperty({ example: 'CA' })
   @IsString()
-  isoCode: string;
+  isoType: string;
 }
 
 export class MobileGroupDto {
@@ -34,7 +34,7 @@ export class MobileGroupDto {
     example: {
       phoneNumber: '+6473334839',
       countryCode: '+1',
-      isoCode: 'CA',
+      isoType: 'CA',
     },
   })
   @IsObject()
@@ -42,14 +42,14 @@ export class MobileGroupDto {
   primary: {
     phoneNumber: string;
     countryCode: string;
-    isoCode: string;
+    isoType: string;
   };
 
   @ApiProperty({
     example: {
       phone_number: '+6473334839',
       country_code: '+1',
-      isoCode: 'CA',
+      isoType: 'CA',
     },
   })
   @IsObject()
@@ -57,6 +57,6 @@ export class MobileGroupDto {
   secondary: {
     phoneNumber: string;
     countryCode: string;
-    isoCode: string;
+    isoType: string;
   };
 }

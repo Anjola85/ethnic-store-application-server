@@ -45,6 +45,14 @@ export class UserDto {
   })
   address: AddressDto[];
 
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    description: 'The type of user being resgistered',
+    example: 'customer',
+  })
+  userProfile: string | UserProfile;
+
   @IsOptional()
   @IsEmail()
   @ApiProperty({
@@ -62,17 +70,10 @@ export class UserDto {
   })
   mobile: MobileDto;
 
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty({
-    description: 'The type of user being resgistered',
-    example: 'customer',
-  })
-  userProfile: string | UserProfile;
-
   @IsOptional()
   dob: string;
 
+  @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary' })
   profileImage: Express.Multer.File;
 

@@ -12,18 +12,21 @@ export class AddressService {
   /**
    *
    * @param addressDto
-   * @returns AddressDto[]
+   * @returns AddressDto[newly added address]
    */
-  async addUserAddress(addressDto: AddressDto): Promise<AddressDto[]> {
+  async addUserAddress(addressDto: AddressDto): Promise<string> {
     const addressEntity: Address = addressDtoToEntity(addressDto);
-    await this.addressRepository.addUserAddress(addressEntity);
-    const allAddresses = await this.addressRepository.getUserAddress(
-      addressDto.user.id,
-    );
-    const userAddress: AddressDto[] = allAddresses.map((address) =>
+    const response = await this.addressRepository.addUserAddress(addressEntity);
+    return response.identifiers[0].id;
+  }
+
+  async getUserAddress(id: string): Promise<AddressDto[]> {
+    const addressEntity: Address[] =
+      await this.addressRepository.getUserAddress(id);
+    const addressDto: AddressDto[] = addressEntity.map((address) =>
       entityToAddressDto(address),
     );
-    return userAddress;
+    return addressDto;
   }
 
   /**
@@ -32,13 +35,13 @@ export class AddressService {
    * @param addressDto
    * @returns updated AddressDto
    */
-  async updateAddress(
-    addressId: string,
-    addressDto: AddressDto,
-  ): Promise<AddressDto> {
+  async updateAddress(addressDto: AddressDto): Promise<AddressDto> {
+    if (!addressDto || !addressDto.id)
+      throw new Error('Address id is required');
+
     const addressEntity: Address = addressDtoToEntity(addressDto);
     const updatedAddressEntity = await this.addressRepository.updateAddressById(
-      addressId,
+      addressDto.id,
       addressEntity,
     );
     const address: AddressDto = entityToAddressDto(updatedAddressEntity);

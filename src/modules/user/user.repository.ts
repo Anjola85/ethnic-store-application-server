@@ -23,5 +23,19 @@ export class UserRepository extends Repository<User> {
     }
   }
 
-  // update user method
+  async addUser(user: User) {
+    try {
+      const newUser = await this.createQueryBuilder('user')
+        .insert()
+        .into(User)
+        .values(user)
+        .execute();
+      return newUser;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, createUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

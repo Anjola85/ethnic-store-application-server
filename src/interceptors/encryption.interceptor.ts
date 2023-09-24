@@ -15,7 +15,7 @@ export class EncryptionInterceptor implements NestInterceptor {
     // Get the response data from the route handler
     return next.handle().pipe(
       map((data) => {
-        console.log('Response: ', data.body);
+        // console.log('Response: ', data.body);
         // Encrypt the response data here
         // const encryptedData = encryptKms(data);
         // return encryptedData;

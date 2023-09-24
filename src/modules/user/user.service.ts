@@ -30,7 +30,7 @@ export class UserService {
     private userFileService: UserFileService,
   ) {}
   /**
-   *
+   * TODO: rename this to register
    * @param CreateUserDto - parsed request body
    * @returns
    */
@@ -51,12 +51,9 @@ export class UserService {
     }
 
     if (!userExists) {
-      const address: AddressDto[] = await this.addressService.addUserAddress(
-        userDto.address[0],
-      );
-
-      // reassigned address to the first address in the array
-      userDto.address = address;
+      const address = userDto.address[0];
+      address.id = await this.addressService.addUserAddress(userDto.address[0]);
+      userDto.address = [address];
 
       const newUserEntity = new User();
 
@@ -71,13 +68,14 @@ export class UserService {
         );
       }
 
+      // map modified field
       userDtoToEntity(userDto, newUserEntity);
 
       userModel = await this.userRepository.create(newUserEntity).save();
 
       await this.authService.updateAuthUserId(auth.id, userModel);
-      address[0].user = userModel;
-      await this.addressService.updateAddress(address[0].id, address[0]);
+      address.user = userModel;
+      await this.addressService.updateAddress(address);
     }
 
     const input: InputObject = { id: auth.id };

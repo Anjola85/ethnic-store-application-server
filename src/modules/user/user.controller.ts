@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
 import { Response } from 'express';
@@ -8,6 +15,7 @@ import { encryptKms, toBuffer } from 'src/common/util/crypto';
 
 @Controller('user')
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
   /**
    *
    * @param userService
@@ -52,6 +60,10 @@ export class UserController {
         .status(HttpStatus.CREATED)
         .json(createResponse('user successfully registered', encryptedUser));
     } catch (err) {
+      this.logger.error(
+        "Error occurred in 'create' method of UserController with error: " +
+          err,
+      );
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json(createError('failed to register user', err.message));

@@ -73,6 +73,8 @@ export class AddressRepository extends Repository<Address> {
   // get all users address
   async getUserAddress(userId: string): Promise<Address[]> {
     try {
+      if (!userId) throw new Error('userId is required');
+
       const addresses = await this.createQueryBuilder('address')
         .where('address.user.id = :userId', { userId })
         .getMany();
