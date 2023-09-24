@@ -44,6 +44,7 @@ export class AuthRepository extends Repository<Auth> {
         .orWhere('auth.mobile = :mobile', { mobile: entityMobile })
         .leftJoinAndSelect('auth.user', 'user')
         .leftJoinAndSelect('user.addresses', 'address')
+        .leftJoinAndSelect('user.favourites', 'favourites')
         .getOne();
 
       return auth || null;
