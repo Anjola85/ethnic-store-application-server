@@ -6,10 +6,11 @@ import { Address } from './entities/address.entity';
 import { User } from '../user/entities/user.entity';
 import { Business } from '../business/entities/business.entity';
 import { AddressRepository } from './address.respository';
+import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Address, User, Business])],
   controllers: [AddressController],
-  providers: [AddressService, AddressRepository],
+  providers: [AddressService, AddressRepository, GeocodingService],
 })
 export class AddressModule {}

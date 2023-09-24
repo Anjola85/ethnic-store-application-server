@@ -4,10 +4,14 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { addressDtoToEntity, entityToAddressDto } from './address-mapper';
 import { AddressRepository } from './address.respository';
 import { Address } from './entities/address.entity';
+import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Injectable()
 export class AddressService {
-  constructor(private readonly addressRepository: AddressRepository) {}
+  constructor(
+    private readonly addressRepository: AddressRepository,
+    private readonly geoCodingService: GeocodingService,
+  ) {}
 
   /**
    *
@@ -15,6 +19,7 @@ export class AddressService {
    * @returns AddressDto[newly added address]
    */
   async addUserAddress(addressDto: AddressDto): Promise<string> {
+    await this.geoCodingService.setCoordinates(addressDto);
     const addressEntity: Address = addressDtoToEntity(addressDto);
     const response = await this.addressRepository.addUserAddress(addressEntity);
     return response.identifiers[0].id;
