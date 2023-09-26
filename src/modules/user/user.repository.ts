@@ -38,4 +38,20 @@ export class UserRepository extends Repository<User> {
       );
     }
   }
+
+  async updateUser(user: User) {
+    try {
+      const updatedUser = await this.createQueryBuilder('user')
+        .update(User)
+        .set(user)
+        .where('id = :id', { id: user.id })
+        .execute();
+      return updatedUser;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, updateUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

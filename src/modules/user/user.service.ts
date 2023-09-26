@@ -94,6 +94,24 @@ export class UserService {
     return { token, user, userExists };
   }
 
+  async getUserById(id: string): Promise<User> {
+    const user = await this.userRepository.getUserById(id);
+    return user;
+  }
+
+  /**
+   *
+   * @param userDto
+   * @returns the updated user info
+   */
+  async updateUser(userDto: UserDto): Promise<UserDto> {
+    const userEntity = new User();
+    userDtoToEntity(userDto, userEntity);
+    const resp = await this.userRepository.updateUser(userEntity);
+    console.log('newly updated user: ', resp);
+    return userDto;
+  }
+
   // /**
   //  * Get all users
   //  * @returns

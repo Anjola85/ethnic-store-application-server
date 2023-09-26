@@ -9,6 +9,7 @@ import {
   UploadedFiles,
   UnauthorizedException,
   Logger,
+  Patch,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -88,6 +89,45 @@ export class AuthController {
           .status(HttpStatus.BAD_REQUEST)
           .json(createError('login failed', error.message));
       }
+    }
+  }
+
+  // TODO: update user information endpoint
+  @Patch('upadte-user')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
+  )
+  async updateUser(
+    @Body() requestBody: any,
+    @UploadedFiles() files: any,
+    @Res() res: Response,
+  ): Promise<any> {
+    try {
+      const decryptedBody = await decryptKms(requestBody.payload);
+
+      // convert decrypted to createuserDto
+      const userDto = new UserDto();
+      Object.assign(userDto, decryptedBody);
+      userDto.id = res.locals.id; // get user id from auth middleware
+      userDto.profileImage = files?.profileImage[0] || null;
+
+      const result = await this.authService.updateUserInfo(userDto);
+
+      return result;
+    } catch (error) {
+      // Handle any error that occurs during the registration process
+      if (error instanceof InternalServerError) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createError('500 user registeration failed', error.message));
+      } else if (error instanceof UnauthorizedException) {
+        return res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json(createError('401 user registeration failed', error.message));
+      }
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(createError('400 user registeration failed ', error.message));
     }
   }
 
@@ -186,38 +226,36 @@ export class AuthController {
     }
   }
 
-  // TODO: update user information endpoint
-
   // TODO: delete user endpoint
 
   // From here: to be deleted
-  @Post('reset')
-  async reset(@Query('clear') clear: boolean, @Res() res: Response) {
-    try {
-      // take in query param resetType to be true or false
-      if (clear === undefined || clear === null) {
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          message: 'clear query param is required',
-        });
-      } else if (clear === false) {
-        return res.status(HttpStatus.OK).json({
-          message: 'clear query param must be true in order to reset',
-        });
-      }
-      // reset user account
-      await this.authService.deleteRegisteredUsers();
-      return res.status(HttpStatus.OK).json(createResponse('reset successful'));
-    } catch (error) {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(
-          createError(
-            `400 reset failed from auth.controller.ts`,
-            error.message,
-          ),
-        );
-    }
-  }
+  // @Post('reset')
+  // async reset(@Query('clear') clear: boolean, @Res() res: Response) {
+  //   try {
+  //     // take in query param resetType to be true or false
+  //     if (clear === undefined || clear === null) {
+  //       return res.status(HttpStatus.BAD_REQUEST).json({
+  //         message: 'clear query param is required',
+  //       });
+  //     } else if (clear === false) {
+  //       return res.status(HttpStatus.OK).json({
+  //         message: 'clear query param must be true in order to reset',
+  //       });
+  //     }
+  //     // reset user account
+  //     await this.authService.deleteRegisteredUsers();
+  //     return res.status(HttpStatus.OK).json(createResponse('reset successful'));
+  //   } catch (error) {
+  //     return res
+  //       .status(HttpStatus.BAD_REQUEST)
+  //       .json(
+  //         createError(
+  //           `400 reset failed from auth.controller.ts`,
+  //           error.message,
+  //         ),
+  //       );
+  //   }
+  // }
 
   @Post('encrypt')
   @ApiBody({

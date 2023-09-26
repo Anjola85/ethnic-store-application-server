@@ -17,6 +17,10 @@ import { AddressDto } from 'src/modules/address/dto/address.dto';
  * This class has all the possible fields required to register a user
  */
 export class UserDto {
+  @IsOptional()
+  @IsString()
+  id: string;
+
   @IsNotEmpty()
   @IsString()
   code: string;
