@@ -7,6 +7,7 @@ import {
   addressDtoToEntity,
   entityToAddressDto,
 } from 'src/modules/address/address-mapper';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 export function userDtoToEntity(userDto: UserDto, userEntity: User): void {
   userEntity.first_name = userDto.firstName;

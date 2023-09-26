@@ -1,7 +1,4 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { loginDto } from './dto/login.dto';
-import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Auth } from './entities/auth.entity';
@@ -14,8 +11,8 @@ import { AuthRepository, InputObject } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
 import { mapAuthToUser } from '../user/user-mapper';
 import { UserDto } from '../user/dto/user.dto';
-import { UserService } from '../user/user.service';
-import { InjectRepository } from '@nestjs/typeorm';
+import { UserFileService } from '../files/user-files.service';
+import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 
 @Injectable()
 export class AuthService {
@@ -23,9 +20,9 @@ export class AuthService {
 
   constructor(
     private authRepository: AuthRepository,
-    @InjectRepository(User) private readonly userRepository: UserService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
+    private readonly userFileService: UserFileService,
   ) {}
 
   async sendOtp(
@@ -133,6 +130,22 @@ export class AuthService {
     }
   }
 
+  // method to update auth account email or mobile
+  async updateAuthEmailOrMobile(
+    userId: string,
+    email: string,
+    mobileDto: MobileDto,
+  ): Promise<any> {
+    if (!userId) throw new Error('userId is required');
+    if (!email && !mobileDto) throw new Error('email or mobile is required');
+    const auth = await this.authRepository.update(userId, {
+      email,
+      mobile: mobileToEntity(mobileDto),
+    });
+
+    return auth;
+  }
+
   /**
    *
    * @param loginDto
@@ -144,7 +157,7 @@ export class AuthService {
         email: loginDto.email,
         mobile: loginDto.mobile,
       };
-      const authAcct = await this.getUserWithAuth(input);
+      const authAcct = await this.getAllUserInfo(input);
 
       if (!authAcct) throw new Error('Invalid credentials');
 
@@ -166,7 +179,7 @@ export class AuthService {
     }
   }
 
-  async getUserWithAuth(input: InputObject): Promise<Auth> {
+  async getAllUserInfo(input: InputObject): Promise<Auth> {
     const auth = await this.authRepository.getUserWithAuth(input);
     return auth || null;
   }
@@ -176,7 +189,7 @@ export class AuthService {
    * @param id
    * @returns jwt token
    */
-  private generateJwt(id: string) {
+  public generateJwt(id: string) {
     const privateKey = fs.readFileSync('./private_key.pem');
     const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
       expiresIn: '1d',
@@ -205,29 +218,4 @@ export class AuthService {
   //     await this.addressRepository.createQueryBuilder(deleteAddQuery);
   //   } catch (error) {}
   // }
-
-  /**
-   *
-   * @param userDto
-   * @returns {token, user}
-   */
-  async updateUserInfo(
-    userDto: UserDto,
-  ): Promise<{ token: string; user: UserDto }> {
-    try {
-      if (!userDto?.id) throw new Error('User id is required');
-
-      const user = await this.userRepository.getUserById(userDto.id);
-
-      if (!user) throw new Error('User not found');
-
-      const updatedUser = await this.userRepository.updateUser(userDto);
-
-      const token = this.generateJwt(userDto.id);
-
-      return { token, user: userDto };
-    } catch (e) {
-      throw new Error(`From AuthService.updateUserInfo: ${e.message}`);
-    }
-  }
 }

@@ -9,11 +9,13 @@ export interface InputObject {
   id?: string;
   email?: string;
   mobile?: MobileDto;
+  userId?: string;
 }
 
 @Injectable()
 export class AuthRepository extends Repository<Auth> {
   private readonly logger = new Logger(AuthRepository.name);
+
   constructor(private dataSource: DataSource) {
     super(Auth, dataSource.createEntityManager());
   }
@@ -36,12 +38,13 @@ export class AuthRepository extends Repository<Auth> {
 
   async getUserWithAuth(input: InputObject): Promise<Auth> {
     try {
-      const { id, email, mobile } = input;
+      const { id, email, mobile, userId } = input;
       const entityMobile = mobileToEntity(mobile);
       const auth = await this.createQueryBuilder('auth')
         .where('auth.id = :id', { id })
         .orWhere('auth.email = :email', { email })
         .orWhere('auth.mobile = :mobile', { mobile: entityMobile })
+        .orWhere('auth.user.id = :id', { userId })
         .leftJoinAndSelect('auth.user', 'user')
         .leftJoinAndSelect('user.addresses', 'address')
         .leftJoinAndSelect('user.favourites', 'favourites')

@@ -1,3 +1,4 @@
+import { UserFileService } from 'src/modules/files/user-files.service';
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -9,7 +10,6 @@ import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { Address } from '../address/entities/address.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserFileService } from '../files/user-files.service';
 import { AwsS3Service } from '../files/aws-s3.service';
 import { AuthRepository } from './auth.repository';
 import { UserRepository } from '../user/user.repository';

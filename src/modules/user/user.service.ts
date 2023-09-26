@@ -20,6 +20,7 @@ import { UserFileService } from '../files/user-files.service';
 import { mapAuthToUser, userDtoToEntity } from './user-mapper';
 import { UserRepository } from './user.repository';
 import { AddressDto } from '../address/dto/address.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -29,11 +30,7 @@ export class UserService {
     private authService: AuthService,
     private userFileService: UserFileService,
   ) {}
-  /**
-   * TODO: rename this to register
-   * @param CreateUserDto - parsed request body
-   * @returns
-   */
+
   async create(userDto: UserDto): Promise<any> {
     let userModel: User;
     let userExists: boolean;
@@ -79,7 +76,7 @@ export class UserService {
     }
 
     const input: InputObject = { id: auth.id };
-    const authObj = await this.authService.getUserWithAuth(input);
+    const authObj = await this.authService.getAllUserInfo(input);
     const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
 
     const privateKey = fs.readFileSync('./private_key.pem');
@@ -104,98 +101,40 @@ export class UserService {
    * @param userDto
    * @returns the updated user info
    */
-  async updateUser(userDto: UserDto): Promise<UserDto> {
+  async updateUser(userDto: UserDto): Promise<void> {
     const userEntity = new User();
     userDtoToEntity(userDto, userEntity);
     const resp = await this.userRepository.updateUser(userEntity);
-    console.log('newly updated user: ', resp);
-    return userDto;
   }
 
-  // /**
-  //  * Get all users
-  //  * @returns
-  //  */
-  // async findAll(): Promise<any> {
-  //   try {
-  //     const users = await this.userModel.find().exec();
-  //     return users;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error retrieving all users from database
-  //       \nfrom findAll method in user.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+  /**
+   *
+   * @param userDto
+   * @returns {token, user}
+   */
+  async updateUserInfo(userDto: UserDto): Promise<void> {
+    if (!userDto?.id) throw new Error('User id is required');
 
-  // /**
-  //  *
-  //  * @param id
-  //  * @returns
-  //  */
-  // async findOne(id: string): Promise<any> {
-  //   try {
-  //     const user = await this.userModel.findById(id).exec();
-  //     // throw error if user does not exist
-  //     if (!user) {
-  //       throw new Error(`User with id ${id} not found`);
-  //     }
-  //     if (user.deleted) {
-  //       throw new Error(`User with id ${id} has been deleted`);
-  //     }
-  //     return user;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error getting user information for user with id ${id},
-  //       \nfrom findOne method in user.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+    const user = await this.getUserById(userDto.id);
 
-  // /**
-  //  *
-  //  * @param id
-  //  */
-  // async update(id: string): Promise<void> {
-  //   try {
-  //     // no field to update, but change updatedAt to latest
-  //     await this.userModel.updateOne(
-  //       { _id: id },
-  //       { $set: { updatedAt: new Date() } },
-  //     );
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error update user information for user with id ${id},
-  //       \nfrom update method in user_account.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+    if (!user) throw new Error('User not found');
 
-  // /**
-  //  * Implementing soft delete
-  //  * @param id - user id
-  //  * @returns
-  //  */
-  // async remove(id: string): Promise<any> {
-  //   try {
-  //     const user = await this.userModel
-  //       .findById(id, { deleted: 'true' })
-  //       .exec();
-  //     if (!user) {
-  //       throw new Error(
-  //         `Mongoose error with deleting user with user id ${id}
-  //         In remove method user.service.ts with dev error message: user with id:${id} not found`,
-  //       );
-  //     }
-  //     return user;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from remove method in user.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+    // check if image was provided, if so overwrite existing image
+    if (userDto.profileImage) {
+      userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
+        user.id,
+        userDto.profileImage,
+      );
+
+      // update the user profile image url
+      this.updateUser(userDto);
+    }
+
+    // update auth account if fields were provided
+    const auth = this.authService.updateAuthEmailOrMobile(
+      user.id,
+      userDto.email,
+      userDto.mobile,
+    );
+  }
 }

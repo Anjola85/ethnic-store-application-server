@@ -41,6 +41,7 @@ export class UserRepository extends Repository<User> {
 
   async updateUser(user: User) {
     try {
+      // only update the fields that was provided
       const updatedUser = await this.createQueryBuilder('user')
         .update(User)
         .set(user)

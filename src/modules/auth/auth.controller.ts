@@ -15,7 +15,6 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { UserController } from '../user/user.controller';
-import { UserService } from '../user/user.service';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
@@ -26,19 +25,17 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UserDto } from '../user/dto/user.dto';
 import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
+import { UpdateUserDto } from '../user/dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthService.name);
-  private readonly userController: UserController;
   constructor(
     private readonly authService: AuthService,
-    private readonly userService: UserService,
     private readonly awsSecretKey: AwsSecretKey,
     private readonly geocodingService: GeocodingService,
-  ) {
-    this.userController = new UserController(userService, authService);
-  }
+  ) {}
 
   @Post('login')
   async login(@Body() body: any, @Res() res: Response) {
@@ -92,95 +89,56 @@ export class AuthController {
     }
   }
 
-  // TODO: update user information endpoint
-  @Patch('upadte-user')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  )
-  async updateUser(
-    @Body() requestBody: any,
-    @UploadedFiles() files: any,
-    @Res() res: Response,
-  ): Promise<any> {
-    try {
-      const decryptedBody = await decryptKms(requestBody.payload);
+  // @Post('signup')
+  // @UseInterceptors(
+  //   FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
+  // )
+  // async register(
+  //   @Body() requestBody: any,
+  //   @UploadedFiles() files: any,
+  //   @Res() res: Response,
+  // ): Promise<any> {
+  //   try {
+  //     const decryptedBody = await decryptKms(requestBody.payload);
 
-      // convert decrypted to createuserDto
-      const userDto = new UserDto();
-      Object.assign(userDto, decryptedBody);
-      userDto.id = res.locals.id; // get user id from auth middleware
-      userDto.profileImage = files?.profileImage[0] || null;
+  //     const authId = res.locals.id;
+  //     const isOtpVerified = await this.authService.verifyOtp(
+  //       authId,
+  //       decryptedBody.code,
+  //     );
 
-      const result = await this.authService.updateUserInfo(userDto);
+  //     if (!isOtpVerified.status) {
+  //       return res
+  //         .status(HttpStatus.BAD_REQUEST)
+  //         .json(
+  //           createError('user registeration failed', isOtpVerified.message),
+  //         );
+  //     }
 
-      return result;
-    } catch (error) {
-      // Handle any error that occurs during the registration process
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createError('500 user registeration failed', error.message));
-      } else if (error instanceof UnauthorizedException) {
-        return res
-          .status(HttpStatus.UNAUTHORIZED)
-          .json(createError('401 user registeration failed', error.message));
-      }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('400 user registeration failed ', error.message));
-    }
-  }
+  //     // convert decrypted to createuserDto
+  //     const userDto = new UserDto();
+  //     Object.assign(userDto, decryptedBody);
+  //     userDto.profileImage = files?.profileImage[0] || null;
 
-  @Post('signup')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  )
-  async register(
-    @Body() requestBody: any,
-    @UploadedFiles() files: any,
-    @Res() res: Response,
-  ): Promise<any> {
-    try {
-      const decryptedBody = await decryptKms(requestBody.payload);
+  //     const result = await this.userController.create(userDto, res);
 
-      const authId = res.locals.id;
-      const isOtpVerified = await this.authService.verifyOtp(
-        authId,
-        decryptedBody.code,
-      );
-
-      if (!isOtpVerified.status) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(
-            createError('user registeration failed', isOtpVerified.message),
-          );
-      }
-
-      // convert decrypted to createuserDto
-      const userDto = new UserDto();
-      Object.assign(userDto, decryptedBody);
-      userDto.profileImage = files?.profileImage[0] || null;
-
-      const result = await this.userController.create(userDto, res);
-
-      return result;
-    } catch (error) {
-      // Handle any error that occurs during the registration process
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createError('500 user registeration failed', error.message));
-      } else if (error instanceof UnauthorizedException) {
-        return res
-          .status(HttpStatus.UNAUTHORIZED)
-          .json(createError('401 user registeration failed', error.message));
-      }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('400 user registeration failed ', error.message));
-    }
-  }
+  //     return 'result';
+  //   } catch (error) {
+  //     // Handle any error that occurs during the registration process
+  //     if (error instanceof InternalServerError) {
+  //       return res
+  //         .status(HttpStatus.INTERNAL_SERVER_ERROR)
+  //         .json(createError('500 user registeration failed', error.message));
+  //     } else if (error instanceof UnauthorizedException) {
+  //       return res
+  //         .status(HttpStatus.UNAUTHORIZED)
+  //         .json(createError('401 user registeration failed', error.message));
+  //     }
+  //     return res
+  //       .status(HttpStatus.BAD_REQUEST)
+  //       .json(createError('400 user registeration failed ', error.message));
+  //   }
+  // }
 
   @Post('sendOtp')
   async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
