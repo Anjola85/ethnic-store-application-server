@@ -18,7 +18,7 @@ import {
 import { User } from 'src/modules/user/entities/user.entity';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
-import { Address } from 'src/modules/user/entities/address.entity';
+import { Address } from 'src/modules/address/entities/address.entity';
 import { ImagesDto, UploadedImagesDto } from '../dto/image.dto';
 
 @Entity('business')

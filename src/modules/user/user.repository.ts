@@ -10,8 +10,6 @@ export class UserRepository extends Repository<User> {
 
   async getUserById(id: string): Promise<User> {
     try {
-      // const user = await this.findBy({ id });
-      // get user and join with address
       const user = await this.createQueryBuilder('user')
         .leftJoinAndSelect('user.addresses', 'address')
         .where('user.id = :id', { id })
@@ -20,6 +18,60 @@ export class UserRepository extends Repository<User> {
     } catch (error) {
       throw new HttpException(
         `Error thrown in user.repository.ts, getUserById method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async addUser(user: User) {
+    try {
+      const newUser = await this.createQueryBuilder('user')
+        .insert()
+        .into(User)
+        .values(user)
+        .execute();
+      return newUser;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, createUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Updates the user entity with provided fields
+   * @param user
+   * @returns
+   */
+  async updateUser(user: User) {
+    try {
+      const updatedUser = await this.createQueryBuilder('user')
+        .update(User)
+        .set(user)
+        .where('id = :id', { id: user.id })
+        .execute();
+      return updatedUser;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, updateUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updateUserImageUrl(id: string, imageUrl: string) {
+    try {
+      const updatedUser = await this.createQueryBuilder('user')
+        .update(User)
+        .set({ profile_image: imageUrl })
+        .set({ updated_at: new Date() })
+        .where('id = :id', { id })
+        .execute();
+      return updatedUser;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, updateUserImageUrl method: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

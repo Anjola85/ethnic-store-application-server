@@ -1,17 +1,7 @@
-import { CommonEntity } from 'src/modules/common/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
-import { User } from './user.entity';
 import { Business } from 'src/modules/business/entities/business.entity';
-
-export interface AddressEntity {
-  primary: boolean;
-  unit: string;
-  street: string;
-  city: string;
-  province: string;
-  postal_code: string;
-  country: string;
-}
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Entity, OneToOne, JoinColumn, ManyToOne, Column } from 'typeorm';
 
 @Entity('address')
 export class Address extends CommonEntity {
@@ -19,7 +9,7 @@ export class Address extends CommonEntity {
   @JoinColumn()
   business: Business;
 
-  @ManyToOne(() => User, (user) => user.addresses, { nullable: true })
+  @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn()
   user: User;
 
@@ -43,4 +33,7 @@ export class Address extends CommonEntity {
 
   @Column()
   country: string;
+
+  @Column({ type: 'point', nullable: true })
+  location: string;
 }

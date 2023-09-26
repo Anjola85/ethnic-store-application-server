@@ -1,20 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from 'aws-sdk/clients/budgets';
-import { UserAccount } from 'aws-sdk/clients/kendra';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
   IsEmail,
-  IsNotEmpty,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
-import { PersonDTO } from 'src/modules/user/dto/person.dto';
+import { User } from 'src/modules/user/entities/user.entity';
 
 export class CreateAuthDto {
+  @IsOptional()
+  @IsString()
+  id? = '';
+
   @IsOptional()
   @IsEmail()
   @ApiProperty({

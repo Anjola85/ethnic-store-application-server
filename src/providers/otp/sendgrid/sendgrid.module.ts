@@ -5,13 +5,16 @@ import TwilioService from '../twilio/twilio.service';
 import { BullModule } from '@nestjs/bull';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/modules/user/entities/user.entity';
-import { Address } from 'src/modules/user/entities/address.entity';
+import { Address } from 'src/modules/address/entities/address.entity';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { UserFileService } from 'src/modules/files/user-files.service';
 import { AwsS3Service } from 'src/modules/files/aws-s3.service';
 import { AuthRepository } from 'src/modules/auth/auth.repository';
 import { UserRepository } from 'src/modules/user/user.repository';
+import { AddressService } from 'src/modules/address/address.service';
+import { AddressRepository } from 'src/modules/address/address.respository';
+import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { UserRepository } from 'src/modules/user/user.repository';
     AwsS3Service,
     AuthRepository,
     UserRepository,
+    AddressService,
+    AddressRepository,
+    GeocodingService,
   ],
 })
 export class SendgridModule {}
