@@ -11,12 +11,17 @@ import { Type } from 'class-transformer';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { UserProfile } from '../user.enums';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
+import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 
 /**
  * Generic DTO
  * This class has all the possible fields required to register a user
  */
 export class UserDto {
+  @IsOptional()
+  @IsString()
+  id: string;
+
   @IsNotEmpty()
   @IsString()
   code: string;
@@ -72,6 +77,9 @@ export class UserDto {
 
   @IsOptional()
   dob: string;
+
+  @IsOptional()
+  favourites: Favourite[];
 
   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary' })

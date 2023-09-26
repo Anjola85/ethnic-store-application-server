@@ -6,7 +6,7 @@ import { generateOtpCode } from 'src/providers/util/otp-code-util';
 
 @Injectable()
 export default class TwilioService {
-  logger = new Logger(TwilioService.name);
+  private readonly logger = new Logger(TwilioService.name);
   client: Twilio;
 
   constructor(private readonly configService: ConfigService) {
@@ -26,7 +26,8 @@ export default class TwilioService {
     codeLength = 4,
     expirationMinutes = 6,
   ) {
-    console.log('phone number is: ', phone_number);
+    this.logger.debug('phone number is: ' + phone_number);
+
     // phone number of sender is quickmartdev
     const senderPhoneNumber = '+14318133976';
 

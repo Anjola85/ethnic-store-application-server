@@ -1,8 +1,4 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { loginDto } from './dto/login.dto';
-import { UserService } from '../user/user.service';
-import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Auth } from './entities/auth.entity';
@@ -10,14 +6,14 @@ import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { User } from '../user/entities/user.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { AuthRepository, InputObject } from './auth.repository';
 import { mapDtoToEntity } from './auth-mapper';
-import { Address } from '../address/entities/address.entity';
 import { mapAuthToUser } from '../user/user-mapper';
 import { UserDto } from '../user/dto/user.dto';
+import { UserFileService } from '../files/user-files.service';
+import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
+import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,12 +21,17 @@ export class AuthService {
 
   constructor(
     private authRepository: AuthRepository,
-    @InjectRepository(User) private userRepository: Repository<User>,
-    @InjectRepository(Address) private addressRepository: Repository<Address>,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
+    private readonly userFileService: UserFileService,
   ) {}
 
+  /**
+   *
+   * @param email
+   * @param mobile
+   * @returns
+   */
   async sendOtp(
     email?: string,
     mobile?: MobileDto,
@@ -50,6 +51,7 @@ export class AuthService {
     authModel.verification_code_expiration = response.expiryTime;
 
     let auth = await this.authRepository.findByUniq({
+      userId: authModel.user?.id,
       email,
       mobile,
     });
@@ -136,6 +138,19 @@ export class AuthService {
     }
   }
 
+  // method to update auth account email or mobile
+  async updateAuthEmailOrMobile(
+    authId: string,
+    authDto: CreateAuthDto,
+  ): Promise<any> {
+    if (!authId) throw new Error('authId is required');
+    if (!authDto) throw new Error('authDto is required');
+    if (!authDto.email && !authDto.mobile)
+      throw new Error('email or mobile is required');
+    const auth = await this.authRepository.updateAuth(authId, authDto);
+    return auth;
+  }
+
   /**
    *
    * @param loginDto
@@ -147,7 +162,7 @@ export class AuthService {
         email: loginDto.email,
         mobile: loginDto.mobile,
       };
-      const authAcct = await this.getUserWithAuth(input);
+      const authAcct = await this.getAllUserInfo(input);
 
       if (!authAcct) throw new Error('Invalid credentials');
 
@@ -169,7 +184,7 @@ export class AuthService {
     }
   }
 
-  async getUserWithAuth(input: InputObject): Promise<Auth> {
+  async getAllUserInfo(input: InputObject): Promise<Auth> {
     const auth = await this.authRepository.getUserWithAuth(input);
     return auth || null;
   }
@@ -179,7 +194,7 @@ export class AuthService {
    * @param id
    * @returns jwt token
    */
-  private generateJwt(id: string) {
+  public generateJwt(id: string) {
     const privateKey = fs.readFileSync('./private_key.pem');
     const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
       expiresIn: '1d',
@@ -187,142 +202,30 @@ export class AuthService {
     return token;
   }
 
-  async deleteRegisteredUsers() {
-    // so for all accounts in the user and auth account, delete them
-    const last24Hours = new Date();
-    last24Hours.setHours(last24Hours.getHours() - 24);
-
-    const formattedLast24Hours = last24Hours
-      .toISOString()
-      .slice(0, 19)
-      .replace('T', ' ');
-
-    try {
-      // Delete all auth accounts created in the last 24 hours
-      const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
-      const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
-      const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
-
-      await this.authRepository.createQueryBuilder(deleteAuthQuery);
-      await this.userRepository.createQueryBuilder(deleteUserQuery);
-      await this.addressRepository.createQueryBuilder(deleteAddQuery);
-    } catch (error) {}
+  async getAuth(input: InputObject): Promise<Auth> {
+    const auth = await this.authRepository.findByUniq(input);
+    return auth || null;
   }
 
-  // /**
-  //  * Update account by user_account_id
-  //  * @param authDto
-  //  * @param userId
-  //  * @returns
-  //  */
-  // async updateAccount(authDto: CreateAuthDto, userId: string) {
+  // async deleteRegisteredUsers() {
+  //   // so for all accounts in the user and auth account, delete them
+  //   const last24Hours = new Date();
+  //   last24Hours.setHours(last24Hours.getHours() - 24);
+
+  //   const formattedLast24Hours = last24Hours
+  //     .toISOString()
+  //     .slice(0, 19)
+  //     .replace('T', ' ');
+
   //   try {
-  //     // get auth object
-  //     const auth = await this.authRepository.findOne({
-  //       user_account_id: userId,
-  //     });
+  //     // Delete all auth accounts created in the last 24 hours
+  //     const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
+  //     const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
+  //     const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
 
-  //     if (auth == null) {
-  //       throw new Error('User not found in auth database');
-  //     }
-
-  //     const saltRounds = 10;
-  //     authDto.password = await bcrypt.hash(authDto.password, saltRounds);
-
-  //     // update auth object
-  //     await this.authRepository.findByIdAndUpdate(auth.id, {
-  //       ...authDto,
-  //     });
-
-  //     // return updated auth
-  //     return await this.authRepository.findOne({ user_account_id: userId });
-  //   } catch (e) {
-  //     throw new Error(`From AuthService.updateAccount: ${e.message}`);
-  //   }
-  // }
-
-  // /**
-  //  * This method resends otp to user
-  //  * It sends the otp to the user and updates the auth DB
-  //  * @param userID
-  //  * @param email
-  //  * @param phone_number
-  //  * @returns
-  //  */
-  // async resendOtp(
-  //   userID: string,
-  //   email?: string,
-  //   mobile?: MobileDto,
-  // ): Promise<{ status; message; code; expiryTime; token }> {
-  //   let response: { status; message; code; expiryTime };
-  //   if (email != null && email.length !== 0) {
-  //     response = await this.sendgridService.sendOTPEmail(email);
-  //   } else if (mobile !== null) {
-  //     if (mobile.phone_number === undefined || mobile.phone_number === null) {
-  //       throw new Error('Phone number is required');
-  //     }
-  //     const phone_number = mobile.phone_number;
-  //     response = await this.twilioService.sendSms(phone_number);
-  //   }
-
-  //   // update auth account verification code and expiry time
-  //   await this.updateAuthOtp(userID, response.code, response.expiryTime);
-
-  //   // generate jwt
-  //   const privateKey = fs.readFileSync('./private_key.pem');
-  //   const token = jsonwebtoken.sign({ id: userID }, privateKey.toString(), {
-  //     expiresIn: '1d',
-  //   });
-
-  //   // add token to response
-  //   const otpResponse = { ...response, token };
-
-  //   return otpResponse;
-  // }
-
-  // async updateAuthOtp(
-  //   userID: string,
-  //   code: string,
-  //   expiryTime: string,
-  // ): Promise<void> {
-  //   await this.authRepository.findOneAndUpdate(
-  //     { user_account_id: userID },
-  //     {
-  //       verification_code: code,
-  //       verification_code_expiration: expiryTime,
-  //     },
-  //   );
-  // }
-
-  // /**
-  //  * TODO: to be deleted after testing auth
-  //  * THis method deletes registered users on that current day for testing purposes
-  //  * @returns
-  //  */
-  // async resetRegisteredUsers() {
-  //   // const startOfDay = new Date();
-  //   // startOfDay.setHours(0, 0, 0, 0); // Set the time to 00:00:00.000
-  //   // const endOfDay = new Date();
-  //   // endOfDay.setHours(23, 59, 59, 999); // Set the time to 23:59:59.999
-  //   // try {
-  //   //   await this.authRepository.deleteMany({
-  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //   //   });
-  //   //   await this.userRepository.deleteMany({
-  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //   //   });
-  //   //   await this.userAccountModel.deleteMany({
-  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //   //   });
-  //   //   await this.customerModel.deleteMany({
-  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //   //   });
-  //   //   await this.tempUserAccountModel.deleteMany({
-  //   //     createdAt: { $gte: startOfDay, $lt: endOfDay },
-  //   //   });
-  //   //   return { success: true, message: 'Reset successful' };
-  //   // } catch (error) {
-  //   //   return { success: false, message: 'Reset failed from auth.service.ts' };
-  //   // }
+  //     await this.authRepository.createQueryBuilder(deleteAuthQuery);
+  //     await this.userRepository.createQueryBuilder(deleteUserQuery);
+  //     await this.addressRepository.createQueryBuilder(deleteAddQuery);
+  //   } catch (error) {}
   // }
 }
