@@ -18,6 +18,8 @@ import { createError, createResponse } from '../../common/util/response';
 import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { mapAuthToUser } from './user-mapper';
 
 @Controller('user')
 export class UserController {
@@ -116,7 +118,7 @@ export class UserController {
    * @param res
    * @returns
    */
-  @Patch('upadte-user')
+  @Patch('update')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
   )
@@ -128,22 +130,44 @@ export class UserController {
     try {
       const decryptedBody = await decryptKms(requestBody.payload);
 
-      // convert decrypted to createuserDto
-      const userDto = new UserDto();
+      const userDto = new UpdateUserDto();
       Object.assign(userDto, decryptedBody);
-      userDto.id = res.locals.id; // get user id from auth middleware
+      const authId = res.locals.id;
+
       userDto.profileImage = files?.profileImage[0] || null;
 
-      // update user info
-      await this.userService.updateUserInfo(userDto);
+      const auth = await this.authService.getAuth({ id: authId });
+      userDto.id = auth.user.id;
+
+      if (auth == null) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('user update failed', 'user does not exist'));
+      }
+
+      if (userDto.code) {
+        const isOtpVerified = await this.authService.verifyOtp(
+          auth.id,
+          userDto.code,
+        );
+
+        if (!isOtpVerified.status) {
+          return res
+            .status(HttpStatus.BAD_REQUEST)
+            .json(createError('user update failed', isOtpVerified.message));
+        }
+      }
+
+      await this.userService.updateUserInfo(userDto, authId);
 
       // generate token
       const token = this.authService.generateJwt(userDto.id);
 
       // get back the user info
-      const user = await this.authService.getAllUserInfo({
+      const authObj = await this.authService.getAllUserInfo({
         userId: userDto.id,
       });
+      const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
 
       // encrypt the response
       const payload = {
@@ -156,7 +180,9 @@ export class UserController {
       const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
       const encryptedUser = encryptedUserBlob.toString('base64');
 
-      return encryptedUser;
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('user successfully updated', encryptedUser));
     } catch (error) {
       // Handle any error that occurs during the registration process
       if (error instanceof InternalServerError) {

@@ -13,6 +13,7 @@ import { mapAuthToUser } from '../user/user-mapper';
 import { UserDto } from '../user/dto/user.dto';
 import { UserFileService } from '../files/user-files.service';
 import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
+import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,12 @@ export class AuthService {
     private readonly userFileService: UserFileService,
   ) {}
 
+  /**
+   *
+   * @param email
+   * @param mobile
+   * @returns
+   */
   async sendOtp(
     email?: string,
     mobile?: MobileDto,
@@ -44,6 +51,7 @@ export class AuthService {
     authModel.verification_code_expiration = response.expiryTime;
 
     let auth = await this.authRepository.findByUniq({
+      userId: authModel.user?.id,
       email,
       mobile,
     });
@@ -132,17 +140,14 @@ export class AuthService {
 
   // method to update auth account email or mobile
   async updateAuthEmailOrMobile(
-    userId: string,
-    email: string,
-    mobileDto: MobileDto,
+    authId: string,
+    authDto: CreateAuthDto,
   ): Promise<any> {
-    if (!userId) throw new Error('userId is required');
-    if (!email && !mobileDto) throw new Error('email or mobile is required');
-    const auth = await this.authRepository.update(userId, {
-      email,
-      mobile: mobileToEntity(mobileDto),
-    });
-
+    if (!authId) throw new Error('authId is required');
+    if (!authDto) throw new Error('authDto is required');
+    if (!authDto.email && !authDto.mobile)
+      throw new Error('email or mobile is required');
+    const auth = await this.authRepository.updateAuth(authId, authDto);
     return auth;
   }
 
@@ -195,6 +200,11 @@ export class AuthService {
       expiresIn: '1d',
     });
     return token;
+  }
+
+  async getAuth(input: InputObject): Promise<Auth> {
+    const auth = await this.authRepository.findByUniq(input);
+    return auth || null;
   }
 
   // async deleteRegisteredUsers() {

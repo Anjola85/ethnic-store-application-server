@@ -8,7 +8,11 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
-  id: string;
+  id = '';
+
+  @IsOptional()
+  @IsString()
+  code: string;
 
   @IsOptional()
   @IsEmail()

@@ -17,7 +17,7 @@ export class FavouriteRepository extends Repository<Favourite> {
       const favourites = await this.createQueryBuilder('favourite')
         .leftJoinAndSelect('favourite.business', 'business')
         .leftJoinAndSelect('favourite.user', 'user')
-        .where('user.id = :id', { id })
+        .where('userId = :userId', { id })
         .getMany();
       return favourites || null;
     } catch (error) {
@@ -64,7 +64,7 @@ export class FavouriteRepository extends Repository<Favourite> {
     } else {
       favourite = await this.createQueryBuilder('favourite')
         .where(
-          'favourite.user.id = :userId AND favourite.business.id = :businessId',
+          'favourite.userId = :userId AND favourite.business.id = :businessId',
           {
             userId,
             businessId,

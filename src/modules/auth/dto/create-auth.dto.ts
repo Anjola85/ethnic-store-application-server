@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from 'aws-sdk/clients/budgets';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -10,8 +9,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
+import { User } from 'src/modules/user/entities/user.entity';
 
 export class CreateAuthDto {
+  @IsOptional()
+  @IsString()
+  id? = '';
+
   @IsOptional()
   @IsEmail()
   @ApiProperty({

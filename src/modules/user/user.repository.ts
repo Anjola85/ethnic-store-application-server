@@ -39,9 +39,13 @@ export class UserRepository extends Repository<User> {
     }
   }
 
+  /**
+   * Updates the user entity with provided fields
+   * @param user
+   * @returns
+   */
   async updateUser(user: User) {
     try {
-      // only update the fields that was provided
       const updatedUser = await this.createQueryBuilder('user')
         .update(User)
         .set(user)
@@ -51,6 +55,23 @@ export class UserRepository extends Repository<User> {
     } catch (error) {
       throw new HttpException(
         `Error thrown in user.repository.ts, updateUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updateUserImageUrl(id: string, imageUrl: string) {
+    try {
+      const updatedUser = await this.createQueryBuilder('user')
+        .update(User)
+        .set({ profile_image: imageUrl })
+        .set({ updated_at: new Date() })
+        .where('id = :id', { id })
+        .execute();
+      return updatedUser;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, updateUserImageUrl method: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

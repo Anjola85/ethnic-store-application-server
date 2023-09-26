@@ -21,6 +21,7 @@ import { mapAuthToUser, userDtoToEntity } from './user-mapper';
 import { UserRepository } from './user.repository';
 import { AddressDto } from '../address/dto/address.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateAuthDto } from '../auth/dto/create-auth.dto';
 
 @Injectable()
 export class UserService {
@@ -112,29 +113,28 @@ export class UserService {
    * @param userDto
    * @returns {token, user}
    */
-  async updateUserInfo(userDto: UserDto): Promise<void> {
+  async updateUserInfo(userDto: UpdateUserDto, authId: string): Promise<void> {
     if (!userDto?.id) throw new Error('User id is required');
 
     const user = await this.getUserById(userDto.id);
 
     if (!user) throw new Error('User not found');
 
-    // check if image was provided, if so overwrite existing image
     if (userDto.profileImage) {
       userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
         user.id,
         userDto.profileImage,
       );
 
-      // update the user profile image url
-      this.updateUser(userDto);
+      this.userRepository.updateUserImageUrl(user.id, userDto.profileImageUrl);
     }
 
     // update auth account if fields were provided
-    const auth = this.authService.updateAuthEmailOrMobile(
-      user.id,
-      userDto.email,
-      userDto.mobile,
-    );
+    if (userDto.email || userDto.mobile) {
+      const authDto = new CreateAuthDto();
+      authDto.email = userDto.email;
+      authDto.mobile = userDto.mobile;
+      await this.authService.updateAuthEmailOrMobile(authId, authDto);
+    }
   }
 }
