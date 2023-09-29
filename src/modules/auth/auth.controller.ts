@@ -4,29 +4,20 @@ import {
   Body,
   HttpStatus,
   Res,
-  Query,
-  UseInterceptors,
-  UploadedFiles,
-  UnauthorizedException,
   Logger,
-  Patch,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
-import { UserController } from '../user/user.controller';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { createError, createResponse } from '../../common/util/response';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { ApiBody } from '@nestjs/swagger';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UserDto } from '../user/dto/user.dto';
 import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
-import { UpdateUserDto } from '../user/dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 
 @Controller('auth')
 export class AuthController {

@@ -7,9 +7,10 @@ export class GeoLocationDto {
     default: 'Point',
   })
   @IsNotEmpty()
-  readonly type: string;
+  type: string;
 
   @ApiProperty({
+    // [latitude, longitude]
     description: 'Coordinates',
     example: [0, 0],
     type: [Number],
@@ -22,5 +23,5 @@ export class GeoLocationDto {
   })
   @IsNotEmpty()
   @IsNumber({}, { each: true })
-  readonly coordinates: number[];
+  coordinates = [];
 }

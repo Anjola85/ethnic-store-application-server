@@ -10,6 +10,7 @@ import { ImagesDto } from './dto/image.dto';
 import { Address } from '../address/entities/address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { mapBusinessData } from './business-mapper';
+import { GeoLocationDto } from './dto/geolocation.dto';
 
 @Injectable()
 export class BusinessService {
@@ -86,6 +87,14 @@ export class BusinessService {
         HttpStatus.CONFLICT,
       );
     }
+  }
+
+  async findNearbyBusinesses(geolocationDto: GeoLocationDto): Promise<any> {
+    const businesses = await this.businessRepository.findNearbyBusinesses(
+      geolocationDto,
+    );
+
+    return businesses;
   }
 
   // async findAll() {
