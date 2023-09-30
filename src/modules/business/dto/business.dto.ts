@@ -16,11 +16,11 @@ import { Country } from 'src/modules/country/entities/country.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 
-export class CreateBusinessDto {
+export class BusinessDto {
   @IsOptional() // remove this
   @ApiProperty()
   @IsObject()
-  user: User;
+  user?: User;
 
   @ApiProperty()
   @IsObject()

@@ -39,11 +39,7 @@ export class MobileGroupDto {
   })
   @IsObject()
   @IsNotEmpty()
-  primary: {
-    phoneNumber: string;
-    countryCode: string;
-    isoType: string;
-  };
+  primary: MobileDto;
 
   @ApiProperty({
     example: {
@@ -54,9 +50,5 @@ export class MobileGroupDto {
   })
   @IsObject()
   @IsOptional()
-  secondary: {
-    phoneNumber: string;
-    countryCode: string;
-    isoType: string;
-  };
+  secondary: MobileDto;
 }

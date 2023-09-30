@@ -1,6 +1,6 @@
 import { BusinessRepository } from './business.repository';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateBusinessDto } from './dto/create-business.dto';
+import { BusinessDto } from './dto/business.dto';
 import { Repository } from 'typeorm';
 import {
   BusinessFilesService,
@@ -21,7 +21,7 @@ export class BusinessService {
     private addressRepository: Repository<Address>,
   ) {}
 
-  async register(createBusinessDto: CreateBusinessDto): Promise<any> {
+  async register(createBusinessDto: BusinessDto): Promise<any> {
     // console.log('recieved request in service with body: ', createBusinessDto);
 
     // check if business exists
@@ -75,7 +75,7 @@ export class BusinessService {
   }
 
   private async checkBusinessExist(
-    createBusinessDto: CreateBusinessDto,
+    createBusinessDto: BusinessDto,
   ): Promise<void> {
     const businessExists = await this.businessRepository.findByName(
       createBusinessDto.name,

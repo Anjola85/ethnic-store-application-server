@@ -8,7 +8,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
-import { CreateBusinessDto } from './dto/create-business.dto';
+import { BusinessDto } from './dto/business.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { createError, createResponse } from 'src/common/util/response';
@@ -33,7 +33,7 @@ export class BusinessController {
     ]),
   )
   async create(
-    @Body() createBusinessDto: CreateBusinessDto,
+    @Body() createBusinessDto: BusinessDto,
     @UploadedFiles() files: any,
     @Res() res: Response,
   ) {

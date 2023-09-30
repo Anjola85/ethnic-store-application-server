@@ -51,7 +51,7 @@ import { Address } from './modules/address/entities/address.entity';
         Auth,
         Favourite,
       ],
-      // synchronize: true,
+      synchronize: true, // comment this out in production
       // ssl: {
       //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
       // },

@@ -1,10 +1,14 @@
-import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
+import {
+  entityToMobile,
+  mobileToEntity,
+} from 'src/common/mapper/mobile-mapper';
 import { Business } from './entities/business.entity';
-import { CreateBusinessDto } from './dto/create-business.dto';
+import { BusinessDto } from './dto/business.dto';
 import { Address } from '../address/entities/address.entity';
+import { entityToAddressDto } from '../address/address-mapper';
 
 export function mapBusinessData(
-  businessData: CreateBusinessDto,
+  businessData: BusinessDto,
   address: Address,
 ): Business {
   const businessEntity = new Business();
@@ -28,4 +32,27 @@ export function mapBusinessData(
   businessEntity.geolocation = businessData.geolocation;
   businessEntity.business_type = businessData.businessType;
   return businessEntity;
+}
+
+export function mapBusinessToBusinessDto(business: Business): BusinessDto {
+  const businessDto = new BusinessDto();
+  businessDto.user = business.user;
+  businessDto.country = business.country;
+  businessDto.otherCountries = business.other_countries;
+  businessDto.categories = business.categories;
+  businessDto.name = business.name;
+  businessDto.description = business.description;
+  businessDto.address = entityToAddressDto(business.address);
+  businessDto.email = business.email;
+  businessDto.schedule = business.schedule;
+  businessDto.website = business.website;
+  businessDto.rating = business.rating;
+  businessDto.mobile = {
+    primary: entityToMobile(business.mobile.primary),
+    secondary: entityToMobile(business.mobile.secondary),
+  };
+  businessDto.navigationUrl = business.navigation_url;
+  businessDto.geolocation = business.geolocation;
+  businessDto.businessType = business.business_type;
+  return businessDto;
 }

@@ -7,7 +7,7 @@ import {
   addressDtoToEntity,
   entityToAddressDto,
 } from 'src/modules/address/address-mapper';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { mapBusinessToBusinessDto } from '../business/business-mapper';
 
 export function userDtoToEntity(userDto: UserDto, userEntity: User): void {
   userEntity.first_name = userDto.firstName;
@@ -15,10 +15,11 @@ export function userDtoToEntity(userDto: UserDto, userEntity: User): void {
   userEntity.addresses = userDto.address.map((addressDto) =>
     addressDtoToEntity(addressDto),
   );
-  userEntity.favourites = userDto.favourites;
+
   userEntity.user_profile = userDto.userProfile || UserProfile.CUSTOMER;
   userEntity.dob = userDto.dob;
   userEntity.profile_image = userDto.profileImageUrl;
+  userEntity.favourites = []; // favourites is empty on registration
 }
 
 export function userEntityToDto(user: User): UserDto {
@@ -28,7 +29,11 @@ export function userEntityToDto(user: User): UserDto {
   userDto.address = user.addresses.map((address) =>
     entityToAddressDto(address),
   );
-  userDto.favourites = user.favourites;
+
+  userDto.favourites = user.favourites.map((favourite) =>
+    mapBusinessToBusinessDto(favourite.business),
+  );
+
   userDto.dob = user.dob;
   userDto.profileImageUrl = user.profile_image;
   userDto.userProfile = user.user_profile;
@@ -47,7 +52,9 @@ export function mapAuthToUser(auth: Auth): UserDto {
   userDto.dob = auth.user.dob;
   userDto.profileImageUrl = auth.user.profile_image;
   userDto.userProfile = auth.user.user_profile;
-  userDto.favourites = auth.user?.favourites;
+  userDto.favourites = auth?.user.favourites.map((favourite) =>
+    mapBusinessToBusinessDto(favourite.business),
+  );
   userDto.email = auth.email;
   userDto.mobile = entityToMobile(auth.mobile);
   return userDto;
