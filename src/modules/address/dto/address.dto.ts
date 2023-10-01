@@ -16,7 +16,7 @@ export class AddressDto extends BaseDto {
   primary = true;
 
   @ApiProperty({ example: '123' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   unit: string;
 

@@ -80,6 +80,45 @@ export class AuthController {
     }
   }
 
+  @Post('verifyOtp')
+  async verifyOtp(@Body() body: any, @Res() res: Response) {
+    try {
+      if (body.payload && body.payload !== '') {
+        const decryptedData = await decryptKms(body.payload);
+        const authId = res.locals.id;
+        const { code } = decryptedData;
+
+        const isOtpVerified = await this.authService.verifyOtp(authId, code);
+
+        if (!isOtpVerified.status) {
+          return res
+            .status(HttpStatus.BAD_REQUEST)
+            .json(
+              createError('otp verification failed', isOtpVerified.message),
+            );
+        }
+
+        return res
+          .status(HttpStatus.OK)
+          .json(createResponse('otp verification successful'));
+      } else {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('payload is required'));
+      }
+    } catch (error) {
+      if (error instanceof InternalServerError) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createResponse('otp verification failed', error.message));
+      } else {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('otp verification failed', error.message));
+      }
+    }
+  }
+
   // @Post('signup')
   // @UseInterceptors(
   //   FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
