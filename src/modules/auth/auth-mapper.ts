@@ -8,8 +8,8 @@ import { Auth } from './entities/auth.entity';
 export function mapDtoToEntity(authData: CreateAuthDto) {
   const authEntity = new Auth();
   authEntity.id = authData.id;
-  authEntity.email = authData.email;
-  authEntity.mobile = mobileToEntity(authData.mobile);
+  authEntity.email = authData.email || '';
+  authEntity.mobile = authData.mobile ? mobileToEntity(authData.mobile) : null;
   authEntity.account_verified = authData.accountVerified;
   authEntity.verification_code = authData.verificationCode;
   authEntity.verification_code_expiration = authData.verificationCodeExpiration;

@@ -23,9 +23,9 @@ export class UserDto {
   @IsString()
   id: string;
 
-  @IsNotEmpty()
-  @IsString()
-  code: string;
+  // @IsNotEmpty()
+  // @IsString()
+  // code: string;
 
   @IsNotEmpty()
   @IsString()

@@ -56,8 +56,12 @@ export class AuthService {
       mobile,
     });
 
+    console.log('auth', auth);
+
     if (!auth) {
+      console.log('going to create ');
       auth = await this.authRepository.create(authModel).save();
+      console.log('created: ', auth);
     } else {
       auth.verification_code = response.code;
       auth.verification_code_expiration = response.expiryTime;
@@ -74,6 +78,7 @@ export class AuthService {
     authId: string,
     otp: string,
   ): Promise<{ message: string; status: boolean }> {
+    this.logger.debug(`Verifying OTP for authId: ${authId}`);
     const auth = await this.authRepository.findOneBy({ id: authId });
 
     if (auth == null) throw new Error('Could not find associated account');

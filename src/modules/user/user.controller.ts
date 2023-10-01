@@ -47,19 +47,19 @@ export class UserController {
     try {
       const decryptedBody = await decryptKms(requestBody.payload);
 
-      const authId = res.locals.id;
-      const isOtpVerified = await this.authService.verifyOtp(
-        authId,
-        decryptedBody.code,
-      );
+      // const authId = res.locals.id;
+      // const isOtpVerified = await this.authService.verifyOtp(
+      //   authId,
+      //   decryptedBody.code,
+      // );
 
-      if (!isOtpVerified.status) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(
-            createError('user registeration failed', isOtpVerified.message),
-          );
-      }
+      // if (!isOtpVerified.status) {
+      //   return res
+      //     .status(HttpStatus.BAD_REQUEST)
+      //     .json(
+      //       createError('user registeration failed', isOtpVerified.message),
+      //     );
+      // }
 
       // convert decrypted to createuserDto
       const userDto = new UserDto();

@@ -80,11 +80,24 @@ export class AuthController {
     }
   }
 
+  /**
+   * Verifies the otp
+   * @param body
+   * @param res
+   * @returns
+   */
   @Post('verifyOtp')
   async verifyOtp(@Body() body: any, @Res() res: Response) {
     try {
+      this.logger.debug('verifyOtp called with payload: ' + body.payload);
+
       if (body.payload && body.payload !== '') {
         const decryptedData = await decryptKms(body.payload);
+
+        this.logger.debug(
+          'verifyOtp decrypted payload: ' + JSON.stringify(decryptedData),
+        );
+
         const authId = res.locals.id;
         const { code } = decryptedData;
 
@@ -173,10 +186,15 @@ export class AuthController {
   @Post('sendOtp')
   async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     try {
+      this.logger.debug('sendOtp called with payload: ' + body.payload);
       // handle decryption of request body
       const decrypted = await decryptKms(body.payload);
       const requestBody = new TempUserAccountDto();
       Object.assign(requestBody, decrypted);
+
+      this.logger.debug(
+        'sendOtp decrypted payload: ' + JSON.stringify(requestBody),
+      );
 
       const authResponse = await this.authService.sendOtp(
         requestBody.email,
