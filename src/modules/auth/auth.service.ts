@@ -56,12 +56,8 @@ export class AuthService {
       mobile,
     });
 
-    console.log('auth', auth);
-
     if (!auth) {
-      console.log('going to create ');
       auth = await this.authRepository.create(authModel).save();
-      console.log('created: ', auth);
     } else {
       auth.verification_code = response.code;
       auth.verification_code_expiration = response.expiryTime;

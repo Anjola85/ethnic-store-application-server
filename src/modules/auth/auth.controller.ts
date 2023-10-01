@@ -111,6 +111,10 @@ export class AuthController {
             );
         }
 
+        this.logger.debug(
+          'response from verifyOtp: ' + JSON.stringify(isOtpVerified),
+        );
+
         return res
           .status(HttpStatus.OK)
           .json(createResponse('otp verification successful'));
@@ -201,11 +205,25 @@ export class AuthController {
         requestBody.mobile,
       );
 
+      this.logger.debug(
+        'sendOtp clear response: ' + JSON.stringify(authResponse),
+      );
+
+      // encrypt the response
+      const payload = {
+        payload: authResponse.token,
+      };
+
+      const payloadToEncryptBuffer = toBuffer(payload);
+      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+      const encryptedPayload = encryptedUserBlob.toString('base64');
+
+      this.logger.debug(
+        'sendOtp encrypted payload: ' + JSON.stringify(encryptedPayload),
+      );
       return res
         .status(HttpStatus.OK)
-        .json(
-          createResponse(authResponse.message, { token: authResponse.token }),
-        );
+        .json(createResponse(authResponse.message, encryptedPayload));
     } catch (error) {
       this.logger.error(
         'Auth Controller with error message: ' + error.message,

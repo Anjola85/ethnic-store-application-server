@@ -17,7 +17,7 @@ import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 
 export class BusinessDto {
-  @IsOptional() // remove this
+  @IsOptional()
   @ApiProperty()
   @IsObject()
   user?: User;

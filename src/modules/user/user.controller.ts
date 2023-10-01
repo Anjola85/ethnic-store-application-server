@@ -45,7 +45,9 @@ export class UserController {
     @Res() res: Response,
   ): Promise<any> {
     try {
+      this.logger.debug('sign up called with body: ' + requestBody);
       const decryptedBody = await decryptKms(requestBody.payload);
+      this.logger.debug('decrypted body: ' + decryptedBody);
 
       // const authId = res.locals.id;
       // const isOtpVerified = await this.authService.verifyOtp(
