@@ -86,7 +86,7 @@ export class AuthController {
    * @param res
    * @returns
    */
-  @Post('verifyOtp')
+  @Post('verify')
   async verifyOtp(@Body() body: any, @Res() res: Response) {
     try {
       this.logger.debug('verifyOtp called with payload: ' + body.payload);
@@ -211,7 +211,7 @@ export class AuthController {
 
       // encrypt the response
       const payload = {
-        payload: authResponse.token,
+        payload: { token: authResponse.token },
       };
 
       const payloadToEncryptBuffer = toBuffer(payload);

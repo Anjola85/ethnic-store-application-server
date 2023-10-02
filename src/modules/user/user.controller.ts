@@ -44,24 +44,12 @@ export class UserController {
     @UploadedFiles() files: any,
     @Res() res: Response,
   ): Promise<any> {
+    console.log('calling signup');
+
     try {
       this.logger.debug('sign up called with body: ' + requestBody);
       const decryptedBody = await decryptKms(requestBody.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
-
-      // const authId = res.locals.id;
-      // const isOtpVerified = await this.authService.verifyOtp(
-      //   authId,
-      //   decryptedBody.code,
-      // );
-
-      // if (!isOtpVerified.status) {
-      //   return res
-      //     .status(HttpStatus.BAD_REQUEST)
-      //     .json(
-      //       createError('user registeration failed', isOtpVerified.message),
-      //     );
-      // }
 
       // convert decrypted to createuserDto
       const userDto = new UserDto();
