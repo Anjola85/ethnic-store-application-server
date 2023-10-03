@@ -103,12 +103,19 @@ export class AuthService {
     }
   }
 
-  async findByEmailOrMobile(email: string, mobile: MobileDto): Promise<Auth> {
+  async findByEmailOrMobile(
+    email: string,
+    mobileDto: MobileDto,
+  ): Promise<Auth> {
     try {
+      const mobile = mobileToEntity(mobileDto);
+
       const auth = await this.authRepository
         .createQueryBuilder('auth')
         .where('auth.email = :email', { email })
-        .orWhere('auth.mobile = :mobile', { mobile })
+        .orWhere('auth.mobile = :mobile', {
+          mobile,
+        })
         .leftJoinAndSelect('auth.user', 'user')
         .getOne();
 

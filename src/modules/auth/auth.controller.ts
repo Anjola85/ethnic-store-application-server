@@ -32,6 +32,7 @@ export class AuthController {
   async login(@Body() body: any, @Res() res: Response) {
     try {
       if (body.payload && body.payload !== '') {
+        this.logger.debug('login called with payload: ' + body.payload);
         const decryptedData = await decryptKms(body.payload);
         const loginDto = new secureLoginDto();
         Object.assign(loginDto, decryptedData);
@@ -47,11 +48,12 @@ export class AuthController {
             .json(createError('user not found'));
         }
 
-        await this.authService.verifyOtp(auth.id, loginDto.code);
-
         const loginResponse: { token: string; user: UserDto } =
           await this.authService.login(loginDto);
 
+        this.logger.debug(
+          'login clear response: ' + JSON.stringify(loginResponse),
+        );
         const payload = {
           payload: loginResponse,
         };

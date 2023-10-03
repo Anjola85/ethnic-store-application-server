@@ -44,8 +44,6 @@ export class UserController {
     @UploadedFiles() files: any,
     @Res() res: Response,
   ): Promise<any> {
-    console.log('calling signup');
-
     try {
       this.logger.debug('sign up called with body: ' + requestBody);
       const decryptedBody = await decryptKms(requestBody.payload);
