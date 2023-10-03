@@ -10,7 +10,6 @@ export class GeoLocationDto {
   type: string;
 
   @ApiProperty({
-    // [latitude, longitude]
     description: 'Coordinates',
     example: [0, 0],
     type: [Number],

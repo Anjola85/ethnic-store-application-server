@@ -9,54 +9,60 @@ import {
 import { ImagesDto } from './dto/image.dto';
 import { Address } from '../address/entities/address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { mapBusinessData } from './business-mapper';
+import { businessDtoToEntity } from './business-mapper';
 import { GeoLocationDto } from './dto/geolocation.dto';
+import { AddressService } from '../address/address.service';
+import { Business } from './entities/business.entity';
 
 @Injectable()
 export class BusinessService {
   constructor(
     private businessRepository: BusinessRepository,
     private businessFileService: BusinessFilesService,
-    @InjectRepository(Address)
-    private addressRepository: Repository<Address>,
+    private addressService: AddressService,
   ) {}
 
-  async register(createBusinessDto: BusinessDto): Promise<any> {
-    // console.log('recieved request in service with body: ', createBusinessDto);
+  async register(businessDto: BusinessDto): Promise<any> {
+    await this.checkBusinessExist(businessDto);
 
-    // check if business exists
-    await this.checkBusinessExist(createBusinessDto);
+    businessDto.address.id = await this.addressService.addAddress(
+      businessDto.address,
+    );
 
-    const { featuredImage, backgroundImage, logoImage, ...businessData } =
-      createBusinessDto;
-
-    // data mapping for address
-    const addressData = new Address();
-    Object.assign(addressData, businessData.address);
-    addressData.postal_code = businessData.address.postalCode;
-    const address = await this.addressRepository.create(addressData);
+    await this.uploadBusinessImages(businessDto);
 
     // map business data
-    const businessEntity = mapBusinessData(createBusinessDto, address);
+    const businessEntity: Business = businessDtoToEntity(businessDto);
 
-    let business = await this.businessRepository.create(businessEntity);
+    const createdBusiness = await this.businessRepository.addBusiness(
+      businessEntity,
+    );
 
-    // save the address id to the business table
-    address.business = business;
-    address.save();
+    //TODO: remove below
+    console.log('created business: ', createdBusiness);
 
-    let businessName = business.name;
+    // map the business data back to businessDto
+
+    // return the created business information
+    return createdBusiness;
+  }
+
+  private async uploadBusinessImages(businessDto: BusinessDto) {
+    const { featuredImage, backgroundImage, logoImage, ...businessData } =
+      businessDto;
+
+    // set the businessId to be name in AWS S3
+    let businessName = businessDto.name;
+
     // replace the space in the business name with underscore
     businessName = businessName.replace(/\s/g, '_');
-
     const businessImages: BusinessImages = {
       business_id: businessName,
       background_blob: backgroundImage,
       logo_blob: logoImage,
       feature_image_blob: featuredImage,
     };
-    //console.log('businessImages: ', businessImages);
-    // upload the images to s3 bucket and get the url
+
     const imagesUrl: ImagesDto =
       await this.businessFileService.uploadBusinessImages(businessImages);
 
@@ -67,18 +73,12 @@ export class BusinessService {
     };
 
     // save the image url to the database
-    business.images = images;
-
-    business = await business.save();
-
-    return business;
+    businessDto.images = images;
   }
 
-  private async checkBusinessExist(
-    createBusinessDto: BusinessDto,
-  ): Promise<void> {
+  private async checkBusinessExist(businessDto: BusinessDto): Promise<void> {
     const businessExists = await this.businessRepository.findByName(
-      createBusinessDto.name,
+      businessDto.name,
     );
 
     if (businessExists) {

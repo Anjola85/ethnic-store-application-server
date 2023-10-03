@@ -15,6 +15,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
+import { ImagesDto } from './image.dto';
 
 export class BusinessDto {
   @IsOptional()
@@ -29,6 +30,10 @@ export class BusinessDto {
   @ApiProperty()
   @IsArray()
   otherCountries: Country[];
+
+  @ApiProperty()
+  @IsArray()
+  categories: Category[];
 
   @ApiProperty()
   @IsString()
@@ -78,10 +83,8 @@ export class BusinessDto {
   @ApiProperty({ type: 'string', format: 'binary' })
   logoImage: Express.Multer.File;
 
-  @ApiProperty()
   @IsOptional()
-  @IsString()
-  navigationUrl: string;
+  images: ImagesDto;
 
   @ApiProperty()
   @IsOptional()
@@ -89,10 +92,6 @@ export class BusinessDto {
   @ValidateNested()
   @Type(() => GeoLocationDto)
   geolocation: GeoLocationDto;
-
-  @ApiProperty()
-  @IsArray()
-  categories: Category[];
 
   @ApiProperty()
   @IsString()

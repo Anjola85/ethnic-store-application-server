@@ -98,7 +98,6 @@ export class AppModule implements NestModule {
         'business/nearby',
         'business/register',
         'business/all',
-        'auth/login',
         'auth/test',
         'auth/sendOtp',
         'auth/resendOtp',

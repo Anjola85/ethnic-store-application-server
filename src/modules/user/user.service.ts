@@ -1,25 +1,14 @@
 import { AddressService } from './../address/address.service';
 import { InputObject } from './../auth/auth.repository';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
-import { UserProfile } from './user.enums';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
-import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
-import TwilioService from 'src/providers/otp/twilio/twilio.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Address } from '../address/entities/address.entity';
-import { MobileDto } from 'src/common/dto/mobile.dto';
-import { Auth } from '../auth/entities/auth.entity';
 import { AuthService } from '../auth/auth.service';
 import { UserFileService } from '../files/user-files.service';
 import { mapAuthToUser, userDtoToEntity } from './user-mapper';
 import { UserRepository } from './user.repository';
-import { AddressDto } from '../address/dto/address.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
 
@@ -50,7 +39,7 @@ export class UserService {
 
     if (!userExists) {
       const address = userDto.address[0];
-      address.id = await this.addressService.addUserAddress(userDto.address[0]);
+      address.id = await this.addressService.addAddress(userDto.address[0]);
       userDto.address = [address];
 
       const newUserEntity = new User();

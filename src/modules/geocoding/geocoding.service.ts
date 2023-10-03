@@ -5,6 +5,7 @@ import axios from 'axios';
 @Injectable()
 export class GeocodingService {
   private readonly logger = new Logger(GeocodingService.name);
+
   async setCoordinates(addressDto: AddressDto): Promise<AddressDto> {
     const addressString = `${addressDto.street}, ${addressDto.city}, ${addressDto.province}, ${addressDto.postalCode}, ${addressDto.country}`;
     const apiKey = process.env.GCP_GEOCODING_API_KEY;

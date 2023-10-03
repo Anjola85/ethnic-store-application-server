@@ -6,6 +6,12 @@ import { AddressRepository } from './address.respository';
 import { Address } from './entities/address.entity';
 import { GeocodingService } from '../geocoding/geocoding.service';
 
+export interface AddressParams {
+  id?: string;
+  userId?: string;
+  businessId?: string;
+}
+
 @Injectable()
 export class AddressService {
   constructor(
@@ -14,20 +20,25 @@ export class AddressService {
   ) {}
 
   /**
-   *
+   * Adds a new address to the DB
    * @param addressDto
-   * @returns AddressDto[newly added address]
+   * @returns
    */
-  async addUserAddress(addressDto: AddressDto): Promise<string> {
+  async addAddress(addressDto: AddressDto): Promise<string> {
+    if (addressDto.user) {
+      addressDto.primary = true;
+    }
+
     await this.geoCodingService.setCoordinates(addressDto);
     const addressEntity: Address = addressDtoToEntity(addressDto);
-    const response = await this.addressRepository.addUserAddress(addressEntity);
+    const response = await this.addressRepository.addAddress(addressEntity);
     return response.identifiers[0].id;
   }
 
-  async getUserAddress(id: string): Promise<AddressDto[]> {
-    const addressEntity: Address[] =
-      await this.addressRepository.getUserAddress(id);
+  async getAddress(params: AddressParams): Promise<AddressDto[]> {
+    const addressEntity: Address[] = await this.addressRepository.getAddress(
+      params,
+    );
     const addressDto: AddressDto[] = addressEntity.map((address) =>
       entityToAddressDto(address),
     );

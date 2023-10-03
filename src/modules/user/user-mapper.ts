@@ -7,7 +7,7 @@ import {
   addressDtoToEntity,
   entityToAddressDto,
 } from 'src/modules/address/address-mapper';
-import { mapBusinessToBusinessDto } from '../business/business-mapper';
+import { entityToBusinessDto } from '../business/business-mapper';
 
 export function userDtoToEntity(userDto: UserDto, userEntity: User): void {
   userEntity.first_name = userDto.firstName;
@@ -31,7 +31,7 @@ export function userEntityToDto(user: User): UserDto {
   );
 
   userDto.favourites = user.favourites.map((favourite) =>
-    mapBusinessToBusinessDto(favourite.business),
+    entityToBusinessDto(favourite.business),
   );
 
   userDto.dob = user.dob;
@@ -53,7 +53,7 @@ export function mapAuthToUser(auth: Auth): UserDto {
   userDto.profileImageUrl = auth.user.profile_image;
   userDto.userProfile = auth.user.user_profile;
   userDto.favourites = auth?.user.favourites.map((favourite) =>
-    mapBusinessToBusinessDto(favourite.business),
+    entityToBusinessDto(favourite.business),
   );
   userDto.email = auth.email;
   userDto.mobile = entityToMobile(auth.mobile);

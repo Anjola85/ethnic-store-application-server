@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
+import { AddressParams } from './address.service';
 
 @Injectable()
 export class AddressRepository extends Repository<Address> {
@@ -10,8 +11,7 @@ export class AddressRepository extends Repository<Address> {
     super(Address, dataSource.createEntityManager());
   }
 
-  // add new address for User, can be multiple,
-  async addUserAddress(address: Address) {
+  async addAddress(address: Address) {
     try {
       const newAddress = await this.createQueryBuilder('address')
         .insert()
@@ -21,30 +21,30 @@ export class AddressRepository extends Repository<Address> {
       return newAddress;
     } catch (error) {
       this.logger.error(
-        `Error thrown in address.repository.ts, addUserAddress method: ${error.message}`,
+        `Error thrown in address.repository.ts, addAddress method: ${error.message}`,
       );
       throw new HttpException(
-        "Unable to add user's address to the database",
+        'Unable to add address to the database',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  // add business address - can only be one
-  async addBusinessAddress(address: Address) {
+  async getAddress(params: AddressParams): Promise<Address[]> {
     try {
-      const newAddress = await this.createQueryBuilder('address')
-        .insert()
-        .into(Address)
-        .values(address)
-        .execute();
-      return newAddress;
+      const addresses = await this.createQueryBuilder('address')
+        .where('address.id = :id', { id: params.id })
+        .orWhere('address.user.id = :id', { id: params.userId })
+        .orWhere('address.business.id = :id', { id: params.businessId })
+        .getMany();
+
+      return addresses;
     } catch (error) {
       this.logger.error(
-        `Error thrown in address.repository.ts, addBusinessAddress method: ${error.message}`,
+        `Error thrown in address.repository.ts, getAddress method: ${error.message}`,
       );
       throw new HttpException(
-        "Unable to add business's address to the database",
+        'Unable to retrieve address from the database',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -65,26 +65,6 @@ export class AddressRepository extends Repository<Address> {
       );
       throw new HttpException(
         "Unable to update business's address in the database",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  // get all users address
-  async getUserAddress(userId: string): Promise<Address[]> {
-    try {
-      if (!userId) throw new Error('userId is required');
-
-      const addresses = await this.createQueryBuilder('address')
-        .where('address.user.id = :userId', { userId })
-        .getMany();
-      return addresses;
-    } catch (error) {
-      this.logger.error(
-        `Error thrown in address.repository.ts, getUserAddresses method: ${error.message}`,
-      );
-      throw new HttpException(
-        "Unable to retrieve user's addresses from the database",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -6,8 +6,30 @@ import { GeoLocationDto } from './dto/geolocation.dto';
 @Injectable()
 export class BusinessRepository extends Repository<Business> {
   private readonly logger = new Logger(BusinessRepository.name);
+
   constructor(private dataSource: DataSource) {
     super(Business, dataSource.createEntityManager());
+  }
+
+  // method to create business
+  async addBusiness(business: Business) {
+    try {
+      const newBusiness = await this.createQueryBuilder('business')
+        .insert()
+        .into(Business)
+        .values(business)
+        .execute();
+
+      return newBusiness;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in business.repository.ts, addBusiness method: ${error.message}`,
+      );
+      throw new HttpException(
+        'Unable to add business to the database',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async findByName(name: string): Promise<Business> {
