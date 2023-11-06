@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { SendgridService } from './sendgrid.service';
 import { UserService } from 'src/modules/user/user.service';
 import TwilioService from '../twilio/twilio.service';
@@ -12,10 +12,10 @@ import { UserFileService } from 'src/modules/files/user-files.service';
 import { AwsS3Service } from 'src/modules/files/aws-s3.service';
 import { AuthRepository } from 'src/modules/auth/auth.repository';
 import { UserRepository } from 'src/modules/user/user.repository';
-import { AddressService } from 'src/modules/address/address.service';
 import { AddressRepository } from 'src/modules/address/address.respository';
 import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
 
+@Global()
 @Module({
   imports: [
     BullModule.registerQueue({
@@ -35,9 +35,9 @@ import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
     AwsS3Service,
     AuthRepository,
     UserRepository,
-    AddressService,
     AddressRepository,
     GeocodingService,
   ],
+  exports: [SendgridService, TwilioService],
 })
 export class SendgridModule {}
