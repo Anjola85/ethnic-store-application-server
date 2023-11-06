@@ -1,12 +1,8 @@
 import { WaitlistShopper } from './entities/waitlist_shopper';
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   Res,
   Logger,
   HttpStatus,
@@ -15,8 +11,6 @@ import { WaitlistService } from './waitlist.service';
 import { Response } from 'express';
 import { WaitlistCustomer } from './entities/waitlist_customer.entity';
 import { decryptKms } from 'src/common/util/crypto';
-import { AnyArn } from 'aws-sdk/clients/groundstation';
-import { WaitlistBusiness } from './entities/waitlist_business';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 
 @Controller('waitlist')
@@ -24,7 +18,7 @@ export class WaitlistController {
   private readonly logger = new Logger(WaitlistController.name);
   constructor(private readonly waitlistService: WaitlistService) {}
 
-  @Post('join-customer-waitlist')
+  @Post('join-customer')
   async joinCustomerWaitlist(
     @Body() body: any,
     @Res() res: Response,
@@ -50,7 +44,7 @@ export class WaitlistController {
     }
   }
 
-  @Post('join-shopper-waitlist')
+  @Post('join-shopper')
   async joinShopperWaitlist(
     @Body() body: any,
     @Res() res: Response,
@@ -76,7 +70,7 @@ export class WaitlistController {
     }
   }
 
-  @Post('join-business-waitlist')
+  @Post('join-business')
   async joinBusinessWaitlist(
     @Body() body: any,
     @Res() res: Response,

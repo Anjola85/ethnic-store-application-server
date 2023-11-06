@@ -1,5 +1,5 @@
 import { IsEmail, IsJSON, IsNotEmpty, IsString, Length } from 'class-validator';
-import { PhoneNumberDto } from 'src/common/dto/mobile.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export class WaitlistCustomerDto {
   @IsNotEmpty()
@@ -12,7 +12,7 @@ export class WaitlistCustomerDto {
 
   @IsNotEmpty()
   @IsJSON()
-  mobile: PhoneNumberDto;
+  mobile: MobileDto;
 
   @IsNotEmpty()
   @IsEmail()

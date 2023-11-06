@@ -1,21 +1,21 @@
-import { PhoneNumberDto } from 'src/common/dto/mobile.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Column, Entity } from 'typeorm';
 
 @Entity('waitlist_users')
 export class WaitlistCustomer extends CommonEntity {
-  @Column('first_name')
+  @Column({ type: 'varchar', name: 'first_name' })
   firstName: string;
 
-  @Column('last_name')
+  @Column({ type: 'varchar', name: 'last_name' })
   lastName: string;
 
-  @Column('mobile')
-  mobile: PhoneNumberDto;
+  @Column({ type: 'varchar', name: 'mobile' })
+  mobile: MobileDto;
 
-  @Column('email')
+  @Column({ type: 'varchar', name: 'email' })
   email: string;
 
-  @Column('zip_code')
+  @Column({ type: 'varchar', name: 'zip_code' })
   zipCode: string;
 }
