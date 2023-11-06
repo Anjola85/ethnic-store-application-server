@@ -6,6 +6,7 @@ import {
   UploadedFiles,
   Res,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { BusinessDto } from './dto/business.dto';
@@ -16,6 +17,8 @@ import { Response } from 'express';
 
 @Controller('business')
 export class BusinessController {
+  private readonly logger = new Logger(BusinessController.name);
+
   constructor(private readonly businessService: BusinessService) {}
 
   /**
@@ -42,9 +45,13 @@ export class BusinessController {
     createBusinessDto.logoImage = files?.logoImage[0] || null;
 
     try {
+      this.logger.debug('sign up called with body: ' + createBusinessDto);
+
       const createdBusiness = await this.businessService.register(
         createBusinessDto,
       );
+
+      this.logger.debug('created business: ' + createdBusiness);
 
       return res
         .status(HttpStatus.CREATED)
@@ -64,7 +71,13 @@ export class BusinessController {
     }
   }
 
-  // fetch nearby businesses by location - coordinates
+  /**
+   * Fetch nearby businesses by location - coordinates
+   * @param body
+   * @param res
+   * @returns
+   */
+  @Post('nearby')
   async findNearbyBusinesses(
     @Body() body: { latitude: number; longitude: number },
     @Res() res: Response,
@@ -72,7 +85,7 @@ export class BusinessController {
     try {
       const geolocationDto = new GeoLocationDto();
       geolocationDto.coordinates = [body.latitude, body.longitude];
-      const businesses = await this.businessService.findNearbyBusinesses(
+      const businesses = await this.businessService.findStoresNearby(
         geolocationDto,
       );
     } catch (error) {
@@ -82,9 +95,9 @@ export class BusinessController {
     }
   }
 
-  // /**
-  //  * Gell all businesses by location
-  //  */
+  /**
+   * Gell all businesses by location
+   */
   // @Post('nearby')
   // async findByLocation(
   //   @Body() body: { lat: number; lng: number; radius: number },

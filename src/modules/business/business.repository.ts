@@ -52,16 +52,28 @@ export class BusinessRepository extends Repository<Business> {
 
   async findNearbyBusinesses(geolocationDto: GeoLocationDto) {
     try {
+      this.logger.debug(
+        `findNearbyBusinesses called with geolocation: ${JSON.stringify(
+          geolocationDto,
+        )}`,
+      );
+      // 1km radius
+      const radius = 1000;
       const { coordinates } = geolocationDto;
       const businesses = await this.createQueryBuilder('business')
         .where(
           `ST_DistanceSphere(
             business.location,
             ST_GeomFromGeoJSON(:coordinates)
-          ) < 1000`,
+          ) < ${radius}`,
           { coordinates: JSON.stringify({ type: 'Point', coordinates }) },
         )
         .getMany();
+
+      // log the response
+      this.logger.debug(
+        `findNearbyBusinesses responded with: ${JSON.stringify(businesses)}`,
+      );
 
       return businesses;
     } catch (error) {

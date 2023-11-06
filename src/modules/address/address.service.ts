@@ -22,7 +22,7 @@ export class AddressService {
   /**
    * Adds a new address to the DB
    * @param addressDto
-   * @returns
+   * @returns the id of the newly created address
    */
   async addAddress(addressDto: AddressDto): Promise<string> {
     if (addressDto.user) {

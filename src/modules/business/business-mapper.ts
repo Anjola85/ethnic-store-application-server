@@ -4,7 +4,6 @@ import {
 } from 'src/common/mapper/mobile-mapper';
 import { Business } from './entities/business.entity';
 import { BusinessDto } from './dto/business.dto';
-import { Address } from '../address/entities/address.entity';
 import {
   addressDtoToEntity,
   entityToAddressDto,
@@ -13,7 +12,6 @@ import {
 export function businessDtoToEntity(businessData: BusinessDto): Business {
   const businessEntity = new Business();
   businessEntity.user = businessData.user;
-  //TODO: fix the mappings below
   businessEntity.country = businessData.country;
   businessEntity.other_countries = businessData.otherCountries;
   businessEntity.categories = businessData.categories;

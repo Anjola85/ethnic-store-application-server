@@ -89,9 +89,9 @@ export class BusinessService {
     }
   }
 
-  async findNearbyBusinesses(geolocationDto: GeoLocationDto): Promise<any> {
+  async findStoresNearby(geolocation: GeoLocationDto): Promise<any> {
     const businesses = await this.businessRepository.findNearbyBusinesses(
-      geolocationDto,
+      geolocation,
     );
 
     return businesses;
