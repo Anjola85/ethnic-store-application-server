@@ -43,7 +43,7 @@ export class WaitlistController {
         .json(createResponse('customer added'));
     } catch (err) {
       this.logger.error(
-        'Error in joinCustomerWaitlistMethod, with message' +
+        'Error in joinCustomerWaitlistMethod, with message ' +
           err.message +
           ' and error: ' +
           err,
@@ -84,7 +84,7 @@ export class WaitlistController {
         .json(createResponse('shopper added'));
     } catch (err) {
       this.logger.error(
-        'Error in joinShopperWaitlist, with message' +
+        'Error in joinShopperWaitlist, with message ' +
           err.message +
           ' and error: ' +
           err,
@@ -125,7 +125,7 @@ export class WaitlistController {
         .json(createResponse('business added'));
     } catch (err) {
       this.logger.error(
-        'Error in joinBusinessWaitlist, with message' +
+        'Error in joinBusinessWaitlist, with message ' +
           err.message +
           ' and error: ' +
           err,

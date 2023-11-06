@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AddressService } from './address.service';
 import { AddressController } from './address.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,9 +8,11 @@ import { Business } from '../business/entities/business.entity';
 import { AddressRepository } from './address.respository';
 import { GeocodingService } from '../geocoding/geocoding.service';
 
+@Global()
 @Module({
   imports: [TypeOrmModule.forFeature([Address, User, Business])],
   controllers: [AddressController],
   providers: [AddressService, AddressRepository, GeocodingService],
+  exports: [AddressService, GeocodingService],
 })
 export class AddressModule {}
