@@ -21,7 +21,4 @@ export class WaitlistShopper extends CommonEntity {
 
   @Column({ type: 'varchar', name: 'age' })
   age: string;
-
-  @Column({ type: 'varchar', name: 'vehicle_type' })
-  vehicleType: string;
 }

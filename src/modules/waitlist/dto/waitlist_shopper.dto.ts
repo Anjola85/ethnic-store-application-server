@@ -33,8 +33,4 @@ export class WaitlistShopperDto {
   @IsNotEmpty()
   @IsNumber()
   age: number;
-
-  @IsNotEmpty()
-  @IsString()
-  vehicleType: string;
 }

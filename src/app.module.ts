@@ -27,6 +27,10 @@ import { Auth } from './modules/auth/entities/auth.entity';
 import { Favourite } from './modules/favourite/entities/favourite.entity';
 import { AddressModule } from './modules/address/address.module';
 import { Address } from './modules/address/entities/address.entity';
+import { WaitlistCustomer } from './modules/waitlist/entities/waitlist_customer.entity';
+import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business';
+import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper';
+import { WaitlistModule } from './modules/waitlist/waitlist.module';
 
 @Module({
   imports: [
@@ -50,6 +54,9 @@ import { Address } from './modules/address/entities/address.entity';
         Address,
         Auth,
         Favourite,
+        WaitlistCustomer,
+        WaitlistBusiness,
+        WaitlistShopper,
       ],
       synchronize: true, // comment this out in production
       // ssl: {
@@ -83,6 +90,7 @@ import { Address } from './modules/address/entities/address.entity';
     ImagesModule,
     FavouriteModule,
     AddressModule,
+    WaitlistModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService],
@@ -112,6 +120,9 @@ export class AppModule implements NestModule {
         'images/upload-avatar',
         'images/get-random-avatar',
         'images/upload-profile-picture',
+        'waitlist/join-customer',
+        'waitlist/join-shopper',
+        'waitlist/join-business',
       )
       .forRoutes('*');
   }

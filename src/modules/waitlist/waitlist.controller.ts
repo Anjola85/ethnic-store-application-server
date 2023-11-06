@@ -12,6 +12,8 @@ import { Response } from 'express';
 import { WaitlistCustomer } from './entities/waitlist_customer.entity';
 import { decryptKms } from 'src/common/util/crypto';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
+import { createResponse } from 'src/common/util/response';
+import { TypeORMError } from 'typeorm';
 
 @Controller('waitlist')
 export class WaitlistController {
@@ -38,9 +40,24 @@ export class WaitlistController {
 
       return res
         .status(HttpStatus.CREATED)
-        .json({ message: 'user added', data: null });
+        .json(createResponse('customer added'));
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        'Error in joinCustomerWaitlistMethod, with message' +
+          err.message +
+          ' and error: ' +
+          err,
+      );
+
+      if (err.message === 'Customer already exists') {
+        return res
+          .status(HttpStatus.CONFLICT)
+          .json(createResponse('customer already exists', null, false));
+      } else {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createResponse('Internal Server Error', null, false));
+      }
     }
   }
 
@@ -51,7 +68,7 @@ export class WaitlistController {
   ): Promise<any> {
     try {
       this.logger.debug(
-        'join customer waitlist endpoint called with body: ' + body,
+        'join shopper waitlist endpoint called with body: ' + body,
       );
 
       const decryptedBody = await decryptKms(body.payload);
@@ -64,9 +81,24 @@ export class WaitlistController {
 
       return res
         .status(HttpStatus.CREATED)
-        .json({ message: 'shopper added', data: null });
+        .json(createResponse('shopper added'));
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        'Error in joinShopperWaitlist, with message' +
+          err.message +
+          ' and error: ' +
+          err,
+      );
+
+      if (err.message === 'Shopper already exists') {
+        return res
+          .status(HttpStatus.CONFLICT)
+          .json(createResponse('shopper already exists', null, false));
+      } else {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createResponse('Internal Server Error', null, false));
+      }
     }
   }
 
@@ -77,7 +109,7 @@ export class WaitlistController {
   ): Promise<any> {
     try {
       this.logger.debug(
-        'join customer waitlist endpoint called with body: ' + body,
+        'join business waitlist endpoint called with body: ' + body,
       );
 
       const decryptedBody = await decryptKms(body.payload);
@@ -90,9 +122,24 @@ export class WaitlistController {
 
       return res
         .status(HttpStatus.CREATED)
-        .json({ message: 'business added', data: null });
+        .json(createResponse('business added'));
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        'Error in joinBusinessWaitlist, with message' +
+          err.message +
+          ' and error: ' +
+          err,
+      );
+
+      if (err.message === 'Business already exists') {
+        return res
+          .status(HttpStatus.CONFLICT)
+          .json(createResponse('business already exists', null, false));
+      } else {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createResponse('Internal Server Error', null, false));
+      }
     }
   }
 }

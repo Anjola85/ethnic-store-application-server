@@ -2,7 +2,7 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Column, Entity } from 'typeorm';
 
-@Entity('waitlist_users')
+@Entity('waitlist_customer')
 export class WaitlistCustomer extends CommonEntity {
   @Column({ type: 'varchar', name: 'first_name' })
   firstName: string;

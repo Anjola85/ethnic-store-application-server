@@ -4,11 +4,20 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config(); // Load environment variables from .env file
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // rate limiting middleware - 100 requests per 15-minute window
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Max requests per windowMs
+  });
+
+  app.use(limiter);
 
   app.useGlobalPipes(new ValidationPipe());
 
