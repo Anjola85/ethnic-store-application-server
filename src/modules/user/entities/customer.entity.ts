@@ -1,27 +1,27 @@
-import { Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ProfileType } from './person.entity';
+// import { Schema, SchemaFactory } from '@nestjs/mongoose';
+// // import { ProfileType } from './person.entity';
 
-export type CustomerDocument = Customer & Document;
+// export type CustomerDocument = Customer & Document;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: {
-    virtuals: true,
-  },
-  toJSON: {
-    virtuals: true,
-  },
-})
-export class Customer extends ProfileType {}
+// @Schema({
+//   timestamps: true,
+//   autoCreate: true,
+//   toObject: {
+//     virtuals: true,
+//   },
+//   toJSON: {
+//     virtuals: true,
+//   },
+// })
+// export class Customer extends ProfileType {}
 
-const CustomerSchema = SchemaFactory.createForClass(Customer);
+// const CustomerSchema = SchemaFactory.createForClass(Customer);
 
-CustomerSchema.statics.config = () => {
-  return {
-    idToken: 'cst',
-    hiddenFields: ['deleted'],
-  };
-};
+// CustomerSchema.statics.config = () => {
+//   return {
+//     idToken: 'cst',
+//     hiddenFields: ['deleted'],
+//   };
+// };
 
-export { CustomerSchema };
+// export { CustomerSchema };

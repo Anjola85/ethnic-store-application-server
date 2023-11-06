@@ -1,44 +1,15 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
 import { Business } from 'src/modules/business/entities/business.entity';
-import { Customer } from 'src/modules/user/entities/customer.entity';
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Entity, JoinColumn, OneToOne } from 'typeorm';
 
-export type FavouriteDocument = Favourite & Document;
+@Entity('favourites')
+export class Favourite extends CommonEntity {
+  @OneToOne(() => Business, (business) => business.id)
+  @JoinColumn()
+  business: Business;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class Favourite {
-  @Prop({
-    type: Types.ObjectId,
-    default: null,
-    ref: 'Business',
-  })
-  businessId: string | Business;
-
-  @Prop({
-    type: Types.ObjectId,
-    default: null,
-    ref: 'Customer',
-  })
-  customerId: string | Customer;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  deleted: boolean;
+  @OneToOne(() => User, (user) => user.id)
+  @JoinColumn()
+  user: User;
 }
-
-const FavouriteSchema = SchemaFactory.createForClass(Favourite);
-
-FavouriteSchema.statics.config = () => {
-  return {
-    idToken: 'favourite',
-  };
-};
-
-export { FavouriteSchema };
