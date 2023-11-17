@@ -126,6 +126,9 @@ NOTE: make sure docker desktop is running
 3. After the build completes, tag your image so you can push the image to this repository:
    `docker tag quickmart-server:latest 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:latest`
 
+Optional:
+To run: `docker run -p 7080:7080 image_name`
+
 4. Run the following command to push this image to your newly created AWS repository:
    `docker push 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name_of_tag}`
 
