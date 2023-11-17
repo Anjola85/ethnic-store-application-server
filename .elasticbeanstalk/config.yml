@@ -1,0 +1,18 @@
+branch-defaults:
+  beanstalkMigration:
+    environment: Quiikmart-server-node-env
+    group_suffix: null
+global:
+  application_name: test-docker-nest-app
+  branch: beanstalkMigration
+  default_ec2_keyname: pilot-monolith-23
+  default_platform: Docker running on 64bit Amazon Linux 2
+  default_region: ca-central-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  repository: origin
+  sc: git
+  workspace_type: Application

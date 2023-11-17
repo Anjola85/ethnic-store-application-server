@@ -117,17 +117,17 @@ NOTE: make sure docker desktop is running
 
 1. Retrieve an authentication token and authenticate your Docker client to your registry.
    Use the AWS CLI:
-   `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.us-east-1.amazonaws.com`
+   `aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.ca-central-1.amazonaws.com`
 
 2. Build your Docker image using the following command.
    For information on building a Docker file from scratch see the instructions here . You can skip this step if your image is already built:
    `docker build -t quickmart-server .`
 
 3. After the build completes, tag your image so you can push the image to this repository:
-   `docker tag quickmart-server:latest 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:latest`
+   `docker tag quickmart-server:latest 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
 
 4. Run the following command to push this image to your newly created AWS repository:
-   `docker push 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name_of_tag}`
+   `docker push 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:{tag_name}`
 
 ## Steps to make the docker image available on AWS EC2
 
