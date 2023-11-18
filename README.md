@@ -138,14 +138,14 @@ NOTE: Remember to login to aws on EC2, if no configuration for docker command co
 `sudo chmod 666 /var/run/docker.sock`
 
 1. Run the following command to pull this image from the ECR Repository on EC2
-   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of branch and first 7 digits of commit}`
+   `docker pull 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:{tag_name}`
 
 2. Run `docker images` to see if the image has been added
 
 3. Run `docker stop {pid}` to stop previous image
 
 4. Run the following command to expose the port in background mode
-   `docker run -p 7080:7080 -d 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+   `docker run -p 7080:7080 -d 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:{tag_name}`
 
 5. Run this to check if image is running
    `docker ps`

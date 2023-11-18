@@ -31,9 +31,11 @@ export class AwsSecretKey {
   }
 
   async getSecretKey(): Promise<string> {
-    if (!this.secretKey) {
-      await this.retrieveSecretKey();
-    }
-    return this.secretKey;
+    // return '0552a0ff92089afd18ae31c1bf7bc73c75da12e9ab0369cfeff90e5f19b2112fquickie';
+    return process.env.SECRET_KEY;
+    // if (!this.secretKey) {
+    //   await this.retrieveSecretKey();
+    // }
+    // return this.secretKey;
   }
 }

@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
-import { DatabseModule } from './modules/database/database.module';
+// import { DatabseModule } from './modules/database/database.module';
 import { CategoryModule } from './modules/category/category.module';
 import { BusinessModule } from './modules/business/business.module';
 import { CountryModule } from './modules/country/country.module';
@@ -16,7 +16,7 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
-import { ImagesModule } from './modules/files/images.module';
+// import { ImagesModule } from './modules/files/images.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/user/entities/user.entity';
 import { Business } from './modules/business/entities/business.entity';
@@ -79,7 +79,6 @@ import { WaitlistModule } from './modules/waitlist/waitlist.module';
     }),
     UserModule,
     SendgridModule,
-    DatabseModule,
     AuthModule,
     BusinessModule,
     CategoryModule,
@@ -87,7 +86,6 @@ import { WaitlistModule } from './modules/waitlist/waitlist.module';
     ContinentModule,
     ReviewsModule,
     FavouriteModule,
-    ImagesModule,
     FavouriteModule,
     AddressModule,
     WaitlistModule,
