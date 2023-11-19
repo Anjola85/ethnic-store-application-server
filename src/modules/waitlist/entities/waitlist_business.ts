@@ -16,7 +16,4 @@ export class WaitlistBusiness extends CommonEntity {
 
   @OneToOne(() => Address, (address) => address.id)
   address: Address;
-
-  @Column({ type: 'varchar', name: 'type' })
-  type: string;
 }

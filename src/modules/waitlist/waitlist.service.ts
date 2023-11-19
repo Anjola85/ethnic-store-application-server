@@ -31,6 +31,9 @@ export class WaitlistService {
       .orWhere('waitlist_business.mobile = :mobile', {
         mobile: waitlistBusiness.mobile,
       })
+      .orWhere('waitlist_business.name = :name', {
+        name: waitlistBusiness.name,
+      })
       .getOne();
 
     if (businessExists) {

@@ -13,13 +13,16 @@ import { WaitlistCustomer } from './entities/waitlist_customer.entity';
 import { decryptKms } from 'src/common/util/crypto';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { createResponse } from 'src/common/util/response';
-import { TypeORMError } from 'typeorm';
+import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
+import { isValidPhoneNumber } from './validation';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('waitlist')
 export class WaitlistController {
   private readonly logger = new Logger(WaitlistController.name);
   constructor(private readonly waitlistService: WaitlistService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-customer')
   async joinCustomerWaitlist(
     @Body() body: any,
@@ -33,8 +36,14 @@ export class WaitlistController {
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
-      const waitlistCustomer = new WaitlistCustomer();
+      const waitlistCustomer = new WaitlistCustomerDto();
       Object.assign(waitlistCustomer, decryptedBody);
+
+      if (isValidPhoneNumber(waitlistCustomer.mobile.phoneNumber) === false) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse('Invalid phone number', null, false));
+      }
 
       await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
 
@@ -43,10 +52,7 @@ export class WaitlistController {
         .json(createResponse('customer added'));
     } catch (err) {
       this.logger.error(
-        'Error in joinCustomerWaitlistMethod, with message ' +
-          err.message +
-          ' and error: ' +
-          err,
+        'Error in joinCustomerWaitlistMethod, with error ' + err,
       );
 
       if (err.message === 'Customer already exists') {
@@ -61,6 +67,7 @@ export class WaitlistController {
     }
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-shopper')
   async joinShopperWaitlist(
     @Body() body: any,
@@ -102,6 +109,7 @@ export class WaitlistController {
     }
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-business')
   async joinBusinessWaitlist(
     @Body() body: any,

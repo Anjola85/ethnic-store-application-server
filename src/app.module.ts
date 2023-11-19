@@ -31,9 +31,27 @@ import { WaitlistCustomer } from './modules/waitlist/entities/waitlist_customer.
 import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business';
 import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper';
 import { WaitlistModule } from './modules/waitlist/waitlist.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 10,
+        limit: 5,
+      },
+      {
+        name: 'medium',
+        ttl: 60,
+        limit: 20,
+      },
+      {
+        name: 'long',
+        ttl: 60,
+        limit: 10,
+      },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['config/.env'],
@@ -58,10 +76,10 @@ import { WaitlistModule } from './modules/waitlist/waitlist.module';
         WaitlistBusiness,
         WaitlistShopper,
       ],
-      // synchronize: true, // comment this out in production
-      ssl: {
-        rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-      },
+      synchronize: true, // comment this out in production
+      // ssl: {
+      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      // },
     }),
     BullModule.forRoot({
       redis: {
@@ -91,7 +109,14 @@ import { WaitlistModule } from './modules/waitlist/waitlist.module';
     WaitlistModule,
   ],
   controllers: [AppController],
-  providers: [AppService, JwtService],
+  providers: [
+    AppService,
+    JwtService,
+    {
+      provide: 'APP_GUARD',
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
