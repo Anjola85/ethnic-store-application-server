@@ -36,4 +36,7 @@ export class WaitlistCustomerDto {
 
   @IsNotEmpty()
   promotions: boolean;
+
+  @IsString()
+  waitlist_uuid: string;
 }

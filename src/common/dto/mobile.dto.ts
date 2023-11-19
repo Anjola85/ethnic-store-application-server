@@ -17,14 +17,17 @@ export class EntityMobileDto {
  */
 export class MobileDto {
   @ApiProperty({ example: '+6473334839' })
+  @IsNotEmpty()
   @IsString()
   phoneNumber: string;
 
   @ApiProperty({ example: '+1' })
+  @IsNotEmpty()
   @IsString()
   countryCode: string;
 
   @ApiProperty({ example: 'CA' })
+  @IsNotEmpty()
   @IsString()
   isoType: string;
 }

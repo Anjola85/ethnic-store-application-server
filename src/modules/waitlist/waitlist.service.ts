@@ -5,8 +5,11 @@ import { WaitlistBusiness } from './entities/waitlist_business';
 import { AddressService } from '../address/address.service';
 import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TypeORMError } from 'typeorm';
+import { Repository } from 'typeorm';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
+import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
+import axios from 'axios';
+import { AddressDto } from '../address/dto/address.dto';
 @Injectable()
 export class WaitlistService {
   private readonly logger = new Logger(WaitlistService.name);
@@ -23,6 +26,10 @@ export class WaitlistService {
   }
 
   async joinBusinessWaitlist(waitlistBusiness: WaitlistBusinessDto) {
+    // call waitlist thrid-party service
+    const waitlist_uuid = await this.sendToWaitlistService(waitlistBusiness);
+    waitlistBusiness.waitlist_uuid = waitlist_uuid;
+
     const businessExists = await this.businessRespository
       .createQueryBuilder('waitlist_business')
       .where('waitlist_business.email = :email', {
@@ -40,15 +47,19 @@ export class WaitlistService {
       throw new Error('Business already exists');
     }
 
-    const addressId: string = await this.address.addAddress(
-      waitlistBusiness.address,
-    );
-    waitlistBusiness.address.id = addressId;
+    // const addressId: string = await this.address.addAddress(
+    //   waitlistBusiness.address,
+    // );
+    // waitlistBusiness.address.id = addressId;
 
     this.businessRespository.create(waitlistBusiness).save();
   }
 
-  async joinShopperWaitlist(waitlistShopper: WaitlistShopper) {
+  async joinShopperWaitlist(waitlistShopper: WaitlistShopperDto) {
+    // call waitlist thrid-party service
+    const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
+    waitlistShopper.waitlist_uuid = waitlist_uuid;
+
     const shopperExists = await this.shopperRespository
       .createQueryBuilder('waitlist_shopper')
       .where('waitlist_shopper.email = :email', {
@@ -67,6 +78,10 @@ export class WaitlistService {
   }
 
   async joinCustomerWaitlist(body: WaitlistCustomerDto) {
+    // call waitlist thrid-party service
+    const waitlist_uuid = await this.sendToWaitlistService(body);
+    body.waitlist_uuid = waitlist_uuid;
+
     const customerExists = await this.customerRespository
       .createQueryBuilder('waitlist_customer')
       .where('waitlist_customer.email = :email', { email: body.email })
@@ -78,5 +93,137 @@ export class WaitlistService {
     }
 
     this.customerRespository.create(body).save();
+  }
+
+  async sendToWaitlistService(payload: any) {
+    const data = this.extractData(payload);
+
+    try {
+      const response = await axios.post(
+        'https://api.getwaitlist.com/api/v1/signup',
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data.uuid;
+    } catch (error) {
+      this.logger.error(
+        'Error in sendToWaitlistService third-party, with error: ' +
+          error +
+          ' and error message: ' +
+          error.message,
+      );
+      throw new Error('Error in sendToWaitlistService');
+    }
+  }
+
+  private extractData(payload: any) {
+    let data;
+
+    if (payload instanceof WaitlistCustomerDto)
+      data = this.extractCustomerData(data, payload);
+    else if (payload instanceof WaitlistShopperDto)
+      data = this.extractShopperData(data, payload);
+    else if (payload instanceof WaitlistBusinessDto)
+      data = this.extractBusinessData(data, payload);
+    else throw new Error('Invalid payload');
+
+    return data;
+  }
+
+  private extractBusinessData(data: any, payload: any) {
+    // const addrStr = this.stringifyAddress(payload.address);
+    data = {
+      waitlist_id: Number(process.env.WAITLIST_ID),
+      phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
+      email: payload.email,
+      answers: [
+        {
+          question_value: 'address',
+          optional: false,
+          answer_value: payload.address,
+        },
+        {
+          question_value: 'businessType',
+          optional: false,
+          answer_value: payload.businessType,
+        },
+        {
+          question_value: 'name',
+          optional: false,
+          answer_value: payload.name,
+        },
+        {
+          question_value: 'country',
+          optional: false,
+          answer_value: payload.countryEthnicity,
+        },
+      ],
+    };
+    return data;
+  }
+
+  private extractShopperData(data: any, payload: any) {
+    data = {
+      waitlist_id: Number(process.env.WAITLIST_ID),
+      phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      answers: [
+        {
+          question_value: 'zipcode',
+          optional: false,
+          answer_value: payload.zipCode,
+        },
+        {
+          question_value: 'country',
+          optional: false,
+          answer_value: payload.country,
+        },
+        {
+          question_value: 'age',
+          optional: false,
+          answer_value: payload.age,
+        },
+      ],
+    };
+    return data;
+  }
+
+  private extractCustomerData(data: any, payload: any) {
+    data = {
+      waitlist_id: Number(process.env.WAITLIST_ID),
+      phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      answers: [
+        {
+          question_value: 'zipcode',
+          optional: false,
+          answer_value: payload.zipCode,
+        },
+        {
+          question_value: 'country',
+          optional: false,
+          answer_value: payload.country,
+        },
+        {
+          question_value: 'promotions',
+          optional: false,
+          answer_value: String(payload.promotions),
+        },
+      ],
+    };
+    return data;
+  }
+
+  private stringifyAddress(address: AddressDto) {
+    return `${address.unit} ${address.street}, ${address.city}, ${address.province}, ${address.postalCode}, ${address.country}`;
   }
 }

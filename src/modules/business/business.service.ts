@@ -38,9 +38,6 @@ export class BusinessService {
       businessEntity,
     );
 
-    //TODO: remove below
-    console.log('created business: ', createdBusiness);
-
     // map the business data back to businessDto
 
     // return the created business information

@@ -9,12 +9,12 @@ export class WaitlistBusinessDto {
   name: string;
 
   @IsNotEmpty()
-  @IsJSON()
-  mobile: MobileDto;
-
-  @IsNotEmpty()
   @IsEmail()
   email: string;
+
+  @IsNotEmpty()
+  @IsJSON()
+  mobile: MobileDto;
 
   @IsNotEmpty()
   @ApiProperty({
@@ -28,9 +28,17 @@ export class WaitlistBusinessDto {
       country: 'Country 1',
     },
   })
-  address: AddressDto;
+  // address: AddressDto;
+  address: string;
 
   @IsNotEmpty()
   @IsString()
-  type: string;
+  businessType: string; // Business type
+
+  @IsNotEmpty()
+  @IsString()
+  countryEthnicity: string; // Country
+
+  @IsString()
+  waitlist_uuid: string;
 }

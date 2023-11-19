@@ -14,8 +14,15 @@ import { decryptKms } from 'src/common/util/crypto';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { createResponse } from 'src/common/util/response';
 import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
-import { isValidPhoneNumber } from './validation';
 import { Throttle } from '@nestjs/throttler';
+import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
+import axios from 'axios';
+import {
+  businessValidation,
+  customerValidation,
+  isValidPhoneNumber,
+  shopperValidation,
+} from './validation/validation';
 
 @Controller('waitlist')
 export class WaitlistController {
@@ -35,6 +42,9 @@ export class WaitlistController {
 
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
+
+      // pass custom validation
+      customerValidation(decryptedBody);
 
       const waitlistCustomer = new WaitlistCustomerDto();
       Object.assign(waitlistCustomer, decryptedBody);
@@ -59,11 +69,15 @@ export class WaitlistController {
         return res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('customer already exists', null, false));
-      } else {
+      } else if (err.message.includes('required')) {
         return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('Internal Server Error', null, false));
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse(err.message, null, false));
       }
+
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createResponse('Internal Server Error', null, false));
     }
   }
 
@@ -81,8 +95,16 @@ export class WaitlistController {
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
-      const waitlistShopper = new WaitlistShopper();
+      shopperValidation(decryptedBody);
+
+      const waitlistShopper = new WaitlistShopperDto();
       Object.assign(waitlistShopper, decryptedBody);
+
+      if (isValidPhoneNumber(waitlistShopper.mobile.phoneNumber) === false) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse('Invalid phone number', null, false));
+      }
 
       await this.waitlistService.joinShopperWaitlist(waitlistShopper);
 
@@ -122,6 +144,8 @@ export class WaitlistController {
 
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
+
+      businessValidation(decryptedBody);
 
       const waitlistBusiness = new WaitlistBusinessDto();
       Object.assign(waitlistBusiness, decryptedBody);

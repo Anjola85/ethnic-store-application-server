@@ -11,6 +11,8 @@ export class SendgridService {
     SendGrid.setApiKey(this.configService.get<string>('SENDGRID_API_KEY'));
   }
 
+  async sendWaitlistEmail(mail: string): Promise<any> {}
+
   /**
    * This method sends an email to the receiver email address containing the otp code
    * @param receiverEmail
