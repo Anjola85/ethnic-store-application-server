@@ -20,6 +20,9 @@ lerna-debug.log*
 /coverage
 /.nyc_output
 
+# AWS Secrets
+/secrets*
+
 # IDEs and editors
 /.idea
 .project
