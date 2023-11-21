@@ -28,10 +28,6 @@ export class WaitlistService {
   }
 
   async joinBusinessWaitlist(waitlistBusiness: WaitlistBusinessDto) {
-    // call waitlist thrid-party service
-    const waitlist_uuid = await this.sendToWaitlistService(waitlistBusiness);
-    waitlistBusiness.waitlist_uuid = waitlist_uuid;
-
     const businessExists = await this.businessRespository
       .createQueryBuilder('waitlist_business')
       .where('waitlist_business.email = :email', {
@@ -48,6 +44,10 @@ export class WaitlistService {
     if (businessExists) {
       throw new Error('Business already exists');
     } else {
+      // call waitlist thrid-party service
+      const waitlist_uuid = await this.sendToWaitlistService(waitlistBusiness);
+      waitlistBusiness.waitlist_uuid = waitlist_uuid;
+
       this.businessRespository.create(waitlistBusiness).save();
       this.sendgridService.businessWelcomeEmail(
         waitlistBusiness.email,
@@ -57,10 +57,6 @@ export class WaitlistService {
   }
 
   async joinShopperWaitlist(waitlistShopper: WaitlistShopperDto) {
-    // call waitlist thrid-party service
-    const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
-    waitlistShopper.waitlist_uuid = waitlist_uuid;
-
     const shopperExists = await this.shopperRespository
       .createQueryBuilder('waitlist_shopper')
       .where('waitlist_shopper.email = :email', {
@@ -74,6 +70,10 @@ export class WaitlistService {
     if (shopperExists) {
       throw new Error('Shopper already exists');
     } else {
+      // call waitlist thrid-party service
+      const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
+      waitlistShopper.waitlist_uuid = waitlist_uuid;
+
       this.shopperRespository.create(waitlistShopper).save();
       this.sendgridService.shopperWelcomeEmail(
         waitlistShopper.email,
@@ -84,13 +84,6 @@ export class WaitlistService {
 
   async joinCustomerWaitlist(body: WaitlistCustomerDto) {
     try {
-      //TODO: remove
-      this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
-
-      // call waitlist thrid-party service
-      const waitlist_uuid = await this.sendToWaitlistService(body);
-      body.waitlist_uuid = waitlist_uuid;
-
       const customerExists = await this.customerRespository
         .createQueryBuilder('waitlist_customer')
         .where('waitlist_customer.email = :email', { email: body.email })
@@ -100,6 +93,10 @@ export class WaitlistService {
       if (customerExists) {
         throw new Error('Customer already exists');
       } else {
+        // call waitlist thrid-party service
+        const waitlist_uuid = await this.sendToWaitlistService(body);
+        body.waitlist_uuid = waitlist_uuid;
+
         this.customerRespository.create(body).save();
 
         this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
@@ -181,6 +178,11 @@ export class WaitlistService {
           optional: false,
           answer_value: payload.countryEthnicity,
         },
+        {
+          question_value: 'userType',
+          optional: false,
+          answer_value: 'business',
+        },
       ],
     };
     return data;
@@ -209,6 +211,11 @@ export class WaitlistService {
           optional: false,
           answer_value: payload.age,
         },
+        {
+          question_value: 'userType',
+          optional: false,
+          answer_value: 'shopper',
+        },
       ],
     };
     return data;
@@ -236,6 +243,11 @@ export class WaitlistService {
           question_value: 'promotions',
           optional: false,
           answer_value: String(payload.promotions),
+        },
+        {
+          question_value: 'userType',
+          optional: false,
+          answer_value: 'customer',
         },
       ],
     };

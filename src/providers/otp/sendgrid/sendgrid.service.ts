@@ -33,28 +33,41 @@ export class SendgridService {
     const mail: SendGrid.MailDataRequired = {
       to: receiverEmail,
       bcc: this.receiverEmails,
-      subject: `Welcome to Quiikmart, ${name}!`,
-      from: this.senderEmailAddress,
-      text: `Hi ${name}, welcome to Quiikmart! We're thrilled to have you with us. ...`, // Plain text version of the email
+      subject: `Welcome to Quiikmart's Journey - Let's Get Started! 🚀`,
+      from: { name: 'QuiikMart Team', email: this.senderEmailAddress },
+      text: `Dear ${name}, welcome to the initial stage of Quiikmart's innovative experience - our waitlist! Your early interest propels us towards a successful pilot and final product launch. ...`, // Plain text version of the email
       html: `
-          <h3>Hi, ${name}!</h3>
-          <p>Just wanted to confirm that you're signed up to our waiting list and we are soo happy to have you here! We can't wait to give you access to Quiikmart. We are working around the clock to bring your favourite ethnic products to you.</p>
-          <p>In the meantime, wanna give us a follow on our socials?</p>
-          <p>
+          <h3>Dear ${name},</h3>
+          <p>We're delighted to welcome you to the Quiikmart community. Your inclusion on our waitlist marks the first step in our shared journey to revolutionize the way you access local ethnic groceries.</p>
+          <p>Here's a glimpse of what's coming:</p>
+          <ol>
+            <li><strong>Waitlist Confirmation:</strong> You've taken the first leap! Being on our waitlist gives you priority access to our updates and upcoming pilot app.</li>
+            <br>
+            <li><strong>Exclusive Pilot Access:</strong> Slated for early 2024, our pilot app launch will be your opportunity to be among the first to experience Quiikmart's unique offerings.</li>
+            <br>
+            <li><strong>Product Market Fit:</strong> Your feedback during the pilot will be invaluable in shaping the final product, ensuring we meet your expectations and preferences.</li>
+            <br>
+            <li><strong>Final Product Launch:</strong> With insights gained from the pilot, we will unveil the complete Quiikmart experience, crafted to bring the world of local ethnic groceries to your fingertips.</li>
+          </ol>
+          <p>In the interim, let's stay connected. Follow us on our social channels for updates, sneak peeks, and more:</p>
+          <div style="text-align: center;">
             <a href="https://www.instagram.com/quiikmart/" target="_blank">
-              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Follow us on Instagram" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-            <a href="#" target="_blank" />
-              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+            <a href="https://www.facebook.com/quiikmart" target="_blank" >
+              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Like us on Facebook" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-            <a href="https://twitter.com/quiikmart" target="_blank"/>
-              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+            <a href="https://twitter.com/quiikmart" target="_blank">
+              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Follow us on Twitter" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-          </p>
-          <p>From the founders <br>Anjola, Kamsi, Justina, Dexter.</p>
+          </div>
+          <p>Thank you for embarking on this journey with us. We're excited for the future and can't wait to serve you!</p>
+          <p>Warmest regards,<br>
+         <i>~The Founders of Quiikmart</i></p>
         `,
-      attachments: this.attachments,
+      // attachments: this.attachments,
     };
+    console.log('sending mail');
 
     return await this.sendWaitlistEmail(receiverEmail, name, mail);
   }
@@ -63,27 +76,43 @@ export class SendgridService {
     const mail: SendGrid.MailDataRequired = {
       to: receiverEmail,
       bcc: this.receiverEmails,
-      subject: `Welcome to Quiikmart, ${name}!`,
-      from: this.senderEmailAddress,
-      text: `Hi ${name}, welcome to Quiikmart! We're thrilled to have you with us. ...`, // Plain text version of the email
+      subject: `Your Journey To Become a Quiikstar Starts Here 🚀`,
+      from: { name: 'QuiikMart Team', email: this.senderEmailAddress },
+      text: `Hello ${name}, you've taken the first step to becoming a Quiikstar, the driving force behind Quiikmart. As we gear up for our pilot in early 2024, your early involvement is key to our community-driven success. ...`, // Plain text version of the email
       html: `
-          <h3>Hi, ${name}!</h3>
-          <p>Just wanted to confirm that you're signed up to our waiting list and we are soo happy to have you here! We can't wait to give you access to Quiikmart. We are working around the clock to bring your favourite ethnic products to you.</p>
-          <p>In the meantime, wanna give us a follow on our socials?</p>
-          <p>
+          <h3>Welcome Aboard, ${name}!</h3>
+          <p>We're thrilled to welcome you to the Quiikstars. 
+          We understand how delivering groceries can be a hassle, and we're here to change that.
+          Delivery drivers are essential to the Quiikmart experience. 
+          Your initiative to join our waitlist is the spark that will ignite a revolution in grocery delivery.</p>
+          <p>Here's what awaits you as a Quiikstar:</p>
+          <ol>
+            <li><strong>Waitlist Confirmation:</strong> You're in the starting lineup! This means you'll be among the first to be updated on our progress and receive exclusive access to the Quiikmart driver app.</li>
+            <br/>
+            <li><strong>Early Access to the Pilot App:</strong> Your feedback will be instrumental as we test and perfect our systems, ensuring a smooth ride as we approach the launch.</li>
+            <br/>
+            <li><strong>Community Engagement:</strong> Join our growing community of Quiikstars and contribute to shaping a delivery service that stands apart.</li>
+            <br/>
+            <li><strong>Official Launch:</strong> You'll be the face of Quiikmart, bringing a world of local ethnic groceries to our customer's doorsteps.</li>
+          </ol>
+          <p>Follow our journey and join the conversation on social media:</p>
+          <div style="text-align: center;">
             <a href="https://www.instagram.com/quiikmart/" target="_blank">
-              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-            <a href="#" target="_blank" />
-              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+            <a href="https://www.facebook.com/quiikmart" target="_blank">
+              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-            <a href="https://twitter.com/quiikmart" target="_blank"/>
-              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+            <a href="https://twitter.com/quiikmart" target="_blank">
+              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
+          </div>
+          <p>Thank you for joining us at this exciting time. Together, we'll drive towards a future full of possibility.</p>
+          <p>On the road to success,<br>
+          <i>~The Founders of Quiikmart</i>
           </p>
-          <p>From the founders <br>Anjola, Kamsi, Justina, Dexter.</p>
         `,
-      attachments: this.attachments,
+      // attachments: this.attachments,
     };
 
     return await this.sendWaitlistEmail(receiverEmail, name, mail);
@@ -93,27 +122,40 @@ export class SendgridService {
     const mail: SendGrid.MailDataRequired = {
       to: receiverEmail,
       bcc: this.receiverEmails,
-      subject: `Welcome to Quiikmart, ${name}!`,
-      from: this.senderEmailAddress,
-      text: `Hi ${name}, welcome to Quiikmart! We're thrilled to have you with us. ...`, // Plain text version of the email
+      subject: `Quiikmart Partnership Awaits: Welcome, ${name}! 🚀`,
+      from: { name: 'QuiikMart Team', email: this.senderEmailAddress },
+      text: `Dear ${name}, your business is now poised to join an exciting venture with Quiikmart. As we approach the launch of our pilot in early 2024, your early registration is a step towards mutual growth and success. ...`, // Plain text version of the email
       html: `
-          <h3>Hi, ${name}!</h3>
-          <p>Just wanted to confirm that you're signed up to our waiting list and we are soo happy to have you here! We can't wait to give you access to Quiikmart. We are working around the clock to bring your favourite ethnic products to you.</p>
-          <p>In the meantime, wanna give us a follow on our socials?</p>
-          <p>
+          <h3>Partnering for Success!</h3>
+          <p>Welcome to the Quiikmart family! We're excited to have your business on our waitlist, a significant step towards unlocking new opportunities and expanding your reach through our platform.</p>
+          <p>As a valued partner, here's what you can look forward to:</p>
+          <ol>
+            <li><strong>Waitlist Confirmation:</strong> Your business is now in the priority circle for updates on our progress and for the first look at our business interface on the Quiikmart platform.</li>
+            <br/>
+            <li><strong>Pilot Program Participation:</strong> You will have early access to our pilot app, offering a unique opportunity to shape our services and ensure they align perfectly with your business needs.</li>
+            <br/>
+            <li><strong>Community and Network Building:</strong> Engage with a growing network of businesses and customers, and be part of a marketplace that values local ethnic products.</li>
+            <br/>
+            <li><strong>Full Launch Inclusion:</strong> Your offerings will be featured as we roll out the full Quiikmart experience, connecting you with a broad audience eager for ethnic and local groceries.</li>
+          </ol>
+          <p>Let's start the conversation and grow together. Connect with us on our social platforms:</p>
+          <div style="text-align: center;">
             <a href="https://www.instagram.com/quiikmart/" target="_blank">
-              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-            <a href="#" target="_blank" />
-              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+            <a href="https://www.facebook.com/quiikmart" target="_blank">
+              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
-            <a href="https://twitter.com/quiikmart" target="_blank"/>
-              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Instagram" style="height: 24px; width: 24px;"/>
+            <a href="https://twitter.com/quiikmart" target="_blank">
+              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" style="height: 24px; width: 24px; margin: 5px;"/>
             </a>
+          </div>
+          <p>We're committed to our partners' success and can't wait to embark on this journey with you.</p>
+          <p>Together towards growth,<br>
+          <i>~The Founders of Quiikmart</i>
           </p>
-          <p>From the founders <br>Anjola, Kamsi, Justina, Dexter.</p>
         `,
-      attachments: this.attachments,
+      // attachments: this.attachments,
     };
 
     return await this.sendWaitlistEmail(receiverEmail, name, mail);
