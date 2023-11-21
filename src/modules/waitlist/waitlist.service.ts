@@ -28,57 +28,67 @@ export class WaitlistService {
   }
 
   async joinBusinessWaitlist(waitlistBusiness: WaitlistBusinessDto) {
-    const businessExists = await this.businessRespository
-      .createQueryBuilder('waitlist_business')
-      .where('waitlist_business.email = :email', {
-        email: waitlistBusiness.email,
-      })
-      .orWhere('waitlist_business.mobile = :mobile', {
-        mobile: waitlistBusiness.mobile,
-      })
-      .orWhere('waitlist_business.name = :name', {
-        name: waitlistBusiness.name,
-      })
-      .getOne();
+    try {
+      const businessExists = await this.businessRespository
+        .createQueryBuilder('waitlist_business')
+        .where('waitlist_business.email = :email', {
+          email: waitlistBusiness.email,
+        })
+        .orWhere('waitlist_business.mobile = :mobile', {
+          mobile: waitlistBusiness.mobile,
+        })
+        .orWhere('waitlist_business.name = :name', {
+          name: waitlistBusiness.name,
+        })
+        .getOne();
 
-    if (businessExists) {
-      throw new Error('Business already exists');
-    } else {
-      // call waitlist thrid-party service
-      const waitlist_uuid = await this.sendToWaitlistService(waitlistBusiness);
-      waitlistBusiness.waitlist_uuid = waitlist_uuid;
+      if (businessExists) {
+        throw new Error('Business already exists');
+      } else {
+        // call waitlist thrid-party service
+        const waitlist_uuid = await this.sendToWaitlistService(
+          waitlistBusiness,
+        );
+        waitlistBusiness.waitlist_uuid = waitlist_uuid;
 
-      this.businessRespository.create(waitlistBusiness).save();
-      this.sendgridService.businessWelcomeEmail(
-        waitlistBusiness.email,
-        waitlistBusiness.name,
-      );
+        this.businessRespository.create(waitlistBusiness).save();
+        this.sendgridService.businessWelcomeEmail(
+          waitlistBusiness.email,
+          waitlistBusiness.name,
+        );
+      }
+    } catch (error) {
+      return;
     }
   }
 
   async joinShopperWaitlist(waitlistShopper: WaitlistShopperDto) {
-    const shopperExists = await this.shopperRespository
-      .createQueryBuilder('waitlist_shopper')
-      .where('waitlist_shopper.email = :email', {
-        email: waitlistShopper.email,
-      })
-      .orWhere('waitlist_shopper.mobile = :mobile', {
-        mobile: waitlistShopper.mobile,
-      })
-      .getOne();
+    try {
+      const shopperExists = await this.shopperRespository
+        .createQueryBuilder('waitlist_shopper')
+        .where('waitlist_shopper.email = :email', {
+          email: waitlistShopper.email,
+        })
+        .orWhere('waitlist_shopper.mobile = :mobile', {
+          mobile: waitlistShopper.mobile,
+        })
+        .getOne();
 
-    if (shopperExists) {
-      throw new Error('Shopper already exists');
-    } else {
-      // call waitlist thrid-party service
-      const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
-      waitlistShopper.waitlist_uuid = waitlist_uuid;
+      if (shopperExists) {
+        throw new Error('Shopper already exists');
+      } else {
+        // call waitlist thrid-party service
+        const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
+        waitlistShopper.waitlist_uuid = waitlist_uuid;
 
-      this.shopperRespository.create(waitlistShopper).save();
-      this.sendgridService.shopperWelcomeEmail(
-        waitlistShopper.email,
-        waitlistShopper.firstName,
-      );
+        this.shopperRespository.create(waitlistShopper).save();
+        this.sendgridService.shopperWelcomeEmail(
+          waitlistShopper.email,
+          waitlistShopper.firstName,
+        );
+      }
+    } catch (error) {
+      return;
     }
   }
 
@@ -102,12 +112,7 @@ export class WaitlistService {
         this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
       }
     } catch (error) {
-      // check if new Error was thrown
-      if (error instanceof Error) {
-        throw new Error(error.message);
-      } else {
-        throw new Error('Error processing customer registration');
-      }
+      return;
     }
   }
 

@@ -50,17 +50,25 @@ export class SendgridService {
             <li><strong>Final Product Launch:</strong> With insights gained from the pilot, we will unveil the complete Quiikmart experience, crafted to bring the world of local ethnic groceries to your fingertips.</li>
           </ol>
           <p>In the interim, let's stay connected. Follow us on our social channels for updates, sneak peeks, and more:</p>
-          <div style="text-align: center;">
-            <a href="https://www.instagram.com/quiikmart/" target="_blank">
-              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Follow us on Instagram" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-            <a href="https://www.facebook.com/quiikmart" target="_blank" >
-              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Like us on Facebook" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-            <a href="https://twitter.com/quiikmart" target="_blank">
-              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Follow us on Twitter" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-          </div>
+          <table align="center" width="70%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td align="center" style="padding: 10px;">
+              <a href="https://www.instagram.com/quiikmart/" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" width="50" height="50" style="display: block;"/>
+              </a>
+            </td>
+            <td align="center" style="padding: 10px;">
+              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
+              </a>
+            </td>
+            <td align="center" style="padding: 10px;">
+              <a href="https://twitter.com/quiikmart" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" width="40" height="40" style="display: block;"/>
+              </a>
+            </td>
+          </tr>
+        </table>
           <p>Thank you for embarking on this journey with us. We're excited for the future and can't wait to serve you!</p>
           <p>Warmest regards,<br>
          <i>~The Founders of Quiikmart</i></p>
@@ -96,17 +104,26 @@ export class SendgridService {
             <li><strong>Official Launch:</strong> You'll be the face of Quiikmart, bringing a world of local ethnic groceries to our customer's doorsteps.</li>
           </ol>
           <p>Follow our journey and join the conversation on social media:</p>
-          <div style="text-align: center;">
-            <a href="https://www.instagram.com/quiikmart/" target="_blank">
-              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-            <a href="https://www.facebook.com/quiikmart" target="_blank">
-              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-            <a href="https://twitter.com/quiikmart" target="_blank">
-              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-          </div>
+          <table align="center" width="70%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td align="center" style="padding: 10px;">
+              <a href="https://www.instagram.com/quiikmart/" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" width="50" height="50" style="display: block;"/>
+              </a>
+            </td>
+            <td align="center" style="padding: 10px;">
+              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
+              </a>
+            </td>
+            <td align="center" style="padding: 10px;">
+              <a href="https://twitter.com/quiikmart" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" width="40" height="40" style="display: block;"/>
+              </a>
+            </td>
+          </tr>
+        </table>
+        
           <p>Thank you for joining us at this exciting time. Together, we'll drive towards a future full of possibility.</p>
           <p>On the road to success,<br>
           <i>~The Founders of Quiikmart</i>
@@ -139,17 +156,25 @@ export class SendgridService {
             <li><strong>Full Launch Inclusion:</strong> Your offerings will be featured as we roll out the full Quiikmart experience, connecting you with a broad audience eager for ethnic and local groceries.</li>
           </ol>
           <p>Let's start the conversation and grow together. Connect with us on our social platforms:</p>
-          <div style="text-align: center;">
-            <a href="https://www.instagram.com/quiikmart/" target="_blank">
-              <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-            <a href="https://www.facebook.com/quiikmart" target="_blank">
-              <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-            <a href="https://twitter.com/quiikmart" target="_blank">
-              <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" style="height: 24px; width: 24px; margin: 5px;"/>
-            </a>
-          </div>
+          <table align="center" width="70%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td align="center" style="padding: 10px;">
+              <a href="https://www.instagram.com/quiikmart/" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/instagram_icon.png" alt="Instagram" width="50" height="50" style="display: block;"/>
+              </a>
+            </td>
+            <td align="center" style="padding: 10px;">
+              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
+              </a>
+            </td>
+            <td align="center" style="padding: 10px;">
+              <a href="https://twitter.com/quiikmart" target="_blank" style="text-decoration: none;">
+                <img src="https://www.quiikmart.com/images/twitter_icon.png" alt="Twitter" width="40" height="40" style="display: block;"/>
+              </a>
+            </td>
+          </tr>
+        </table>
           <p>We're committed to our partners' success and can't wait to embark on this journey with you.</p>
           <p>Together towards growth,<br>
           <i>~The Founders of Quiikmart</i>
