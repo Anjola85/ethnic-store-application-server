@@ -49,16 +49,11 @@ export class WaitlistService {
       throw new Error('Business already exists');
     } else {
       this.businessRespository.create(waitlistBusiness).save();
-      this.sendgridService.sendWaitlistEmail(
+      this.sendgridService.businessWelcomeEmail(
         waitlistBusiness.email,
         waitlistBusiness.name,
       );
     }
-
-    // const addressId: string = await this.address.addAddress(
-    //   waitlistBusiness.address,
-    // );
-    // waitlistBusiness.address.id = addressId;
   }
 
   async joinShopperWaitlist(waitlistShopper: WaitlistShopperDto) {
@@ -80,7 +75,7 @@ export class WaitlistService {
       throw new Error('Shopper already exists');
     } else {
       this.shopperRespository.create(waitlistShopper).save();
-      this.sendgridService.sendWaitlistEmail(
+      this.sendgridService.shopperWelcomeEmail(
         waitlistShopper.email,
         waitlistShopper.firstName,
       );
@@ -90,7 +85,7 @@ export class WaitlistService {
   async joinCustomerWaitlist(body: WaitlistCustomerDto) {
     try {
       //TODO: remove
-      this.sendgridService.sendWaitlistEmail(body.email, body.firstName);
+      this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
 
       // call waitlist thrid-party service
       const waitlist_uuid = await this.sendToWaitlistService(body);
@@ -107,7 +102,7 @@ export class WaitlistService {
       } else {
         this.customerRespository.create(body).save();
 
-        this.sendgridService.sendWaitlistEmail(body.email, body.firstName);
+        this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
       }
     } catch (error) {
       // check if new Error was thrown
