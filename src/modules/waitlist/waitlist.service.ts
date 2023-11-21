@@ -10,6 +10,7 @@ import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
 import axios from 'axios';
 import { AddressDto } from '../address/dto/address.dto';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 @Injectable()
 export class WaitlistService {
   private readonly logger = new Logger(WaitlistService.name);
@@ -21,6 +22,7 @@ export class WaitlistService {
     @InjectRepository(WaitlistBusiness)
     private businessRespository: Repository<WaitlistBusiness>,
     private address: AddressService,
+    private readonly sendgridService: SendgridService,
   ) {
     this.address = address;
   }
@@ -45,14 +47,18 @@ export class WaitlistService {
 
     if (businessExists) {
       throw new Error('Business already exists');
+    } else {
+      this.businessRespository.create(waitlistBusiness).save();
+      this.sendgridService.sendWaitlistEmail(
+        waitlistBusiness.email,
+        waitlistBusiness.name,
+      );
     }
 
     // const addressId: string = await this.address.addAddress(
     //   waitlistBusiness.address,
     // );
     // waitlistBusiness.address.id = addressId;
-
-    this.businessRespository.create(waitlistBusiness).save();
   }
 
   async joinShopperWaitlist(waitlistShopper: WaitlistShopperDto) {
@@ -72,27 +78,45 @@ export class WaitlistService {
 
     if (shopperExists) {
       throw new Error('Shopper already exists');
+    } else {
+      this.shopperRespository.create(waitlistShopper).save();
+      this.sendgridService.sendWaitlistEmail(
+        waitlistShopper.email,
+        waitlistShopper.firstName,
+      );
     }
-
-    this.shopperRespository.create(waitlistShopper).save();
   }
 
   async joinCustomerWaitlist(body: WaitlistCustomerDto) {
-    // call waitlist thrid-party service
-    const waitlist_uuid = await this.sendToWaitlistService(body);
-    body.waitlist_uuid = waitlist_uuid;
+    try {
+      //TODO: remove
+      this.sendgridService.sendWaitlistEmail(body.email, body.firstName);
 
-    const customerExists = await this.customerRespository
-      .createQueryBuilder('waitlist_customer')
-      .where('waitlist_customer.email = :email', { email: body.email })
-      .orWhere('waitlist_customer.mobile = :mobile', { mobile: body.mobile })
-      .getOne();
+      // call waitlist thrid-party service
+      const waitlist_uuid = await this.sendToWaitlistService(body);
+      body.waitlist_uuid = waitlist_uuid;
 
-    if (customerExists) {
-      throw new Error('Customer already exists');
+      const customerExists = await this.customerRespository
+        .createQueryBuilder('waitlist_customer')
+        .where('waitlist_customer.email = :email', { email: body.email })
+        .orWhere('waitlist_customer.mobile = :mobile', { mobile: body.mobile })
+        .getOne();
+
+      if (customerExists) {
+        throw new Error('Customer already exists');
+      } else {
+        this.customerRespository.create(body).save();
+
+        this.sendgridService.sendWaitlistEmail(body.email, body.firstName);
+      }
+    } catch (error) {
+      // check if new Error was thrown
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Error processing customer registration');
+      }
     }
-
-    this.customerRespository.create(body).save();
   }
 
   async sendToWaitlistService(payload: any) {

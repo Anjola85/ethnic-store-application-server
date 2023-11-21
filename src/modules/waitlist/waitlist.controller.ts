@@ -60,7 +60,7 @@ export class WaitlistController {
       return res
         .status(HttpStatus.CREATED)
         .json(createResponse('customer added'));
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(
         'Error in joinCustomerWaitlistMethod, with error ' + err,
       );
