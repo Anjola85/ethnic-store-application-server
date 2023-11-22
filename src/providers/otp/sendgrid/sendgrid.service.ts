@@ -37,7 +37,7 @@ export class SendgridService {
       from: { name: 'QuiikMart Team', email: this.senderEmailAddress },
       text: `Dear ${name}, welcome to the initial stage of Quiikmart's innovative experience - our waitlist! Your early interest propels us towards a successful pilot and final product launch. ...`, // Plain text version of the email
       html: `
-          <h3>Hello ${name}!,</h3>
+          <h3>Hello ${name}!</h3>
           <p>We're delighted to welcome you to the Quiikmart community. Your inclusion on our waitlist marks the first step in our shared journey to revolutionize the way you access local ethnic groceries.</p>
           <p>Here's a glimpse of what's coming:</p>
           <ol>
@@ -141,7 +141,7 @@ export class SendgridService {
       bcc: this.receiverEmails,
       subject: `Quiikmart Partnership Awaits: Welcome, ${name}! 🚀`,
       from: { name: 'QuiikMart Team', email: this.senderEmailAddress },
-      text: `Dear ${name}, your business is now poised to join an exciting venture with Quiikmart. As we approach the launch of our pilot in early 2024, your early registration is a step towards mutual growth and success. ...`, // Plain text version of the email
+      text: `Congratulations! your business is now poised to join an exciting venture with Quiikmart. As we approach the launch of our pilot in early 2024, your early registration is a step towards mutual growth and success. ...`, // Plain text version of the email
       html: `
           <h3>Partnering for Success!</h3>
           <p>Welcome to the Quiikmart family! We're excited to have your business on our waitlist, a significant step towards unlocking new opportunities and expanding your reach through our platform.</p>
