@@ -18,4 +18,13 @@ export class WaitlistCustomer extends CommonEntity {
 
   @Column({ type: 'varchar', name: 'zip_code' })
   zipCode: string;
+
+  @Column({ type: 'varchar', name: 'country', default: '' })
+  country: string;
+
+  @Column({ type: 'boolean', name: 'promitions', default: false })
+  promotions: boolean;
+
+  @Column({ type: 'varchar', name: 'waitlist_uuid', nullable: true })
+  waitlist_uuid: string;
 }

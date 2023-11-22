@@ -11,18 +11,10 @@ dotenv.config(); // Load environment variables from .env file
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // rate limiting middleware - 100 requests per 15-minute window
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Max requests per windowMs
-  });
-
-  app.use(limiter);
-
   app.useGlobalPipes(new ValidationPipe());
 
   const corsOptions: CorsOptions = {
-    origin: '*', // Allow requests from all origins
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   };
@@ -30,6 +22,7 @@ async function bootstrap() {
   app.enableCors(corsOptions);
 
   const logger = new Logger();
+
   const config = new DocumentBuilder()
     .setTitle('Quickmart Server')
     .setDescription('Server API description')

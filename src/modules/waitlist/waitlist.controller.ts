@@ -13,13 +13,23 @@ import { WaitlistCustomer } from './entities/waitlist_customer.entity';
 import { decryptKms } from 'src/common/util/crypto';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { createResponse } from 'src/common/util/response';
-import { TypeORMError } from 'typeorm';
+import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
+import { Throttle } from '@nestjs/throttler';
+import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
+import axios from 'axios';
+import {
+  businessValidation,
+  customerValidation,
+  isValidPhoneNumber,
+  shopperValidation,
+} from './validation/validation';
 
 @Controller('waitlist')
 export class WaitlistController {
   private readonly logger = new Logger(WaitlistController.name);
   constructor(private readonly waitlistService: WaitlistService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-customer')
   async joinCustomerWaitlist(
     @Body() body: any,
@@ -33,34 +43,45 @@ export class WaitlistController {
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
-      const waitlistCustomer = new WaitlistCustomer();
+      // pass custom validation
+      customerValidation(decryptedBody);
+
+      const waitlistCustomer = new WaitlistCustomerDto();
       Object.assign(waitlistCustomer, decryptedBody);
+
+      if (isValidPhoneNumber(waitlistCustomer.mobile.phoneNumber) === false) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse('Invalid phone number', null, false));
+      }
 
       await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
 
       return res
         .status(HttpStatus.CREATED)
         .json(createResponse('customer added'));
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(
-        'Error in joinCustomerWaitlistMethod, with message ' +
-          err.message +
-          ' and error: ' +
-          err,
+        'Error in joinCustomerWaitlistMethod, with error ' + err,
       );
 
       if (err.message === 'Customer already exists') {
         return res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('customer already exists', null, false));
-      } else {
+      } else if (err.message.includes('required')) {
         return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('Internal Server Error', null, false));
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse(err.message, null, false));
       }
+
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createResponse('Internal Server Error', null, false));
     }
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-shopper')
   async joinShopperWaitlist(
     @Body() body: any,
@@ -74,8 +95,16 @@ export class WaitlistController {
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
-      const waitlistShopper = new WaitlistShopper();
+      shopperValidation(decryptedBody);
+
+      const waitlistShopper = new WaitlistShopperDto();
       Object.assign(waitlistShopper, decryptedBody);
+
+      if (isValidPhoneNumber(waitlistShopper.mobile.phoneNumber) === false) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse('Invalid phone number', null, false));
+      }
 
       await this.waitlistService.joinShopperWaitlist(waitlistShopper);
 
@@ -102,6 +131,7 @@ export class WaitlistController {
     }
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-business')
   async joinBusinessWaitlist(
     @Body() body: any,
@@ -114,6 +144,8 @@ export class WaitlistController {
 
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
+
+      businessValidation(decryptedBody);
 
       const waitlistBusiness = new WaitlistBusinessDto();
       Object.assign(waitlistBusiness, decryptedBody);

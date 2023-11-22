@@ -1,4 +1,11 @@
-import { IsEmail, IsJSON, IsNotEmpty, IsString, Length } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsJSON,
+  IsNotEmpty,
+  IsString,
+  Length,
+} from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export class WaitlistCustomerDto {
@@ -22,4 +29,14 @@ export class WaitlistCustomerDto {
   @IsString()
   @Length(6)
   zipCode: string;
+
+  @IsNotEmpty()
+  @IsString()
+  country: string;
+
+  @IsNotEmpty()
+  promotions: boolean;
+
+  @IsString()
+  waitlist_uuid: string;
 }

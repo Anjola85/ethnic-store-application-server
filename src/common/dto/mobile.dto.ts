@@ -13,18 +13,21 @@ export class EntityMobileDto {
 }
 
 /**
- * Defining the structire for the mobile field
+ * Defining the structure for the mobile field
  */
 export class MobileDto {
-  @ApiProperty({ example: '+6473334839' })
+  @ApiProperty({ example: '6473334839' })
+  @IsNotEmpty()
   @IsString()
   phoneNumber: string;
 
   @ApiProperty({ example: '+1' })
+  @IsNotEmpty()
   @IsString()
   countryCode: string;
 
   @ApiProperty({ example: 'CA' })
+  @IsNotEmpty()
   @IsString()
   isoType: string;
 }

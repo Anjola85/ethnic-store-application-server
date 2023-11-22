@@ -14,9 +14,17 @@ export class WaitlistBusiness extends CommonEntity {
   @Column({ type: 'varchar', name: 'mobile' })
   mobile: MobileDto;
 
-  @OneToOne(() => Address, (address) => address.id)
-  address: Address;
+  @Column({ type: 'varchar', name: 'address' })
+  address: string;
+  // @OneToOne(() => Address, (address) => address.id)
+  // address: Address;
 
-  @Column({ type: 'varchar', name: 'type' })
-  type: string;
+  @Column({ type: 'varchar', name: 'business_type' })
+  businessType: string;
+
+  @Column({ type: 'varchar', name: 'country_ethnicity', default: '' })
+  countryEthnicity: string;
+
+  @Column({ type: 'varchar', name: 'waitlist_uuid', nullable: true })
+  waitlist_uuid: string;
 }

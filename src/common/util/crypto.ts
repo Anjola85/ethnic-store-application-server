@@ -12,9 +12,10 @@ export const encryptKms = async (buffer: Buffer) => {
     secretAccessKey: process.env.AWS_SECRET_KEY,
   });
 
-  const awsSecretKey = new AwsSecretKey();
+  // const awsSecretKey = new AwsSecretKey();
 
-  const key = await awsSecretKey.getSecretKey();
+  // const key = await awsSecretKey.getSecretKey()
+  const key = process.env.SECRET_KEY;
 
   const params = {
     KeyId: process.env.AWS_KMS_KEY_ID,
@@ -45,9 +46,9 @@ export const decryptKms = async (data: string) => {
     secretAccessKey: process.env.AWS_SECRET_KEY,
   });
 
-  const awsSecretKey = new AwsSecretKey();
-
-  const key = await awsSecretKey.getSecretKey();
+  // const awsSecretKey = new AwsSecretKey();
+  // const key = await awsSecretKey.getSecretKey();
+  const key = process.env.SECRET_KEY;
 
   const params = {
     KeyId: process.env.AWS_KMS_KEY_ID,

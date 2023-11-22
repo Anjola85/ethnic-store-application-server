@@ -1,4 +1,4 @@
-import { EntityMobileDto } from 'src/common/dto/mobile.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Column, Entity } from 'typeorm';
 
@@ -11,7 +11,7 @@ export class WaitlistShopper extends CommonEntity {
   lastName: string;
 
   @Column({ type: 'varchar', name: 'mobile' })
-  mobile: EntityMobileDto;
+  mobile: MobileDto;
 
   @Column({ type: 'varchar', name: 'email' })
   email: string;
@@ -21,4 +21,10 @@ export class WaitlistShopper extends CommonEntity {
 
   @Column({ type: 'varchar', name: 'age' })
   age: string;
+
+  @Column({ type: 'varchar', name: 'country', default: '' })
+  country: string;
+
+  @Column({ type: 'varchar', name: 'waitlist_uuid', nullable: true })
+  waitlist_uuid: string;
 }
