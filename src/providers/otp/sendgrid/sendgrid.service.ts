@@ -37,7 +37,7 @@ export class SendgridService {
       from: { name: 'QuiikMart Team', email: this.senderEmailAddress },
       text: `Dear ${name}, welcome to the initial stage of Quiikmart's innovative experience - our waitlist! Your early interest propels us towards a successful pilot and final product launch. ...`, // Plain text version of the email
       html: `
-          <h3>Dear ${name},</h3>
+          <h3>Hello ${name}!,</h3>
           <p>We're delighted to welcome you to the Quiikmart community. Your inclusion on our waitlist marks the first step in our shared journey to revolutionize the way you access local ethnic groceries.</p>
           <p>Here's a glimpse of what's coming:</p>
           <ol>
@@ -71,7 +71,7 @@ export class SendgridService {
         </table>
           <p>Thank you for embarking on this journey with us. We're excited for the future and can't wait to serve you!</p>
           <p>Warmest regards,<br>
-         <i>~The Founders of Quiikmart</i></p>
+         <i>~The Founders of <a style="text-decoration: none;" href="https://www.quiikmart.com/">Quiikmart</a></i></p>
         `,
       // attachments: this.attachments,
     };

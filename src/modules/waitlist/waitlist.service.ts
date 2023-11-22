@@ -49,6 +49,9 @@ export class WaitlistService {
         const waitlist_uuid = await this.sendToWaitlistService(
           waitlistBusiness,
         );
+        this.logger.debug(
+          `Successfully added ${waitlistBusiness.name} to getwaitlist.com`,
+        );
         waitlistBusiness.waitlist_uuid = waitlist_uuid;
 
         this.businessRespository.create(waitlistBusiness).save();
@@ -79,6 +82,9 @@ export class WaitlistService {
       } else {
         // call waitlist thrid-party service
         const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
+        this.logger.debug(
+          `Successfully added ${waitlistShopper.firstName} ${waitlistShopper.lastName} to getwaitlist.com`,
+        );
         waitlistShopper.waitlist_uuid = waitlist_uuid;
 
         this.shopperRespository.create(waitlistShopper).save();
@@ -105,6 +111,9 @@ export class WaitlistService {
       } else {
         // call waitlist thrid-party service
         const waitlist_uuid = await this.sendToWaitlistService(body);
+        this.logger.debug(
+          `Successfully added ${body.firstName} ${body.lastName} to getwaitlist.com`,
+        );
         body.waitlist_uuid = waitlist_uuid;
 
         this.customerRespository.create(body).save();
