@@ -43,6 +43,7 @@ export class WaitlistService {
         .getOne();
 
       if (businessExists) {
+        this.logger.debug(`Business ${waitlistBusiness.name} already exists`);
         throw new Error('Business already exists');
       } else {
         // call waitlist thrid-party service
@@ -61,6 +62,12 @@ export class WaitlistService {
         );
       }
     } catch (error) {
+      this.logger.debug(
+        'Error in joinBusinessWaitlist third-party, with error: ' +
+          error +
+          ' and error message: ' +
+          error.message,
+      );
       return;
     }
   }
@@ -78,6 +85,9 @@ export class WaitlistService {
         .getOne();
 
       if (shopperExists) {
+        this.logger.debug(
+          `Shopper ${waitlistShopper.firstName} ${waitlistShopper.lastName} already exists`,
+        );
         throw new Error('Shopper already exists');
       } else {
         // call waitlist thrid-party service
@@ -94,6 +104,12 @@ export class WaitlistService {
         );
       }
     } catch (error) {
+      this.logger.debug(
+        'Error in joinShopperWaitlist third-party, with error: ' +
+          error +
+          ' and error message: ' +
+          error.message,
+      );
       return;
     }
   }
@@ -107,6 +123,9 @@ export class WaitlistService {
         .getOne();
 
       if (customerExists) {
+        this.logger.debug(
+          `Customer ${body.firstName} ${body.lastName} already exists`,
+        );
         throw new Error('Customer already exists');
       } else {
         // call waitlist thrid-party service
@@ -121,6 +140,12 @@ export class WaitlistService {
         this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
       }
     } catch (error) {
+      this.logger.error(
+        'Error in joinCustomerWaitlist third-party, with error: ' +
+          error +
+          ' and error message: ' +
+          error.message,
+      );
       return;
     }
   }
