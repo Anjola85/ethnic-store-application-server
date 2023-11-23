@@ -13,7 +13,7 @@ export class SendgridService {
     { email: 'anjolaa@quiikmart.com' },
     { email: 'dextereromosele@quiikmart.com' },
     { email: 'justinaackah@quiikmart.com' },
-    { email: 'kamsi@quiikmart.com' },
+    { email: 'kamsii@quiikmart.com' },
   ];
   private readonly attachments = [
     {

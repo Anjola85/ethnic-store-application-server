@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { WaitlistCustomer } from './entities/waitlist_customer.entity';
 import { WaitlistShopper } from './entities/waitlist_shopper';
 import { WaitlistBusiness } from './entities/waitlist_business';
@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
-import axios from 'axios';
+import axios, { HttpStatusCode } from 'axios';
 import { AddressDto } from '../address/dto/address.dto';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 @Injectable()
@@ -28,125 +28,106 @@ export class WaitlistService {
   }
 
   async joinBusinessWaitlist(waitlistBusiness: WaitlistBusinessDto) {
-    try {
-      const businessExists = await this.businessRespository
-        .createQueryBuilder('waitlist_business')
-        .where('waitlist_business.email = :email', {
-          email: waitlistBusiness.email,
-        })
-        .orWhere('waitlist_business.mobile = :mobile', {
-          mobile: waitlistBusiness.mobile,
-        })
-        .orWhere('waitlist_business.name = :name', {
-          name: waitlistBusiness.name,
-        })
-        .getOne();
+    const businessExists = await this.businessRespository
+      .createQueryBuilder('waitlist_business')
+      .where('waitlist_business.email = :email', {
+        email: waitlistBusiness.email,
+      })
+      .orWhere('waitlist_business.mobile = :mobile', {
+        mobile: waitlistBusiness.mobile,
+      })
+      .orWhere('waitlist_business.name = :name', {
+        name: waitlistBusiness.name,
+      })
+      .getOne();
 
-      if (businessExists) {
-        this.logger.debug(`Business ${waitlistBusiness.name} already exists`);
-        throw new Error('Business already exists');
+    if (businessExists) {
+      this.logger.debug(
+        `Business with name:${waitlistBusiness.name} already exists`,
+      );
+      throw new ConflictException(
+        `Business with name:${waitlistBusiness.name} already exists`,
+      );
+    } else {
+      // call waitlist thrid-party service
+      const waitlist_uuid = await this.sendToWaitlistService(waitlistBusiness);
+      if (
+        waitlist_uuid === '' ||
+        waitlist_uuid === undefined ||
+        waitlist_uuid === null
+      ) {
+        this.logger.error('Error in sendToWaitlistService third-party');
       } else {
-        // call waitlist thrid-party service
-        const waitlist_uuid = await this.sendToWaitlistService(
-          waitlistBusiness,
-        );
         this.logger.debug(
           `Successfully added ${waitlistBusiness.name} to getwaitlist.com`,
         );
-        waitlistBusiness.waitlist_uuid = waitlist_uuid;
-
-        this.businessRespository.create(waitlistBusiness).save();
-        this.sendgridService.businessWelcomeEmail(
-          waitlistBusiness.email,
-          waitlistBusiness.name,
-        );
       }
-    } catch (error) {
-      this.logger.debug(
-        'Error in joinBusinessWaitlist third-party, with error: ' +
-          error +
-          ' and error message: ' +
-          error.message,
+      waitlistBusiness.waitlist_uuid = waitlist_uuid;
+      console.log('waitlist id: ', waitlistBusiness.waitlist_uuid);
+
+      this.businessRespository.create(waitlistBusiness).save();
+      this.sendgridService.businessWelcomeEmail(
+        waitlistBusiness.email,
+        waitlistBusiness.name,
       );
-      return;
     }
   }
 
   async joinShopperWaitlist(waitlistShopper: WaitlistShopperDto) {
-    try {
-      const shopperExists = await this.shopperRespository
-        .createQueryBuilder('waitlist_shopper')
-        .where('waitlist_shopper.email = :email', {
-          email: waitlistShopper.email,
-        })
-        .orWhere('waitlist_shopper.mobile = :mobile', {
-          mobile: waitlistShopper.mobile,
-        })
-        .getOne();
+    const shopperExists = await this.shopperRespository
+      .createQueryBuilder('waitlist_shopper')
+      .where('waitlist_shopper.email = :email', {
+        email: waitlistShopper.email,
+      })
+      .orWhere('waitlist_shopper.mobile = :mobile', {
+        mobile: waitlistShopper.mobile,
+      })
+      .getOne();
 
-      if (shopperExists) {
-        this.logger.debug(
-          `Shopper ${waitlistShopper.firstName} ${waitlistShopper.lastName} already exists`,
-        );
-        throw new Error('Shopper already exists');
-      } else {
-        // call waitlist thrid-party service
-        const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
-        this.logger.debug(
-          `Successfully added ${waitlistShopper.firstName} ${waitlistShopper.lastName} to getwaitlist.com`,
-        );
-        waitlistShopper.waitlist_uuid = waitlist_uuid;
-
-        this.shopperRespository.create(waitlistShopper).save();
-        this.sendgridService.shopperWelcomeEmail(
-          waitlistShopper.email,
-          waitlistShopper.firstName,
-        );
-      }
-    } catch (error) {
+    if (shopperExists) {
       this.logger.debug(
-        'Error in joinShopperWaitlist third-party, with error: ' +
-          error +
-          ' and error message: ' +
-          error.message,
+        `Shopper with firstName:${waitlistShopper.firstName} lastName:${waitlistShopper.lastName} already exists`,
       );
-      return;
+      throw new ConflictException('Shopper already exists');
+    } else {
+      // call waitlist thrid-party service
+      const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
+      this.logger.debug(
+        `Successfully added customer with fistName:${waitlistShopper.firstName} and lastName:${waitlistShopper.lastName} to getwaitlist.com`,
+      );
+      waitlistShopper.waitlist_uuid = waitlist_uuid;
+
+      this.shopperRespository.create(waitlistShopper).save();
+      this.sendgridService.shopperWelcomeEmail(
+        waitlistShopper.email,
+        waitlistShopper.firstName,
+      );
     }
   }
 
   async joinCustomerWaitlist(body: WaitlistCustomerDto) {
-    try {
-      const customerExists = await this.customerRespository
-        .createQueryBuilder('waitlist_customer')
-        .where('waitlist_customer.email = :email', { email: body.email })
-        .orWhere('waitlist_customer.mobile = :mobile', { mobile: body.mobile })
-        .getOne();
+    const customerExists = await this.customerRespository
+      .createQueryBuilder('waitlist_customer')
+      .where('waitlist_customer.email = :email', { email: body.email })
+      .orWhere('waitlist_customer.mobile = :mobile', { mobile: body.mobile })
+      .getOne();
 
-      if (customerExists) {
-        this.logger.debug(
-          `Customer ${body.firstName} ${body.lastName} already exists`,
-        );
-        throw new Error('Customer already exists');
-      } else {
-        // call waitlist thrid-party service
-        const waitlist_uuid = await this.sendToWaitlistService(body);
-        this.logger.debug(
-          `Successfully added ${body.firstName} ${body.lastName} to getwaitlist.com`,
-        );
-        body.waitlist_uuid = waitlist_uuid;
-
-        this.customerRespository.create(body).save();
-
-        this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
-      }
-    } catch (error) {
-      this.logger.error(
-        'Error in joinCustomerWaitlist third-party, with error: ' +
-          error +
-          ' and error message: ' +
-          error.message,
+    if (customerExists) {
+      this.logger.debug(
+        `Customer ${body.firstName} ${body.lastName} already exists`,
       );
-      return;
+      throw new ConflictException('Customer already exists');
+    } else {
+      // call waitlist thrid-party service
+      const waitlist_uuid = await this.sendToWaitlistService(body);
+      this.logger.debug(
+        `Successfully added ${body.firstName} ${body.lastName} to getwaitlist.com`,
+      );
+      body.waitlist_uuid = waitlist_uuid;
+
+      this.customerRespository.create(body).save();
+
+      this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
     }
   }
 
@@ -166,13 +147,15 @@ export class WaitlistService {
 
       return response.data.uuid;
     } catch (error) {
+      console.log(error);
       this.logger.error(
         'Error in sendToWaitlistService third-party, with error: ' +
           error +
           ' and error message: ' +
           error.message,
       );
-      throw new Error('Error in sendToWaitlistService');
+      return '';
+      // throw new Error('Error in sendToWaitlistService');
     }
   }
 
@@ -187,15 +170,18 @@ export class WaitlistService {
       data = this.extractBusinessData(data, payload);
     else throw new Error('Invalid payload');
 
+    console.log('got back data: ' + data);
+    console.log(data);
     return data;
   }
 
   private extractBusinessData(data: any, payload: any) {
+    console.log('EXTRACTING DATA FOR bUSiNEss');
     // const addrStr = this.stringifyAddress(payload.address);
     data = {
       waitlist_id: Number(process.env.WAITLIST_ID),
-      phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
-      email: payload.email,
+      phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}` || '',
+      email: payload.email || '',
       answers: [
         {
           question_value: 'address',

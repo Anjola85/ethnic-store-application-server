@@ -6,6 +6,7 @@ import {
   Res,
   Logger,
   HttpStatus,
+  ConflictException,
 } from '@nestjs/common';
 import { WaitlistService } from './waitlist.service';
 import { Response } from 'express';
@@ -60,21 +61,25 @@ export class WaitlistController {
       return res
         .status(HttpStatus.CREATED)
         .json(createResponse('customer added'));
-    } catch (err: any) {
+    } catch (error: any) {
       this.logger.error(
-        'Error in joinCustomerWaitlistMethod, with error ' + err,
+        'Error in joinCustomerWaitlistMethod, with error ' + error,
       );
 
-      if (err.message === 'Customer already exists') {
+      // if (err.message === 'Customer already exists') {
+      if (error instanceof ConflictException) {
+        // console.log('first block of code');
         return res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('customer already exists', null, false));
-      } else if (err.message.includes('required')) {
+      } else if (error.message.includes('required')) {
+        // console.log('second block of code');
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json(createResponse(err.message, null, false));
+          .json(createResponse(error.message, null, false));
       }
 
+      // gernrtic error
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json(createResponse('Internal Server Error', null, false));
@@ -119,7 +124,7 @@ export class WaitlistController {
           err,
       );
 
-      if (err.message === 'Shopper already exists') {
+      if (err instanceof ConflictException) {
         return res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('shopper already exists', null, false));
@@ -145,6 +150,9 @@ export class WaitlistController {
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
+      // console.log('Got back decrypted body: ' + JSON.stringify(decryptedBody));
+      // console.log(decryptedBody);
+
       businessValidation(decryptedBody);
 
       const waitlistBusiness = new WaitlistBusinessDto();
@@ -156,6 +164,7 @@ export class WaitlistController {
         .status(HttpStatus.CREATED)
         .json(createResponse('business added'));
     } catch (err) {
+      // log error
       this.logger.error(
         'Error in joinBusinessWaitlist, with message ' +
           err.message +
@@ -163,7 +172,7 @@ export class WaitlistController {
           err,
       );
 
-      if (err.message === 'Business already exists') {
+      if (err instanceof ConflictException) {
         return res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('business already exists', null, false));

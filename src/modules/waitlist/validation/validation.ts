@@ -41,6 +41,7 @@ export const customerValidation = (data: any) => {
 
 export const businessValidation = (data: any) => {
   const { name, mobile, email, address, businessType, countryEthnicity } = data;
+
   if (!name) {
     throw new Error('name is required');
   }
@@ -48,7 +49,11 @@ export const businessValidation = (data: any) => {
     throw new Error('Mobile is required');
   }
 
-  if (!mobile.countryCode) {
+  if (
+    !mobile.countryCode ||
+    mobile.countryCode === undefined ||
+    mobile.countryCode === ''
+  ) {
     throw new Error('Country code is required');
   }
 
@@ -57,7 +62,7 @@ export const businessValidation = (data: any) => {
   }
 
   if (!mobile.isoType) {
-    throw new Error('ISO code is required');
+    throw new Error('ISO type is required');
   }
 
   if (!email) {
