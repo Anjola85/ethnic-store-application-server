@@ -75,7 +75,7 @@ export class SendgridService {
         `,
       // attachments: this.attachments,
     };
-    console.log('sending mail');
+    // console.log('sending mail');
 
     return await this.sendWaitlistEmail(receiverEmail, name, mail);
   }

@@ -63,7 +63,7 @@ export class WaitlistService {
         );
       }
       waitlistBusiness.waitlist_uuid = waitlist_uuid;
-      console.log('waitlist id: ', waitlistBusiness.waitlist_uuid);
+      // console.log('waitlist id: ', waitlistBusiness.waitlist_uuid);
 
       this.businessRespository.create(waitlistBusiness).save();
       this.sendgridService.businessWelcomeEmail(
@@ -147,7 +147,7 @@ export class WaitlistService {
 
       return response.data.uuid;
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       this.logger.error(
         'Error in sendToWaitlistService third-party, with error: ' +
           error +
@@ -170,8 +170,8 @@ export class WaitlistService {
       data = this.extractBusinessData(data, payload);
     else throw new Error('Invalid payload');
 
-    console.log('got back data: ' + data);
-    console.log(data);
+    // console.log('got back data: ' + data);
+    // console.log(data);
     return data;
   }
 

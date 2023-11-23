@@ -13,13 +13,13 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
-  const corsOptions: CorsOptions = {
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  };
+  // const corsOptions: CorsOptions = {
+  //   origin: '*',
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  //   credentials: true,
+  // };
 
-  app.enableCors(corsOptions);
+  // app.enableCors(corsOptions);
 
   const logger = new Logger();
 

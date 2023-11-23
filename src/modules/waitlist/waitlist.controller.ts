@@ -58,31 +58,38 @@ export class WaitlistController {
 
       await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
 
-      return res
+      const resp = res
         .status(HttpStatus.CREATED)
         .json(createResponse('customer added'));
+      return resp;
     } catch (error: any) {
       this.logger.error(
         'Error in joinCustomerWaitlistMethod, with error ' + error,
       );
 
+      let errResp;
+
       // if (err.message === 'Customer already exists') {
       if (error instanceof ConflictException) {
-        // console.log('first block of code');
-        return res
+        errResp = res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('customer already exists', null, false));
+        return errResp;
       } else if (error.message.includes('required')) {
-        // console.log('second block of code');
-        return res
+        errResp = res
           .status(HttpStatus.BAD_REQUEST)
           .json(createResponse(error.message, null, false));
+
+        // console.log('second block of code');
+        return errResp;
       }
 
-      // gernrtic error
-      return res
+      errResp = res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json(createResponse('Internal Server Error', null, false));
+
+      // gernrtic error
+      return errResp;
     }
   }
 
