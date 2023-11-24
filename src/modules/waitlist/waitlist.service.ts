@@ -118,7 +118,6 @@ export class WaitlistService {
       );
       throw new ConflictException('Customer already exists');
     } else {
-      // call waitlist thrid-party service
       const waitlist_uuid = await this.sendToWaitlistService(body);
       this.logger.debug(
         `Successfully added ${body.firstName} ${body.lastName} to getwaitlist.com`,
@@ -155,7 +154,6 @@ export class WaitlistService {
           error.message,
       );
       return '';
-      // throw new Error('Error in sendToWaitlistService');
     }
   }
 

@@ -10,18 +10,15 @@ import {
 } from '@nestjs/common';
 import { WaitlistService } from './waitlist.service';
 import { Response } from 'express';
-import { WaitlistCustomer } from './entities/waitlist_customer.entity';
 import { decryptKms } from 'src/common/util/crypto';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { createResponse } from 'src/common/util/response';
 import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
 import { Throttle } from '@nestjs/throttler';
 import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
-import axios from 'axios';
 import {
   businessValidation,
   customerValidation,
-  isValidPhoneNumber,
   shopperValidation,
 } from './validation/validation';
 
@@ -41,26 +38,26 @@ export class WaitlistController {
         'join customer waitlist endpoint called with body: ' + body,
       );
 
+      // decrypt body
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
-      // pass custom validation
+      // validate input
       customerValidation(decryptedBody);
 
       const waitlistCustomer = new WaitlistCustomerDto();
       Object.assign(waitlistCustomer, decryptedBody);
-
-      if (isValidPhoneNumber(waitlistCustomer.mobile.phoneNumber) === false) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createResponse('Invalid phone number', null, false));
-      }
 
       await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
 
       const resp = res
         .status(HttpStatus.CREATED)
         .json(createResponse('customer added'));
+
+      this.logger.debug(
+        'join customer waitlist endpoint called with response: ' + resp,
+      );
+
       return resp;
     } catch (error: any) {
       this.logger.error(
@@ -69,26 +66,32 @@ export class WaitlistController {
 
       let errResp;
 
-      // if (err.message === 'Customer already exists') {
       if (error instanceof ConflictException) {
         errResp = res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('customer already exists', null, false));
-        return errResp;
+
+        this.logger.error(
+          'Error in joinCustomerWaitlistMethod, with error ' + error,
+        );
       } else if (error.message.includes('required')) {
         errResp = res
           .status(HttpStatus.BAD_REQUEST)
           .json(createResponse(error.message, null, false));
 
-        // console.log('second block of code');
-        return errResp;
+        this.logger.error(
+          'Error in joinCustomerWaitlistMethod, with error ' + errResp,
+        );
+      } else {
+        errResp = res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createResponse('Internal Server Error', null, false));
+
+        this.logger.error(
+          'Error in joinCustomerWaitlistMethod, with error ' + errResp,
+        );
       }
 
-      errResp = res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json(createResponse('Internal Server Error', null, false));
-
-      // gernrtic error
       return errResp;
     }
   }
@@ -112,34 +115,47 @@ export class WaitlistController {
       const waitlistShopper = new WaitlistShopperDto();
       Object.assign(waitlistShopper, decryptedBody);
 
-      if (isValidPhoneNumber(waitlistShopper.mobile.phoneNumber) === false) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createResponse('Invalid phone number', null, false));
-      }
-
       await this.waitlistService.joinShopperWaitlist(waitlistShopper);
 
-      return res
+      const resp = res
         .status(HttpStatus.CREATED)
         .json(createResponse('shopper added'));
-    } catch (err) {
-      this.logger.error(
-        'Error in joinShopperWaitlist, with message ' +
-          err.message +
-          ' and error: ' +
-          err,
+
+      this.logger.debug(
+        'join shopper waitlist endpoint called with response: ' + resp,
       );
 
-      if (err instanceof ConflictException) {
-        return res
+      return resp;
+    } catch (error) {
+      this.logger.error('Error in joinShopperWaitlist, with error ' + error);
+
+      let errResp;
+
+      if (error instanceof ConflictException) {
+        errResp = res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('shopper already exists', null, false));
+
+        this.logger.error('Error in joinShopperWaitlist, with error ' + error);
+      } else if (error.message.includes('required')) {
+        errResp = res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse(error.message, null, false));
+
+        this.logger.error(
+          'Error in joinShopperWaitlist, with error ' + errResp,
+        );
       } else {
-        return res
+        errResp = res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json(createResponse('Internal Server Error', null, false));
+
+        this.logger.error(
+          'Error in joinShopperWaitlist, with error ' + errResp,
+        );
       }
+
+      return errResp;
     }
   }
 
@@ -157,9 +173,6 @@ export class WaitlistController {
       const decryptedBody = await decryptKms(body.payload);
       this.logger.debug('decrypted body: ' + decryptedBody);
 
-      // console.log('Got back decrypted body: ' + JSON.stringify(decryptedBody));
-      // console.log(decryptedBody);
-
       businessValidation(decryptedBody);
 
       const waitlistBusiness = new WaitlistBusinessDto();
@@ -170,24 +183,36 @@ export class WaitlistController {
       return res
         .status(HttpStatus.CREATED)
         .json(createResponse('business added'));
-    } catch (err) {
-      // log error
-      this.logger.error(
-        'Error in joinBusinessWaitlist, with message ' +
-          err.message +
-          ' and error: ' +
-          err,
-      );
+    } catch (error) {
+      this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
 
-      if (err instanceof ConflictException) {
-        return res
+      let errResp;
+
+      if (error instanceof ConflictException) {
+        errResp = res
           .status(HttpStatus.CONFLICT)
           .json(createResponse('business already exists', null, false));
+
+        this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
+      } else if (error.message.includes('required')) {
+        errResp = res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse(error.message, null, false));
+
+        this.logger.error(
+          'Error in joinBusinessWaitlist, with error ' + errResp,
+        );
       } else {
-        return res
+        errResp = res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json(createResponse('Internal Server Error', null, false));
+
+        this.logger.error(
+          'Error in joinBusinessWaitlist, with error ' + errResp,
+        );
       }
+
+      return errResp;
     }
   }
 }

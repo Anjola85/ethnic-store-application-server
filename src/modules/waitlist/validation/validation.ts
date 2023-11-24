@@ -1,4 +1,6 @@
 export const customerValidation = (data: any) => {
+  // convert all fields to lowercase
+
   const { firstName, lastName, mobile, email, zipCode, country, promotions } =
     data;
   if (!firstName) {
@@ -17,6 +19,9 @@ export const customerValidation = (data: any) => {
 
   if (!mobile.phoneNumber) {
     throw new Error('Phone number is required');
+  }
+  if (isValidPhoneNumber(mobile.phoneNumber) === false) {
+    throw new Error('Invalid phone number');
   }
 
   if (!mobile.isoType) {
@@ -57,7 +62,7 @@ export const businessValidation = (data: any) => {
     throw new Error('Country code is required');
   }
 
-  if (!mobile.phoneNumber) {
+  if (!mobile.phoneNumber && isValidPhoneNumber(mobile.phoneNumber) === false) {
     throw new Error('Phone number is required');
   }
 
@@ -113,7 +118,7 @@ export const shopperValidation = (data: any) => {
     throw new Error('Country code is required');
   }
 
-  if (!mobile.phoneNumber) {
+  if (!mobile.phoneNumber && isValidPhoneNumber(mobile.phoneNumber) === false) {
     throw new Error('Phone number is required');
   }
 

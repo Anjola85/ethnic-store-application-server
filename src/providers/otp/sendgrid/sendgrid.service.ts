@@ -58,7 +58,7 @@ export class SendgridService {
               </a>
             </td>
             <td align="center" style="padding: 10px;">
-              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+              <a href="#" target="_blank" style="text-decoration: none;">
                 <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
               </a>
             </td>
@@ -112,7 +112,7 @@ export class SendgridService {
               </a>
             </td>
             <td align="center" style="padding: 10px;">
-              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+              <a href="#" target="_blank" style="text-decoration: none;">
                 <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
               </a>
             </td>
@@ -164,7 +164,7 @@ export class SendgridService {
               </a>
             </td>
             <td align="center" style="padding: 10px;">
-              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+              <a href="#" target="_blank" style="text-decoration: none;">
                 <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
               </a>
             </td>
