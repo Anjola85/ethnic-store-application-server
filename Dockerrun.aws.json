@@ -1,0 +1,11 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 7080
+    }
+  ]
+}

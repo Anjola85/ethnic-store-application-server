@@ -113,32 +113,44 @@ NOTE: the public ip might change
 
 ## These are the steps to push the docker image to AWS ECR reposiotry
 
+NOTE: make sure docker desktop is running
+
 1. Retrieve an authentication token and authenticate your Docker client to your registry.
    Use the AWS CLI:
-   `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.us-east-1.amazonaws.com`
+   `aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.ca-central-1.amazonaws.com`
 
 2. Build your Docker image using the following command.
    For information on building a Docker file from scratch see the instructions here . You can skip this step if your image is already built:
    `docker build -t quickmart-server .`
 
 3. After the build completes, tag your image so you can push the image to this repository:
-   `docker tag quickmart-server:latest 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:latest`
+   `docker tag quickmart-server:latest 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
+
+Optional:
+To run: `docker run -p 7080:7080 image_name`
 
 4. Run the following command to push this image to your newly created AWS repository:
-   `docker push 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name_of_tag}`
+   `docker push 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
 
 ## Steps to make the docker image available on AWS EC2
 
+NOTE: Remember to login to aws on EC2, if no configuration for docker command comes up run:
+`sudo chmod 666 /var/run/docker.sock`
+
 1. Run the following command to pull this image from the ECR Repository on EC2
-   `docker pull 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+   `docker pull 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
 
-2. Run the following command to expose the port in background mode
-   `docker run -p 7080:7080 -d 932400219699.dkr.ecr.us-east-1.amazonaws.com/quickmart-server:{name of tag}`
+2. Run `docker images` to see if the image has been added
 
-3. Run this to check if image is running
+3. Run `docker stop {pid}` to stop previous image
+
+4. Run the following command to expose the port in background mode
+   `docker run -p 7080:7080 -d 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:{tag_name}`
+
+5. Run this to check if image is running
    `docker ps`
 
-4. Run this to see the logs, add -f (to see the love feed)
+6. Run this to see the logs, add -f (to see the love feed)
    `docker logs {container id} -f`
 
 ## Support

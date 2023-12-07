@@ -2,6 +2,7 @@
 /dist
 /node_modules
 /private_key.pem
+*.pem
 
 # Logs
 logs
@@ -18,6 +19,9 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+
+# AWS Secrets
+/secrets*
 
 # IDEs and editors
 /.idea
@@ -37,3 +41,7 @@ lerna-debug.log*
 
 # Config files
 config/.env
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

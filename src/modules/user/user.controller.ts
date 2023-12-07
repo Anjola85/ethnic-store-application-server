@@ -1,35 +1,32 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   Res,
   HttpStatus,
+  Logger,
+  Patch,
+  UnauthorizedException,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
 import { Response } from 'express';
-import { UserAccountService } from '../user_account/user_account.service';
-import { CreateUserAccountDto } from '../user_account/dto/create-user_account.dto';
 import { AuthService } from '../auth/auth.service';
-import { CreateAuthDto } from '../auth/dto/create-auth.dto';
-import { MobileUtil } from 'src/common/util/mobileUtil';
+import { createError, createResponse } from '../../common/util/response';
+import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
+import { InternalServerError } from '@aws-sdk/client-dynamodb';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { mapAuthToUser } from './user-mapper';
 
 @Controller('user')
 export class UserController {
-  /**
-   *
-   * @param userService
-   * @param userAccountService
-   * @param authService
-   */
+  private readonly logger = new Logger(UserController.name);
+
   constructor(
     private readonly userService: UserService,
-    private readonly userAccountService: UserAccountService,
     private readonly authService: AuthService,
   ) {}
 
@@ -38,186 +35,156 @@ export class UserController {
    * @param body - request passed by the user
    * @returns {*}
    */
-  @Post('register')
-  async create(
-    // @Body() createUserDto: CreateUserDto,
+  @Post('signup')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
+  )
+  async register(
     @Body() requestBody: any,
+    @UploadedFiles() files: any,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      // get user id from auth middleware
-      const userID = res.locals.userId;
+      this.logger.debug('sign up called with body: ' + requestBody);
+      const decryptedBody = await decryptKms(requestBody.payload);
+      this.logger.debug('decrypted body: ' + decryptedBody);
 
-      const createUserDto = new CreateUserDto();
-      Object.assign(createUserDto, { ...requestBody, _id: userID });
+      // convert decrypted to createuserDto
+      const userDto = new UserDto();
+      Object.assign(userDto, decryptedBody);
+      userDto.profileImage = files?.profileImage[0] || null;
 
-      // check if user exists with email or mobile
-      const userExists = await this.userAccountService.userExists(
-        createUserDto.email,
-        createUserDto.mobile,
-      );
+      const response: {
+        token: string;
+        user: UserDto;
+        userExists: boolean;
+      } = await this.userService.create(userDto);
 
-      if (userExists) {
-        return res.status(HttpStatus.CONFLICT).json({
-          message: 'user already exists',
-        });
+      const payload = {
+        payload: response,
+      };
+      const payloadToEncryptBuffer = toBuffer(payload);
+      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+      const encryptedUser = encryptedUserBlob.toString('base64');
+
+      if (response.userExists) {
+        return res
+          .status(HttpStatus.OK)
+          .json(createResponse('user already exists: ', encryptedUser));
       }
 
-      // make sure user exists in temp user account for customer
-      if (createUserDto.profileType === 'customer') {
-        const tempUserAccount =
-          await this.userAccountService.findUserInTempAccount(userID);
-
-        if (!tempUserAccount) {
-          return res.status(HttpStatus.NOT_FOUND).json({
-            message: 'user not found in temp account',
-          });
-        }
-      }
-
-      // create the user(customer/merchant) and pass the user account id
-      const user = await this.userService.create(createUserDto);
-      const token = user.token;
-
-      // pass response from request and created user id to account service
-      const userAccountDto = new CreateUserAccountDto();
-      Object.assign(userAccountDto, { _id: userID, ...createUserDto });
-
-      // update auth account
-      const authDto = new CreateAuthDto();
-      Object.assign(authDto, { user_account_id: userID, ...requestBody });
-      await this.authService.updateAccount(authDto, userID);
-
-      // create user account
-      const userAccount = await this.userAccountService.create(
-        userAccountDto,
-        userID,
+      return res
+        .status(HttpStatus.CREATED)
+        .json(createResponse('user successfully registered', encryptedUser));
+    } catch (error) {
+      this.logger.error(
+        "Error occurred in 'create' method of UserController with error: " +
+          error,
       );
-
-      return res.status(HttpStatus.CREATED).json({
-        message: 'user successfully registered',
-        token,
-      });
-    } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: 'failed to register user',
-        error: err.message,
-      });
+      // Handle any error that occurs during the registration process
+      if (error instanceof InternalServerError) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createError('500 user registeration failed', error.message));
+      } else if (error instanceof UnauthorizedException) {
+        return res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json(createError('401 user registeration failed', error.message));
+      }
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(createError('400 user registeration failed ', error.message));
     }
   }
 
   /**
    *
+   * this shoudl check for what input fields has been provided and do the necessary update
+   *
+   * @param requestBody
+   * @param files
    * @param res
-   * @returns {*}
+   * @returns
    */
-  @Get('all')
-  async findAll(@Res() res: Response): Promise<any> {
-    try {
-      // call user account service
-      const accounts = await this.userAccountService.findAll();
-
-      // call to userAccountService
-      const users = await this.userService.findAll();
-
-      return res.status(HttpStatus.CREATED).json({
-        success: true,
-        message: 'user successfully registered',
-        accounts: accounts,
-        users: users,
-      });
-    } catch (error) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to get list of users',
-        error: error.message,
-      });
-    }
-    return this.userService.findAll();
-  }
-
-  /**
-   * Retrieve information for a user
-   * @param id - user id
-   * @returns {*}
-   */
-  @Get('find/:id')
-  async findOne(@Param('id') id: string, @Res() res: Response): Promise<any> {
-    try {
-      // call to userAccountService
-      const account = await this.userAccountService.findOne(id);
-
-      // call user service
-      const user = await this.userService.findOne(id);
-
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'user information fetched',
-        account: account,
-        user: user,
-      });
-    } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to retrieve user information',
-        error: err.message,
-      });
-    }
-  }
-
-  @Patch('update/:id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
+  @Patch('update')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
+  )
+  async updateUser(
+    @Body() requestBody: any,
+    @UploadedFiles() files: any,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      // get the id from the token
+      const decryptedBody = await decryptKms(requestBody.payload);
 
-      // call to user account service
-      const account = await this.userAccountService.update(id, updateUserDto);
+      const userDto = new UpdateUserDto();
+      Object.assign(userDto, decryptedBody);
+      const authId = res.locals.id;
 
-      // call to user service
-      const user = await this.userService.update(id);
+      userDto.profileImage = files?.profileImage[0] || null;
 
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'user information updated',
-        account: account,
-        user: user,
+      const auth = await this.authService.getAuth({ id: authId });
+      userDto.id = auth.user.id;
+
+      if (auth == null) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('user update failed', 'user does not exist'));
+      }
+
+      if (userDto.code) {
+        const isOtpVerified = await this.authService.verifyOtp(
+          auth.id,
+          userDto.code,
+        );
+
+        if (!isOtpVerified.status) {
+          return res
+            .status(HttpStatus.BAD_REQUEST)
+            .json(createError('user update failed', isOtpVerified.message));
+        }
+      }
+
+      await this.userService.updateUserInfo(userDto, authId);
+
+      // generate token
+      const token = this.authService.generateJwt(userDto.id);
+
+      // get back the user info
+      const authObj = await this.authService.getAllUserInfo({
+        userId: userDto.id,
       });
-    } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to register user',
-        error: err.message,
-      });
-    }
-  }
+      const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
 
-  @Delete('delete/:id')
-  async remove(@Param('id') id: string, @Res() res: Response): Promise<any> {
-    try {
-      // TODO: check if user has been deleted before by checking if condition is true
+      // encrypt the response
+      const payload = {
+        payload: {
+          token,
+          user,
+        },
+      };
+      const payloadToEncryptBuffer = toBuffer(payload);
+      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+      const encryptedUser = encryptedUserBlob.toString('base64');
 
-      // call to user account service
-      const account = await this.userAccountService.remove(id);
-
-      // call to user service
-      const user = await this.userService.remove(id);
-
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'user information updated',
-        account: account,
-        user: user,
-      });
-    } catch (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'failed to delete user',
-        error: err.message,
-      });
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('user successfully updated', encryptedUser));
+    } catch (error) {
+      // Handle any error that occurs during the registration process
+      if (error instanceof InternalServerError) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createError('500 user registeration failed', error.message));
+      } else if (error instanceof UnauthorizedException) {
+        return res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json(createError('401 user registeration failed', error.message));
+      }
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(createError('400 user registeration failed ', error.message));
     }
   }
 }

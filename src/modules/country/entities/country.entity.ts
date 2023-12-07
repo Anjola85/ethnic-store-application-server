@@ -1,58 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { ContinentType } from 'src/modules/continent/continentType.enum';
+import { CommonEntity } from 'src/modules/common/base.entity';
 import { Continent } from 'src/modules/continent/entities/continent.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 export type CountryDocument = Country & Document;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class Country {
-  @Prop({
-    type: String,
-    required: true,
-  })
+@Entity('countries')
+export class Country extends CommonEntity {
+  @Column()
   name: string;
 
-  /**
-   * The continent Id the Country belongs to
-   */
-  @Prop({
-    type: Types.ObjectId,
-    required: true,
-    refpath: 'continentType',
-  })
-  continentId: string | Continent;
-
-  /**
-   * The continent type the Country belongs to e.g. African
-   */
-  @Prop({
-    type: String,
-    required: true,
-    enum: Object.values(ContinentType),
-  })
-  continentType: string;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-    select: false,
-  })
-  deleted: boolean;
+  @ManyToOne(() => Continent, (continent) => continent.name)
+  continent: Continent;
 }
-
-const CountrySchema = SchemaFactory.createForClass(Country);
-
-CountrySchema.statics.config = () => {
-  return {
-    idToken: 'country',
-    hiddenFields: ['deleted'],
-  };
-};
-
-export { CountrySchema };

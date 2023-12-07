@@ -1,100 +1,162 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
-import { loginDto } from './dto/login.dto';
-import { UserAccountService } from '../user_account/user_account.service';
-import { UserService } from '../user/user.service';
-import * as bcrypt from 'bcrypt';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
-import { Auth, AuthDocument } from './entities/auth.entity';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Auth } from './entities/auth.entity';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
-import { User, UserDocument } from '../user/entities/user.entity';
-import {
-  UserAccount,
-  UserAccountDocument,
-} from '../user_account/entities/user_account.entity';
-import {
-  TempUserAccount,
-  TempUserAccountDocument,
-} from '../user_account/entities/temporary_user_account.entity';
-import { Customer, CustomerDocument } from '../user/entities/customer.entity';
+import { User } from '../user/entities/user.entity';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { secureLoginDto } from './dto/secure-login.dto';
+import { AuthRepository, InputObject } from './auth.repository';
+import { mapDtoToEntity } from './auth-mapper';
+import { mapAuthToUser } from '../user/user-mapper';
+import { UserDto } from '../user/dto/user.dto';
+import { UserFileService } from '../files/user-files.service';
+import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
+import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
-    @InjectModel(Auth.name)
-    protected authModel: Model<AuthDocument> & any,
-    private readonly userService: UserService,
-    private readonly userAccountService: UserAccountService,
+    private authRepository: AuthRepository,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
-    // delete from here,
-    @InjectModel(User.name)
-    private userModel: Model<UserDocument> & any,
-    @InjectModel(UserAccount.name)
-    private userAccountModel: Model<UserAccountDocument> & any,
-    @InjectModel(TempUserAccount.name)
-    private tempUserAccountModel: Model<TempUserAccountDocument> & any,
-    @InjectModel(Customer.name)
-    private customerModel: Model<CustomerDocument> & any,
+    private readonly userFileService: UserFileService,
   ) {}
 
-  async create(
-    createAuthDto: CreateAuthDto,
-    userID: string,
-  ): Promise<{ token; message }> {
-    try {
-      // send OTP code to email or phoen number
-      const response: { message; code; expiryTime; token } = await this.sendOTP(
-        userID,
-        createAuthDto.email,
-        createAuthDto.mobile.phoneNumber,
-      );
+  /**
+   *
+   * @param email
+   * @param mobile
+   * @returns
+   */
+  async sendOtp(
+    email?: string,
+    mobile?: MobileDto,
+  ): Promise<{ message; code; expiryTime; token }> {
+    let response: { message; code; expiryTime };
 
-      // set default value for password
-      if (
-        createAuthDto.hashedPassword === undefined ||
-        createAuthDto.hashedPassword === null
-      ) {
-        createAuthDto.hashedPassword = '';
+    if (email) {
+      response = await this.sendgridService.sendOTPEmail(email);
+    } else if (mobile) {
+      const phone_number = mobile?.phoneNumber || '';
+      response = await this.twilioService.sendSms(phone_number);
+    }
+
+    const authModel: Auth = mapDtoToEntity({ email, mobile });
+
+    authModel.verification_code = response.code;
+    authModel.verification_code_expiration = response.expiryTime;
+
+    let auth = await this.authRepository.findByUniq({
+      userId: authModel.user?.id,
+      email,
+      mobile,
+    });
+
+    if (!auth) {
+      auth = await this.authRepository.create(authModel).save();
+    } else {
+      auth.verification_code = response.code;
+      auth.verification_code_expiration = response.expiryTime;
+      await this.authRepository.save(auth);
+    }
+
+    const token = this.generateJwt(auth.id);
+    const otpResponse = { ...response, token };
+
+    return otpResponse;
+  }
+
+  async verifyOtp(
+    authId: string,
+    otp: string,
+  ): Promise<{ message: string; status: boolean }> {
+    this.logger.debug(`Verifying OTP for authId: ${authId}`);
+    const auth = await this.authRepository.findOneBy({ id: authId });
+
+    if (auth == null) throw new Error('Could not find associated account');
+
+    const expiryTime = new Date(
+      auth.verification_code_expiration,
+    ).toISOString();
+
+    const entryTime = new Date(Date.now()).toISOString();
+
+    if (entryTime <= expiryTime) {
+      if (otp === auth.verification_code) {
+        await this.authRepository.update(authId, {
+          ...auth,
+          account_verified: true,
+        });
+
+        return { message: 'OTP successfully verified', status: true };
+      } else {
+        // return { message: 'OTP has expired', status: false };
+        throw new UnauthorizedException('OTP does not match');
       }
-
-      // create new auth object
-      const auth = new this.authModel({
-        password: createAuthDto.hashedPassword,
-        user_account_id: userID,
-        verification_code: response.code,
-        verification_code_expiration: response.expiryTime,
-      });
-
-      // save auth object
-      await auth.save();
-
-      // send back token
-      return { token: response.token, message: response.message };
-    } catch (e) {
-      throw new Error(`From AuthService.create method: ${e.message}`);
+    } else {
+      //return { message: 'OTP does not match', status: false };
+      throw new UnauthorizedException('OTP has expired');
     }
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async findByEmailOrMobile(
+    email: string,
+    mobileDto: MobileDto,
+  ): Promise<Auth> {
+    try {
+      const mobile = mobileToEntity(mobileDto);
+
+      const auth = await this.authRepository
+        .createQueryBuilder('auth')
+        .where('auth.email = :email', { email })
+        .orWhere('auth.mobile = :mobile', {
+          mobile,
+        })
+        .leftJoinAndSelect('auth.user', 'user')
+        .getOne();
+
+      return auth || null;
+    } catch (e) {
+      throw new Error(
+        `Error from findByEmailOrMobile method in auth.service.ts.
+        with error message: ${e.message}`,
+      );
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
+  // method to update auth account user id
+  async updateAuthUserId(authId: string, user: User): Promise<any> {
+    try {
+      if (!authId) throw new Error('authId is required');
+      if (!user) throw new Error('user is required');
+
+      const auth = await this.authRepository.update(authId, {
+        user,
+      });
+      return auth;
+    } catch (e) {
+      throw new Error(
+        `Error from updateAuthUserId method in auth.service.ts.
+        with error message: ${e.message}`,
+      );
+    }
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  // method to update auth account email or mobile
+  async updateAuthEmailOrMobile(
+    authId: string,
+    authDto: CreateAuthDto,
+  ): Promise<any> {
+    if (!authId) throw new Error('authId is required');
+    if (!authDto) throw new Error('authDto is required');
+    if (!authDto.email && !authDto.mobile)
+      throw new Error('email or mobile is required');
+    const auth = await this.authRepository.updateAuth(authId, authDto);
+    return auth;
   }
 
   /**
@@ -102,249 +164,76 @@ export class AuthService {
    * @param loginDto
    * @returns
    */
-  async login(loginDto: loginDto): Promise<any> {
+  async login(loginDto: secureLoginDto): Promise<any> {
     try {
-      let user: any;
+      const input: InputObject = {
+        email: loginDto.email,
+        mobile: loginDto.mobile,
+      };
+      const authAcct = await this.getAllUserInfo(input);
 
-      // retrieve user_account_id from user database
-      if (loginDto.email !== '') {
-        user = await this.userAccountService.getUserByEmail(loginDto.email);
-      } else if (loginDto.phone !== '') {
-        user = await this.userAccountService.getUserByPhone(loginDto.phone);
-      }
-      const userId: string = user[0].id;
+      if (!authAcct) throw new Error('Invalid credentials');
 
-      // get password from auth database
-      const auth = await this.authModel.find({ user_account_id: userId });
-
-      if (user != null && Object.keys(auth).length > 0) {
-        const encryptedPassword: string = auth[0].password;
-
-        const passwordMatch: boolean = await bcrypt.compare(
-          loginDto.password,
-          encryptedPassword,
+      if (!authAcct.user)
+        throw new Error(
+          'User has incomlete registeration, please complete registeration',
         );
 
-        if (passwordMatch) {
-          // generate token
-          const privateKey = fs.readFileSync('./private_key.pem');
-          const token = jsonwebtoken.sign(
-            { id: user.id, email: loginDto.email },
-            privateKey.toString(),
-            {
-              expiresIn: '1d',
-            },
-          );
+      const userAcct = authAcct.user;
 
-          // return user
-          return {
-            message: 'user successfully logged in',
-            token,
-            user,
-            encryptedPassword: encryptedPassword,
-          };
-        } else {
-          throw new UnauthorizedException(
-            'Invalid credentials, passwords dont match',
-          );
-        }
-      } else {
-        throw new Error('User not found');
-      }
+      // generate token with userID
+      const token = this.generateJwt(userAcct.id);
+
+      const user: UserDto = mapAuthToUser(authAcct);
+
+      return { token, user };
     } catch (e) {
       throw new Error(`From AuthService.login: ${e.message}`);
     }
   }
 
-  async verifyOtp(
-    otp: string,
-    entryTime: Date,
-    userId: string,
-  ): Promise<{ message: string; verified: boolean }> {
-    try {
-      // TODO: decrypt otp here
-
-      // get auth object
-      const auth = await this.authModel.findOne({ user_account_id: userId });
-
-      if (auth == null) {
-        throw new Error('User not found');
-      }
-
-      // check if account is already verified
-      if (auth.account_verified) {
-        return { message: 'Account already verified', verified: true };
-      }
-
-      // check if otp matches
-      if (otp === auth.verification_code) {
-        // check if otp is expired
-        const expiryTime = auth.verification_code_expiration;
-
-        if (entryTime.getTime() <= expiryTime.getTime()) {
-          // update auth object
-          await this.authModel.findByIdAndUpdate(auth.id, {
-            account_verified: true,
-          });
-
-          // return updated auth
-          return { message: 'OTP successfully verified', verified: true };
-        } else {
-          // time elapsed
-          return { message: 'OTP has expired', verified: false };
-        }
-      } else {
-        return { message: 'OTP does not match', verified: false };
-      }
-    } catch (e) {
-      throw new Error(`From AuthService.verifyOtp: ${e.message}`);
-    }
+  async getAllUserInfo(input: InputObject): Promise<Auth> {
+    const auth = await this.authRepository.getUserWithAuth(input);
+    return auth || null;
   }
 
   /**
-   * Update account by user_account_id
-   * @param authDto
-   * @param userId
-   * @returns
+   * Generates jwt token with 1 day expiration
+   * @param id
+   * @returns jwt token
    */
-  async updateAccount(authDto: CreateAuthDto, userId: string) {
-    try {
-      // get auth object
-      const auth = await this.authModel.findOne({ user_account_id: userId });
-
-      if (auth == null) {
-        throw new Error('User not found in auth database');
-      }
-
-      // update auth object
-      await this.authModel.findByIdAndUpdate(auth.id, {
-        ...authDto,
-      });
-
-      // return updated auth
-      return await this.authModel.findOne({ user_account_id: userId });
-    } catch (e) {
-      throw new Error(`From AuthService.updateAccount: ${e.message}`);
-    }
-  }
-
-  /**
-   * THis method sends otp to user
-   * @param userID
-   * @param email
-   * @param phoneNumber
-   * @returns
-   */
-  async sendOTP(
-    userID: string,
-    email?: string,
-    phoneNumber?: string,
-  ): Promise<{ message; code; expiryTime; token }> {
-    let response: { message; code; expiryTime };
-    if (email != null) {
-      // use sendgrid to send otp
-      response = await this.sendgridService.sendOTPEmail(userID, email);
-    } else if (phoneNumber != null) {
-      // use twilio to send otp
-      response = await this.twilioService.sendSms(userID, phoneNumber);
-    }
-
-    // generate jwt
+  public generateJwt(id: string) {
     const privateKey = fs.readFileSync('./private_key.pem');
-    const token = jsonwebtoken.sign({ id: userID }, privateKey.toString(), {
+    const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
       expiresIn: '1d',
     });
-
-    // add token to response
-    const otpResponse = { ...response, token };
-
-    return otpResponse;
+    return token;
   }
 
-  /**
-   * THis method resends otp to user
-   * @param userID
-   * @param email
-   * @param phoneNumber
-   * @returns
-   */
-  async resendOtp(
-    userID: string,
-    email?: string,
-    phoneNumber?: string,
-  ): Promise<{ message; code; expiryTime; token }> {
-    let response: { message; code; expiryTime };
-    if (email != null) {
-      // use sendgrid to send otp
-      response = await this.sendgridService.sendOTPEmail(userID, email);
-    } else if (phoneNumber != null) {
-      // use twilio to send otp
-      response = await this.twilioService.sendSms(userID, phoneNumber);
-    }
-    // update auth account verification code and expiry time
-    await this.authModel.findOneAndUpdate(
-      { user_account_id: userID },
-      {
-        verification_code: response.code,
-        verification_code_expiration: response.expiryTime,
-      },
-    );
-
-    // generate jwt
-    const privateKey = fs.readFileSync('./private_key.pem');
-    const token = jsonwebtoken.sign({ id: userID }, privateKey.toString(), {
-      expiresIn: '1d',
-    });
-
-    // add token to response
-    const otpResponse = { ...response, token };
-
-    return otpResponse;
+  async getAuth(input: InputObject): Promise<Auth> {
+    const auth = await this.authRepository.findByUniq(input);
+    return auth || null;
   }
 
-  /**
-   * THis endpoint is to test twilio send sms feature
-   * @param phoneNumber
-   * @returns
-   */
-  async sendOTPBySmsTest(phoneNumber: string) {
-    try {
-      await this.twilioService.sendSmsTest(phoneNumber);
-      return { success: true, message: 'SMS sent successfully.' };
-    } catch (error) {
-      return { success: false, message: 'Failed to send SMS.' };
-    }
-  }
+  // async deleteRegisteredUsers() {
+  //   // so for all accounts in the user and auth account, delete them
+  //   const last24Hours = new Date();
+  //   last24Hours.setHours(last24Hours.getHours() - 24);
 
-  /**
-   * TODO: to be deleted
-   * THis method deletes registered users on that current day for testing purposes
-   * @returns
-   */
-  async resetRegisteredUsers() {
-    try {
-      // delete only documents in authModel starting from current day, by checking updated at field from the colection
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      await this.authModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
-      });
-      await this.userModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
-      });
-      await this.userAccountModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
-      });
-      await this.customerModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
-      });
-      await this.tempUserAccountModel.deleteMany({
-        updated_at: { $gte: today, $lt: tomorrow },
-      });
-      return { success: true, message: 'Reset successful' };
-    } catch (error) {
-      return { success: false, message: 'Reset failed from auth.service.ts' };
-    }
-  }
+  //   const formattedLast24Hours = last24Hours
+  //     .toISOString()
+  //     .slice(0, 19)
+  //     .replace('T', ' ');
+
+  //   try {
+  //     // Delete all auth accounts created in the last 24 hours
+  //     const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
+  //     const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
+  //     const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
+
+  //     await this.authRepository.createQueryBuilder(deleteAuthQuery);
+  //     await this.userRepository.createQueryBuilder(deleteUserQuery);
+  //     await this.addressRepository.createQueryBuilder(deleteAddQuery);
+  //   } catch (error) {}
+  // }
 }

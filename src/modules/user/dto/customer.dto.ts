@@ -1,3 +1,3 @@
-import { PersonDTO } from './person.dto';
+// import { PersonDTO } from './person.dto';
 
-export class CustomerDto extends PersonDTO {}
+// export class CustomerDto extends PersonDTO {}

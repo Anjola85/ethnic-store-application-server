@@ -3,16 +3,16 @@ import {
   NestMiddleware,
   HttpStatus,
   HttpException,
+  Logger,
 } from '@nestjs/common';
-// import { JwtService } from '@nestjs/jwt';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
-import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
-import { UserService } from 'src/modules/user/user.service';
 import * as fs from 'fs';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
+  private readonly logger = new Logger(AuthMiddleware.name);
+
   async use(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization;
 
@@ -28,7 +28,16 @@ export class AuthMiddleware implements NestMiddleware {
 
       next();
     } catch (error) {
-      throw new HttpException('Invalid token: ', HttpStatus.UNAUTHORIZED);
+      this.logger.debug(
+        'error in auth.middleware.ts: ' +
+          error.message +
+          ' with error: ' +
+          error,
+      );
+      throw new HttpException(
+        'Invalid token provided',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
   }
 
@@ -39,7 +48,8 @@ export class AuthMiddleware implements NestMiddleware {
       token,
       privateKey.toString(),
     );
+
     // add user id to response object
-    res.locals.userId = decoded.id;
+    res.locals.id = decoded?.id || null;
   }
 }

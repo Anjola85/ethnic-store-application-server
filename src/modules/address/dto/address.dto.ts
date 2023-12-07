@@ -1,10 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNotEmpty,
+  IsLongitude,
+  IsLatitude,
+} from 'class-validator';
+import { BaseDto } from 'src/common/dto/base.dto';
+import { Business } from 'src/modules/business/entities/business.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 
-/**
- * Defining the structire for the address field
- */
-export class AddressDto {
+export class AddressDto extends BaseDto {
+  @ApiProperty()
+  @IsOptional()
+  primary = true;
+
   @ApiProperty({ example: '123' })
   @IsOptional()
   @IsString()
@@ -34,4 +44,15 @@ export class AddressDto {
   @IsNotEmpty()
   @IsString()
   country: string;
+
+  @IsOptional()
+  user: User = null;
+
+  @IsOptional()
+  business: Business = null;
+
+  @IsOptional()
+  @IsLatitude()
+  @IsLongitude()
+  location: string;
 }

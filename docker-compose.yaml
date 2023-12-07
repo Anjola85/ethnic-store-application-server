@@ -11,3 +11,5 @@ services:
       - ./package.json:/quickmart/src/app/package.json
     environment:
       - NODE_ENV=development
+    env_file:
+      - ./config/.env

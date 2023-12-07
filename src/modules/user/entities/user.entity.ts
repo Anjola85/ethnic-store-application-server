@@ -1,50 +1,34 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { Auth } from 'src/modules/auth/entities/auth.entity';
-import { Merchant } from './merchant.entity';
-import { Customer } from './customer.entity';
-import { UserProfile } from 'src/modules/user/user.enums';
+import { CommonEntity } from 'src/modules/common/base.entity';
+import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
+import { UserProfile } from '../user.enums';
+import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
+import { Address } from 'src/modules/address/entities/address.entity';
 
-export type UserDocument = User & Document;
-export type Profile = Customer | Merchant;
+@Entity('users')
+export class User extends CommonEntity {
+  @Column()
+  first_name: string;
 
-@Schema({
-  timestamps: true,
-  autoCreate: true,
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true },
-})
-export class User {
-  @Prop({
-    type: Types.ObjectId,
-    required: true,
-    refpath: 'profileType',
-  })
-  profile: Profile;
+  @Column()
+  last_name: string;
 
-  @Prop({
-    type: String,
-    required: true,
-    enum: Object.values(UserProfile),
-    default: 'Customer',
-  })
-  profileType: string;
+  @OneToMany(() => Address, (address) => address.user)
+  @JoinColumn()
+  addresses: Address[];
 
-  @Prop({
-    type: Boolean,
-    default: false,
-    select: false,
-  })
-  deleted: boolean;
+  @OneToMany(() => Favourite, (favourite) => favourite.business)
+  @JoinColumn()
+  favourites: Favourite[];
+
+  @Column({ type: 'varchar', default: UserProfile.CUSTOMER })
+  user_profile: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  dob: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  profile_image: string;
+
+  @Column({ type: 'boolean', default: true })
+  active: boolean;
 }
-
-const UserSchema = SchemaFactory.createForClass(User);
-
-UserSchema.statics.config = () => {
-  return {
-    idToken: 'usr',
-    hiddenFields: ['deleted'],
-  };
-};
-
-export { UserSchema };

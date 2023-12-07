@@ -1,58 +1,52 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from 'aws-sdk/clients/budgets';
-import { UserAccount } from 'aws-sdk/clients/kendra';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
-  IsNotEmpty,
+  IsEmail,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
-import { PersonDTO } from 'src/modules/user/dto/person.dto';
+import { User } from 'src/modules/user/entities/user.entity';
 
-export class CreateAuthDto extends PersonDTO {
+export class CreateAuthDto {
   @IsOptional()
   @IsString()
-  hashedPassword: string;
+  id? = '';
 
-  @IsNotEmpty()
   @IsOptional()
-  @IsString()
-  user_account_id: string;
+  @IsEmail()
+  @ApiProperty({
+    description: 'The email address of the person',
+    example: 'johndoe@quickie.com',
+  })
+  email: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MobileDto)
+  @ApiProperty({
+    description: 'The mobile phone number of the person',
+    example: { phone_number: '1234567890', country_code: '+1', iso_type: 'CA' },
+  })
+  mobile: MobileDto;
 
   @IsOptional()
   @IsBoolean()
-  account_verified?: boolean;
+  accountVerified?: boolean;
 
   @IsOptional()
   @IsString()
-  verification_code?: string;
+  verificationCode?: string;
 
   @IsOptional()
   @IsDateString()
-  verify_code_expiration?: Date;
+  verificationCodeExpiration?: Date;
 
   @IsOptional()
-  @IsString()
-  password_reset?: string;
-
-  @IsOptional()
-  @IsString()
-  password_reset_code?: string;
-
-  @IsOptional()
-  @IsDateString()
-  reset_code_expiration?: Date;
-
-  @IsOptional()
-  @IsBoolean()
-  change_password?: boolean;
-
-  @IsOptional()
-  user?: any | User;
+  user?: User;
 
   @IsOptional()
   @IsBoolean()
