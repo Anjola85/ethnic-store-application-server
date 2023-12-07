@@ -147,6 +147,7 @@ export class WaitlistService {
       return response.data.uuid;
     } catch (error) {
       // console.log(error);
+      this.logger.error(`payload: ${JSON.stringify(data, null, 2)}`);
       this.logger.error(
         'Error in sendToWaitlistService third-party, with error: ' +
           error +
