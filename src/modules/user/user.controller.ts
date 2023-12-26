@@ -19,7 +19,12 @@ import {
   createResponse,
   encryptedResponse,
 } from '../../common/util/response';
-import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
+import {
+  decryptKms,
+  encryptKms,
+  encryptPayload,
+  toBuffer,
+} from 'src/common/util/crypto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -48,7 +53,10 @@ export class UserController {
    * @param body - request passed by the user
    * @returns {*}
    */
-
+  @Post('signup')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
+  )
   @ApiOperation({ summary: 'Sign up', description: 'Register a new user' })
   @ApiBody({
     schema: {
@@ -70,10 +78,6 @@ export class UserController {
     type: SignupResponseDtoEncrypted,
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  @Post('signup')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  )
   async register(
     @Body() requestBody: EncryptedDTO,
     @UploadedFiles() files: any,
@@ -92,7 +96,7 @@ export class UserController {
       userDto.profileImage = files?.profileImage[0] || null;
 
       // TODO: remove
-      console.log('userDto: ' + JSON.stringify(userDto));
+      // console.log('userDto: ' + JSON.stringify(userDto));
 
       const response: {
         token: string;
@@ -134,23 +138,6 @@ export class UserController {
       return res
         .status(HttpStatus.BAD_REQUEST)
         .json(createError('400 user registeration failed ', error.message));
-    }
-
-    async function encryptPayload(payload: {
-      status: boolean;
-      message: string;
-      payload: any;
-    }) {
-      // convert payload to buffer
-      const payloadToEncryptBuffer = toBuffer(payload);
-
-      // encrypt payload
-      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-
-      // convert encyrpted blob to base64 string
-      const encryptedResp = encryptedUserBlob.toString('base64');
-
-      return encryptedResp;
     }
   }
 

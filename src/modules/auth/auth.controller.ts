@@ -12,11 +12,20 @@ import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
-import { createError, createResponse } from '../../common/util/response';
+import {
+  createError,
+  createResponse,
+  encryptedResponse,
+} from '../../common/util/response';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserDto } from '../user/dto/user.dto';
-import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
+import {
+  decryptKms,
+  encryptKms,
+  encryptPayload,
+  toBuffer,
+} from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Controller('auth')
@@ -54,16 +63,15 @@ export class AuthController {
         this.logger.debug(
           'login clear response: ' + JSON.stringify(loginResponse),
         );
-        const payload = {
-          payload: loginResponse,
-        };
-        const payloadToEncryptBuffer = toBuffer(payload);
-        const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-        const encryptedUser = encryptedUserBlob.toString('base64');
+        // const payload = {
+        //   payload: loginResponse,
+        // };
 
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse('login successful', encryptedUser, true));
+        const payload = createResponse('login successful', loginResponse, true);
+
+        const encryptedResp = await encryptPayload(payload);
+
+        return res.status(HttpStatus.OK).json(encryptedResponse(encryptedResp));
       } else {
         return res
           .status(HttpStatus.BAD_REQUEST)

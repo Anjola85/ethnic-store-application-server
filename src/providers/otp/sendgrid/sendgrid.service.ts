@@ -244,7 +244,7 @@ export class SendgridService {
     const expiryTime: string = otpResponse.expiryTime;
 
     // TODO: remove
-    console.log('otpCode: ' + otpCode);
+    // console.log('otpCode: ' + otpCode);
 
     // create mail object
     const mail = {

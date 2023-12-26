@@ -37,7 +37,7 @@ export default class TwilioService {
     const expiryTime: string = otpResponse.expiryTime;
 
     // TODO: remove
-    console.log('otpCode: ' + otpCode);
+    // console.log('otpCode: ' + otpCode);
 
     const options: MessageListInstanceCreateOptions = {
       to: phone_number,
