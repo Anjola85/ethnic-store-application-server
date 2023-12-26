@@ -46,13 +46,16 @@ export class AddressDto extends BaseDto {
   country: string;
 
   @IsOptional()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   user: User = null;
 
   @IsOptional()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   business: Business = null;
 
   @IsOptional()
   @IsLatitude()
   @IsLongitude()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   location: string;
 }

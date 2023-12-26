@@ -20,6 +20,13 @@ import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { mapAuthToUser } from './user-mapper';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
+import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 
 @Controller('user')
 export class UserController {
@@ -39,8 +46,20 @@ export class UserController {
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
   )
+  @ApiOperation({ summary: 'Sign up', description: 'Register a new user' })
+  // @ApiBody({ type: EncryptedDTO })
+  @ApiBody({
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(EncryptedDTO) },
+        { $ref: getSchemaPath(UserDto) },
+      ],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'User registration successful.' })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
   async register(
-    @Body() requestBody: any,
+    @Body() requestBody: EncryptedDTO,
     @UploadedFiles() files: any,
     @Res() res: Response,
   ): Promise<any> {

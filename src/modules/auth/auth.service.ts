@@ -203,7 +203,7 @@ export class AuthService {
    * @returns jwt token
    */
   public generateJwt(id: string) {
-    const privateKey = fs.readFileSync('./private_key.pem');
+    const privateKey = fs.readFileSync('./secrets/private_key.pem');
     const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
       expiresIn: '1d',
     });

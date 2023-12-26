@@ -84,16 +84,17 @@ export class BusinessDto {
   logoImage: Express.Multer.File;
 
   @IsOptional()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   images: ImagesDto;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => GeoLocationDto)
   geolocation: GeoLocationDto;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   @IsString()
   businessType: string;
 }

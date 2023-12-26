@@ -69,7 +69,7 @@ export class UserService {
     const authObj = await this.authService.getAllUserInfo(input);
     const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
 
-    const privateKey = fs.readFileSync('./private_key.pem');
+    const privateKey = fs.readFileSync('./secrets/private_key.pem');
     const token = jsonwebtoken.sign(
       { id: userModel.id },
       privateKey.toString(),

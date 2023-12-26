@@ -28,13 +28,16 @@ export default class TwilioService {
   ) {
     this.logger.debug('phone number is: ' + phone_number);
 
-    // phone number of sender is quickmartdev
-    const senderPhoneNumber = '+14318133976';
+    // quickmartdev from phone number
+    const senderPhoneNumber = '+18738000976';
 
     // generate otp code
     const otpResponse = generateOtpCode(codeLength, expirationMinutes);
     const otpCode: string = otpResponse.code;
     const expiryTime: string = otpResponse.expiryTime;
+
+    // TODO: remove
+    console.log('otpCode: ' + otpCode);
 
     const options: MessageListInstanceCreateOptions = {
       to: phone_number,
