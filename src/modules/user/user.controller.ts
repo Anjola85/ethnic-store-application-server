@@ -14,7 +14,11 @@ import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
-import { createError, createResponse } from '../../common/util/response';
+import {
+  createError,
+  createResponse,
+  encryptedResponse,
+} from '../../common/util/response';
 import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -22,11 +26,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { mapAuthToUser } from './user-mapper';
 import {
   ApiBody,
+  ApiHeader,
   ApiOperation,
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
+import { SignupResponseDtoEncrypted } from 'src/common/responseDTO/signupResponse.dto';
 
 @Controller('user')
 export class UserController {
@@ -42,12 +48,8 @@ export class UserController {
    * @param body - request passed by the user
    * @returns {*}
    */
-  @Post('signup')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  )
+
   @ApiOperation({ summary: 'Sign up', description: 'Register a new user' })
-  // @ApiBody({ type: EncryptedDTO })
   @ApiBody({
     schema: {
       oneOf: [
@@ -56,8 +58,22 @@ export class UserController {
       ],
     },
   })
-  @ApiResponse({ status: 201, description: 'User registration successful.' })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Authorization header with the Bearer token',
+    required: true,
+    schema: { type: 'string', default: 'Bearer ' },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User registration successful.',
+    type: SignupResponseDtoEncrypted,
+  })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @Post('signup')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
+  )
   async register(
     @Body() requestBody: EncryptedDTO,
     @UploadedFiles() files: any,
@@ -66,12 +82,17 @@ export class UserController {
     try {
       this.logger.debug('sign up called with body: ' + requestBody);
       const decryptedBody = await decryptKms(requestBody.payload);
-      this.logger.debug('decrypted body: ' + decryptedBody);
+      this.logger.debug(
+        'decrypted body request: ' + JSON.stringify(decryptedBody),
+      );
 
-      // convert decrypted to createuserDto
+      // map decrypted object to userDto
       const userDto = new UserDto();
       Object.assign(userDto, decryptedBody);
       userDto.profileImage = files?.profileImage[0] || null;
+
+      // TODO: remove
+      console.log('userDto: ' + JSON.stringify(userDto));
 
       const response: {
         token: string;
@@ -79,22 +100,22 @@ export class UserController {
         userExists: boolean;
       } = await this.userService.create(userDto);
 
-      const payload = {
-        payload: response,
-      };
-      const payloadToEncryptBuffer = toBuffer(payload);
-      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-      const encryptedUser = encryptedUserBlob.toString('base64');
+      // const payload = {
+      //   message: 'user successfully registered',
+      //   payload: response,
+      // };
 
-      if (response.userExists) {
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse('user already exists: ', encryptedUser));
-      }
+      const payload = createResponse('user successfully registered', response);
+
+      // encrypt payload
+      const encryptedResp = await encryptPayload(payload);
+
+      if (response.userExists)
+        return res.status(HttpStatus.OK).json(encryptedResp);
 
       return res
         .status(HttpStatus.CREATED)
-        .json(createResponse('user successfully registered', encryptedUser));
+        .json(encryptedResponse(encryptedResp));
     } catch (error) {
       this.logger.error(
         "Error occurred in 'create' method of UserController with error: " +
@@ -113,6 +134,23 @@ export class UserController {
       return res
         .status(HttpStatus.BAD_REQUEST)
         .json(createError('400 user registeration failed ', error.message));
+    }
+
+    async function encryptPayload(payload: {
+      status: boolean;
+      message: string;
+      payload: any;
+    }) {
+      // convert payload to buffer
+      const payloadToEncryptBuffer = toBuffer(payload);
+
+      // encrypt payload
+      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+
+      // convert encyrpted blob to base64 string
+      const encryptedResp = encryptedUserBlob.toString('base64');
+
+      return encryptedResp;
     }
   }
 
@@ -185,11 +223,9 @@ export class UserController {
       };
       const payloadToEncryptBuffer = toBuffer(payload);
       const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-      const encryptedUser = encryptedUserBlob.toString('base64');
+      const encryptedResp = encryptedUserBlob.toString('base64');
 
-      return res
-        .status(HttpStatus.OK)
-        .json(createResponse('user successfully updated', encryptedUser));
+      return res.status(HttpStatus.OK).json(createResponse(encryptedResp));
     } catch (error) {
       // Handle any error that occurs during the registration process
       if (error instanceof InternalServerError) {

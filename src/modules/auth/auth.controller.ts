@@ -182,6 +182,8 @@ export class AuthController {
         'sendOtp clear response: ' + JSON.stringify(authResponse),
       );
 
+      console.log('token: ' + authResponse.token);
+
       // encrypt the response
       const payload = {
         payload: { token: authResponse.token },

@@ -79,8 +79,7 @@ import { UserDto } from './modules/user/dto/user.dto';
         WaitlistBusiness,
         WaitlistShopper,
       ],
-      synchronize: true, // comment this out in production
-      // comment below out in local testing
+      // synchronize: true, // comment this out in production
       // ssl: {
       //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
       // },
