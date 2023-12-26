@@ -1,8 +1,12 @@
-export function createResponse(message?: string, data = null, status = true) {
+export function createResponse(
+  message?: string,
+  payload = null,
+  status = true,
+) {
   return {
     status,
     message,
-    data,
+    payload,
   };
 }
 
@@ -10,5 +14,11 @@ export function createError(message: string, error?: any) {
   return {
     message,
     error,
+  };
+}
+
+export function encryptedResponse(encryptedData: string) {
+  return {
+    data: encryptedData,
   };
 }

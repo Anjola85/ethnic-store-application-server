@@ -1,6 +1,14 @@
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger();
+
 export const customerValidation = (data: any) => {
   const { firstName, lastName, mobile, email, zipCode, country, promotions } =
     data;
+
+  logger.debug(`validation for customer with name: ${firstName} ${lastName}`);
+  // convert all fields to lowercase
+
   if (!firstName) {
     throw new Error('First name is required');
   }
@@ -17,6 +25,9 @@ export const customerValidation = (data: any) => {
 
   if (!mobile.phoneNumber) {
     throw new Error('Phone number is required');
+  }
+  if (isValidPhoneNumber(mobile.phoneNumber) === false) {
+    throw new Error('Invalid phone number');
   }
 
   if (!mobile.isoType) {
@@ -41,6 +52,9 @@ export const customerValidation = (data: any) => {
 
 export const businessValidation = (data: any) => {
   const { name, mobile, email, address, businessType, countryEthnicity } = data;
+
+  logger.debug(`validation for business with name: ${name}`);
+
   if (!name) {
     throw new Error('name is required');
   }
@@ -48,16 +62,20 @@ export const businessValidation = (data: any) => {
     throw new Error('Mobile is required');
   }
 
-  if (!mobile.countryCode) {
+  if (
+    !mobile.countryCode ||
+    mobile.countryCode === undefined ||
+    mobile.countryCode === ''
+  ) {
     throw new Error('Country code is required');
   }
 
-  if (!mobile.phoneNumber) {
+  if (!mobile.phoneNumber && isValidPhoneNumber(mobile.phoneNumber) === false) {
     throw new Error('Phone number is required');
   }
 
   if (!mobile.isoType) {
-    throw new Error('ISO code is required');
+    throw new Error('ISO type is required');
   }
 
   if (!email) {
@@ -94,6 +112,9 @@ export const businessValidation = (data: any) => {
 
 export const shopperValidation = (data: any) => {
   const { firstName, lastName, mobile, email, zipCode, country, age } = data;
+
+  logger.debug(`shopper validation with name: ${firstName} ${lastName}`);
+
   if (!firstName) {
     throw new Error('First name is required');
   }
@@ -108,7 +129,7 @@ export const shopperValidation = (data: any) => {
     throw new Error('Country code is required');
   }
 
-  if (!mobile.phoneNumber) {
+  if (!mobile.phoneNumber && isValidPhoneNumber(mobile.phoneNumber) === false) {
     throw new Error('Phone number is required');
   }
 
@@ -133,6 +154,7 @@ export const shopperValidation = (data: any) => {
 };
 
 export const isValidPhoneNumber = (phoneNumber: string): boolean => {
+  return true;
   const regex = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
   return regex.test(phoneNumber);
 };

@@ -12,11 +12,20 @@ import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { EncryptedDTO } from '../../common/dto/encrypted.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
-import { createError, createResponse } from '../../common/util/response';
+import {
+  createError,
+  createResponse,
+  encryptedResponse,
+} from '../../common/util/response';
 import { secureLoginDto } from './dto/secure-login.dto';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserDto } from '../user/dto/user.dto';
-import { decryptKms, encryptKms, toBuffer } from 'src/common/util/crypto';
+import {
+  decryptKms,
+  encryptKms,
+  encryptPayload,
+  toBuffer,
+} from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
 
 @Controller('auth')
@@ -54,16 +63,15 @@ export class AuthController {
         this.logger.debug(
           'login clear response: ' + JSON.stringify(loginResponse),
         );
-        const payload = {
-          payload: loginResponse,
-        };
-        const payloadToEncryptBuffer = toBuffer(payload);
-        const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-        const encryptedUser = encryptedUserBlob.toString('base64');
+        // const payload = {
+        //   payload: loginResponse,
+        // };
 
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse('login successful', encryptedUser, true));
+        const payload = createResponse('login successful', loginResponse, true);
+
+        const encryptedResp = await encryptPayload(payload);
+
+        return res.status(HttpStatus.OK).json(encryptedResponse(encryptedResp));
       } else {
         return res
           .status(HttpStatus.BAD_REQUEST)
@@ -91,17 +99,21 @@ export class AuthController {
   @Post('verify')
   async verifyOtp(@Body() body: any, @Res() res: Response) {
     try {
-      this.logger.debug('verifyOtp called with payload: ' + body.payload);
+      this.logger.debug(
+        'verifyOtp called with payload: ' + JSON.stringify(body),
+      );
 
-      if (body.payload && body.payload !== '') {
-        const decryptedData = await decryptKms(body.payload);
+      if (body && body.code !== '') {
+        // const decryptedData = await decryptKms(body.payload);
 
-        this.logger.debug(
-          'verifyOtp decrypted payload: ' + JSON.stringify(decryptedData),
-        );
+        // this.logger.debug(
+        //   'verifyOtp decrypted payload: ' + JSON.stringify(decryptedData),
+        // );
 
         const authId = res.locals.id;
-        const { code } = decryptedData;
+        // const { code } = decryptedData;
+
+        const { code } = body;
 
         const isOtpVerified = await this.authService.verifyOtp(authId, code);
 
@@ -138,58 +150,25 @@ export class AuthController {
     }
   }
 
-  // @Post('signup')
-  // @UseInterceptors(
-  //   FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  // )
-  // async register(
-  //   @Body() requestBody: any,
-  //   @UploadedFiles() files: any,
-  //   @Res() res: Response,
-  // ): Promise<any> {
-  //   try {
-  //     const decryptedBody = await decryptKms(requestBody.payload);
-
-  //     const authId = res.locals.id;
-  //     const isOtpVerified = await this.authService.verifyOtp(
-  //       authId,
-  //       decryptedBody.code,
-  //     );
-
-  //     if (!isOtpVerified.status) {
-  //       return res
-  //         .status(HttpStatus.BAD_REQUEST)
-  //         .json(
-  //           createError('user registeration failed', isOtpVerified.message),
-  //         );
-  //     }
-
-  //     // convert decrypted to createuserDto
-  //     const userDto = new UserDto();
-  //     Object.assign(userDto, decryptedBody);
-  //     userDto.profileImage = files?.profileImage[0] || null;
-
-  //     const result = await this.userController.create(userDto, res);
-
-  //     return 'result';
-  //   } catch (error) {
-  //     // Handle any error that occurs during the registration process
-  //     if (error instanceof InternalServerError) {
-  //       return res
-  //         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-  //         .json(createError('500 user registeration failed', error.message));
-  //     } else if (error instanceof UnauthorizedException) {
-  //       return res
-  //         .status(HttpStatus.UNAUTHORIZED)
-  //         .json(createError('401 user registeration failed', error.message));
-  //     }
-  //     return res
-  //       .status(HttpStatus.BAD_REQUEST)
-  //       .json(createError('400 user registeration failed ', error.message));
-  //   }
-  // }
-
   @Post('sendOtp')
+  @ApiOperation({
+    summary: 'Send OTP to user',
+    description: 'Send OTP to user',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        payload: {
+          // just include the object you want to encrypt here
+          example:
+            'AQICAHjLuDRTnKVsgRzvUy74xztM2frynZUHkg/Nv5ZSxXo+PgEfnog+SPjBWqGB',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'OTP sent successfully' })
+  @ApiResponse({ status: 400, description: 'Failed to send OTP' })
   async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
     try {
       this.logger.debug('sendOtp called with payload: ' + body.payload);
@@ -210,6 +189,8 @@ export class AuthController {
       this.logger.debug(
         'sendOtp clear response: ' + JSON.stringify(authResponse),
       );
+
+      console.log('token: ' + authResponse.token);
 
       // encrypt the response
       const payload = {

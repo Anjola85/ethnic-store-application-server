@@ -21,6 +21,10 @@ import { BusinessDto } from 'src/modules/business/dto/business.dto';
 export class UserDto {
   @IsOptional()
   @IsString()
+  @ApiProperty({
+    description: 'User ID',
+    example: '00733fab-e715-41be-ad9d-dc417ae60858',
+  })
   id: string;
 
   // @IsNotEmpty()
@@ -77,9 +81,11 @@ export class UserDto {
   mobile: MobileDto;
 
   @IsOptional()
+  @ApiProperty({ description: 'The Date of birth', example: '2005-06-15' })
   dob: string;
 
   @IsOptional()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   favourites: BusinessDto[];
 
   @IsOptional()
@@ -88,5 +94,6 @@ export class UserDto {
 
   @IsOptional()
   @IsString()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   profileImageUrl: string;
 }

@@ -41,6 +41,7 @@
     "date-fns": "^2.30.0",
     "express-rate-limit": "^7.1.0",
     "jsonwebtoken": "^9.0.0",
+    "libphonenumber-js": "^1.10.51",
     "nestjs-twilio": "^4.1.1",
     "p-queue": "^7.3.4",
     "p-retry": "^5.1.2",

@@ -13,7 +13,7 @@ export class SendgridService {
     { email: 'anjolaa@quiikmart.com' },
     { email: 'dextereromosele@quiikmart.com' },
     { email: 'justinaackah@quiikmart.com' },
-    { email: 'kamsi@quiikmart.com' },
+    { email: 'kamsii@quiikmart.com' },
   ];
   private readonly attachments = [
     {
@@ -58,7 +58,7 @@ export class SendgridService {
               </a>
             </td>
             <td align="center" style="padding: 10px;">
-              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+              <a href="#" target="_blank" style="text-decoration: none;">
                 <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
               </a>
             </td>
@@ -75,7 +75,7 @@ export class SendgridService {
         `,
       // attachments: this.attachments,
     };
-    console.log('sending mail');
+    // console.log('sending mail');
 
     return await this.sendWaitlistEmail(receiverEmail, name, mail);
   }
@@ -112,7 +112,7 @@ export class SendgridService {
               </a>
             </td>
             <td align="center" style="padding: 10px;">
-              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+              <a href="#" target="_blank" style="text-decoration: none;">
                 <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
               </a>
             </td>
@@ -164,7 +164,7 @@ export class SendgridService {
               </a>
             </td>
             <td align="center" style="padding: 10px;">
-              <a href="https://www.facebook.com/quiikmart" target="_blank" style="text-decoration: none;">
+              <a href="#" target="_blank" style="text-decoration: none;">
                 <img src="https://www.quiikmart.com/images/facebook_icon.png" alt="Facebook" width="40" height="40" style="display: block;"/>
               </a>
             </td>
@@ -242,6 +242,9 @@ export class SendgridService {
     // set otp code and expiry time
     const otpCode: string = otpResponse.code;
     const expiryTime: string = otpResponse.expiryTime;
+
+    // TODO: remove
+    // console.log('otpCode: ' + otpCode);
 
     // create mail object
     const mail = {

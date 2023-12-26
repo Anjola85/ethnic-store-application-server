@@ -120,3 +120,20 @@ export const toBuffer = (data: any) => {
   }
   return buffer;
 };
+
+export const encryptPayload = async (payload: {
+  status: boolean;
+  message: string;
+  payload: any;
+}) => {
+  // convert payload to buffer
+  const payloadToEncryptBuffer = toBuffer(payload);
+
+  // encrypt payload
+  const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
+
+  // convert encyrpted blob to base64 string
+  const encryptedResp = encryptedUserBlob.toString('base64');
+
+  return encryptedResp;
+};

@@ -42,7 +42,7 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   private async validate(res: Response, token: string): Promise<void> {
-    const privateKey = fs.readFileSync('./private_key.pem');
+    const privateKey = fs.readFileSync('./secrets/private_key.pem');
 
     const decoded: any = await jsonwebtoken.verify(
       token,

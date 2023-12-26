@@ -32,7 +32,10 @@ import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business'
 import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper';
 import { WaitlistModule } from './modules/waitlist/waitlist.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ApiExtraModels } from '@nestjs/swagger';
+import { UserDto } from './modules/user/dto/user.dto';
 
+@ApiExtraModels(UserDto)
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -77,9 +80,9 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
         WaitlistShopper,
       ],
       // synchronize: true, // comment this out in production
-      ssl: {
-        rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-      },
+      // ssl: {
+      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      // },
     }),
     BullModule.forRoot({
       redis: {
