@@ -93,7 +93,12 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  // update a single address
+  /**
+   * Updates a single address
+   * @param addressId
+   * @param address
+   * @returns
+   */
   async updateAddressById(
     addressId: string,
     address: Address,
@@ -123,7 +128,11 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  // findone address by id
+  /**
+   * Gets an address by Id
+   * @param addressId
+   * @returns
+   */
   async findOneById(addressId: string) {
     try {
       const address = await this.createQueryBuilder('address')

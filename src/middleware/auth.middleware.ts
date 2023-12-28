@@ -14,6 +14,18 @@ export class AuthMiddleware implements NestMiddleware {
   private readonly logger = new Logger(AuthMiddleware.name);
 
   async use(req: Request, res: Response, next: NextFunction) {
+    // specifies whether to get response encrypted or not
+    const crypto = req.headers.crypto;
+
+    if (!crypto) {
+      throw new HttpException(
+        'Crypto is required in the header',
+        HttpStatus.UNAUTHORIZED,
+      );
+    } else {
+      res.locals.crypto = crypto;
+    }
+
     const token = req.headers.authorization;
 
     if (!token) {
@@ -49,6 +61,7 @@ export class AuthMiddleware implements NestMiddleware {
       privateKey.toString(),
     );
 
+    //TODO: rename below to specify what kind of ids are being passed
     // add user id to response object
     res.locals.id = decoded?.id || null;
   }

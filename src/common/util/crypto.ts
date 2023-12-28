@@ -122,9 +122,9 @@ export const toBuffer = (data: any) => {
 };
 
 export const encryptPayload = async (payload: {
+  payload: any;
   status: boolean;
   message: string;
-  payload: any;
 }) => {
   // convert payload to buffer
   const payloadToEncryptBuffer = toBuffer(payload);

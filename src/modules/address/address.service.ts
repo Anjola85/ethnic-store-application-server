@@ -35,6 +35,11 @@ export class AddressService {
     return response.identifiers[0].id;
   }
 
+  /**
+   *
+   * @param params
+   * @returns
+   */
   async getAddress(params: AddressParams): Promise<AddressDto[]> {
     const addressEntity: Address[] = await this.addressRepository.getAddress(
       params,

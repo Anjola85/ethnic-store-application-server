@@ -210,6 +210,11 @@ export class AuthService {
     return token;
   }
 
+  /**
+   * Retrieves a specific value from the auth repository
+   * @param input
+   * @returns auth object containing the vlaue
+   */
   async getAuth(input: InputObject): Promise<Auth> {
     const auth = await this.authRepository.findByUniq(input);
     return auth || null;
