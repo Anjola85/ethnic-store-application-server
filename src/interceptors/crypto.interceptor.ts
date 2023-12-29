@@ -1,0 +1,30 @@
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import { Observable, map, mergeMap } from 'rxjs';
+import { encryptPayload } from 'src/common/util/crypto';
+import { createEncryptedResponse } from 'src/common/util/response';
+
+@Injectable()
+export class CryptoInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle().pipe(
+      mergeMap(async (data) => {
+        const ctx = context.switchToHttp();
+        const request = ctx.getRequest<Request>();
+
+        if (
+          request.headers['crypto'] === 'true' ||
+          request.headers['crypto'] === undefined
+        ) {
+          const encryptedResp = await encryptPayload(data);
+          return createEncryptedResponse(encryptedResp);
+        }
+        return data;
+      }),
+    );
+  }
+}

@@ -18,7 +18,7 @@ import { AuthService } from '../auth/auth.service';
 import {
   createError,
   createResponse,
-  encryptedResponse,
+  createEncryptedResponse,
 } from '../../common/util/response';
 import {
   decryptKms,
@@ -85,6 +85,7 @@ export class UserController {
     @Res() res: Response,
   ): Promise<any> {
     try {
+      const crypto = res.locals.crypto;
       this.logger.debug('sign up called with body: ' + requestBody);
       const decryptedBody = await decryptKms(requestBody.payload);
       this.logger.debug(
@@ -102,22 +103,22 @@ export class UserController {
         userExists: boolean;
       } = await this.userService.create(userDto);
 
-      // const payload = {
-      //   message: 'user successfully registered',
-      //   payload: response,
-      // };
-
       const payload = createResponse('user successfully registered', response);
-
-      // encrypt payload
       const encryptedResp = await encryptPayload(payload);
 
-      if (response.userExists)
+      if (response.userExists || crypto)
         return res.status(HttpStatus.OK).json(encryptedResp);
+      else if (response.userExists || !crypto)
+        return res.status(HttpStatus.OK).json(payload);
 
-      return res
-        .status(HttpStatus.CREATED)
-        .json(encryptedResponse(encryptedResp));
+      if (crypto)
+        return res
+          .status(HttpStatus.CREATED)
+          .json(createEncryptedResponse(encryptedResp));
+      else
+        return res
+          .status(HttpStatus.CREATED)
+          .json(createResponse('user successfully registered', response));
     } catch (error) {
       this.logger.error(
         "Error occurred in 'create' method of UserController with error: " +
@@ -159,7 +160,9 @@ export class UserController {
 
       // return encrypted response
       if (crypto === 'true')
-        return res.status(HttpStatus.OK).json(encryptedResponse(encryptedResp));
+        return res
+          .status(HttpStatus.OK)
+          .json(createEncryptedResponse(encryptedResp));
       else
         return res
           .status(HttpStatus.OK)
@@ -245,7 +248,7 @@ export class UserController {
       };
       const resp = await encryptPayload(payload);
       if (crypto === 'true' || !crypto)
-        return res.status(HttpStatus.OK).json(encryptedResponse(resp));
+        return res.status(HttpStatus.OK).json(createEncryptedResponse(resp));
       else
         return res
           .status(HttpStatus.OK)

@@ -5,6 +5,8 @@ import {
   HttpStatus,
   Res,
   Logger,
+  UseInterceptors,
+  HttpException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -15,7 +17,7 @@ import { AwsSecretKey } from 'src/common/util/secret';
 import {
   createError,
   createResponse,
-  encryptedResponse,
+  createEncryptedResponse,
 } from '../../common/util/response';
 import { secureLoginDto } from './dto/secure-login.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -71,7 +73,9 @@ export class AuthController {
 
         const encryptedResp = await encryptPayload(payload);
 
-        return res.status(HttpStatus.OK).json(encryptedResponse(encryptedResp));
+        return res
+          .status(HttpStatus.OK)
+          .json(createEncryptedResponse(encryptedResp));
       } else {
         return res
           .status(HttpStatus.BAD_REQUEST)
@@ -169,10 +173,12 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Failed to send OTP' })
-  async sendOtp(@Body() body: EncryptedDTO, @Res() res: Response) {
+  async sendOtp(@Body() body: EncryptedDTO) {
     try {
       this.logger.debug('sendOtp called with payload: ' + body.payload);
-      // handle decryption of request body
+      // const crypto = res.locals.crypto;
+      console.log('here: ', crypto);
+
       const decrypted = await decryptKms(body.payload);
       const requestBody = new TempUserAccountDto();
       Object.assign(requestBody, decrypted);
@@ -186,35 +192,31 @@ export class AuthController {
         requestBody.mobile,
       );
 
-      this.logger.debug(
-        'sendOtp clear response: ' + JSON.stringify(authResponse),
-      );
-
-      console.log('token: ' + authResponse.token);
-
       // encrypt the response
-      const payload = {
-        payload: { token: authResponse.token },
-      };
+      const payload = createResponse('otp sent successfully', authResponse);
+      // const encryptedPayload = await encryptPayload(payload);
 
-      const payloadToEncryptBuffer = toBuffer(payload);
-      const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
-      const encryptedPayload = encryptedUserBlob.toString('base64');
+      this.logger.debug('sendOtp clear response: ' + JSON.stringify(payload));
 
-      this.logger.debug(
-        'sendOtp encrypted payload: ' + JSON.stringify(encryptedPayload),
-      );
-      return res
-        .status(HttpStatus.OK)
-        .json(createResponse(authResponse.message, encryptedPayload));
+      // this.logger.debug(
+      //   'sendOtp encrypted payload: ' + JSON.stringify(encryptedPayload),
+      // );
+
+      // if (crypto)
+      //   return res
+      //     .status(HttpStatus.OK)
+      //     .json(createEncryptedResponse(encryptedPayload));
+      // else return res.status(HttpStatus.OK).json(payload);
+      return payload;
     } catch (error) {
       this.logger.error(
         'Auth Controller with error message: ' + error.message,
         ' with error: ' + error,
       );
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('400 send otp failed'));
+      // return res
+      //   .status(HttpStatus.BAD_REQUEST)
+      //   .json(createError('400 send otp failed'));
+      throw new HttpException('send otp failed', HttpStatus.BAD_REQUEST);
     }
   }
 

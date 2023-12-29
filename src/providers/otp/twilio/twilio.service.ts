@@ -36,9 +36,6 @@ export default class TwilioService {
     const otpCode: string = otpResponse.code;
     const expiryTime: string = otpResponse.expiryTime;
 
-    // TODO: remove
-    console.log('otpCode: ' + otpCode);
-
     const options: MessageListInstanceCreateOptions = {
       to: phone_number,
       body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
