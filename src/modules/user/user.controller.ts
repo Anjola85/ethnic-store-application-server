@@ -80,21 +80,16 @@ export class UserController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   async register(
-    @Body() requestBody: EncryptedDTO,
+    @Body() requestBody: UserDto,
     @UploadedFiles() files: any,
-    @Res() res: Response,
   ): Promise<any> {
     try {
-      const crypto = res.locals.crypto;
-      this.logger.debug('sign up called with body: ' + requestBody);
-      const decryptedBody = await decryptKms(requestBody.payload);
       this.logger.debug(
-        'decrypted body request: ' + JSON.stringify(decryptedBody),
+        'sign up called with body: ' + JSON.stringify(requestBody),
       );
 
       // map decrypted object to userDto
-      const userDto = new UserDto();
-      Object.assign(userDto, decryptedBody);
+      const userDto = requestBody;
       userDto.profileImage = files?.profileImage[0] || null;
 
       const response: {
@@ -103,40 +98,19 @@ export class UserController {
         userExists: boolean;
       } = await this.userService.create(userDto);
 
-      const payload = createResponse('user successfully registered', response);
-      const encryptedResp = await encryptPayload(payload);
-
-      if (response.userExists || crypto)
-        return res.status(HttpStatus.OK).json(encryptedResp);
-      else if (response.userExists || !crypto)
-        return res.status(HttpStatus.OK).json(payload);
-
-      if (crypto)
-        return res
-          .status(HttpStatus.CREATED)
-          .json(createEncryptedResponse(encryptedResp));
-      else
-        return res
-          .status(HttpStatus.CREATED)
-          .json(createResponse('user successfully registered', response));
+      if (response.userExists)
+        return createResponse('user already exists', response);
+      else return createResponse('user successfully registered', response);
     } catch (error) {
       this.logger.error(
         "Error occurred in 'create' method of UserController with error: " +
           error,
       );
       // Handle any error that occurs during the registration process
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createError('500 user registeration failed', error.message));
-      } else if (error instanceof UnauthorizedException) {
-        return res
-          .status(HttpStatus.UNAUTHORIZED)
-          .json(createError('401 user registeration failed', error.message));
-      }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('400 user registeration failed ', error.message));
+      if (error instanceof UnauthorizedException)
+        throw new UnauthorizedException(error.message);
+
+      throw new InternalServerError(error.message);
     }
   }
 

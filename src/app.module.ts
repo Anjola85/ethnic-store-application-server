@@ -34,6 +34,7 @@ import { ApiExtraModels } from '@nestjs/swagger';
 import { UserDto } from './modules/user/dto/user.dto';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CryptoInterceptor } from './interceptors/crypto.interceptor';
+import { DecryptionMiddleware } from './middleware/decryption.middleware';
 
 @ApiExtraModels(UserDto)
 @Module({
@@ -127,35 +128,6 @@ import { CryptoInterceptor } from './interceptors/crypto.interceptor';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // consumer
-    //   .apply(AuthMiddleware)
-    //   .exclude(
-    //     '/',
-    //     '/test-validation',
-    //     'user/register',
-    //     'business/nearby',
-    //     'business/register',
-    //     'business/all',
-    //     'auth/test',
-    //     'auth/sendOtp',
-    //     'auth/resendOtp',
-    //     'auth/sendOTPBySms',
-    //     'auth/reset',
-    //     'auth/encrypt',
-    //     'auth/decrypt',
-    //     'images/upload',
-    //     'images/test',
-    //     'images/upload-s3',
-    //     'images/upload-business-images',
-    //     'images/upload-avatar',
-    //     'images/get-random-avatar',
-    //     'images/upload-profile-picture',
-    //     'waitlist/join-customer',
-    //     'waitlist/join-shopper',
-    //     'waitlist/join-business',
-    //   )
-    //   .forRoutes('*');
-
     consumer
       .apply(AuthMiddleware)
       .forRoutes(
@@ -165,5 +137,10 @@ export class AppModule implements NestModule {
         'auth/login',
         'auth/resendOtp',
       );
+
+    consumer
+      .apply(DecryptionMiddleware)
+      .exclude('auth/encrypt', 'auth/decrypt')
+      .forRoutes('*');
   }
 }

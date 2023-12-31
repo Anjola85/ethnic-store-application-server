@@ -173,49 +173,31 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Failed to send OTP' })
-  async sendOtp(@Body() body: EncryptedDTO) {
+  async sendOtp(@Body() reqBody: TempUserAccountDto) {
     try {
-      this.logger.debug('sendOtp called with payload: ' + body.payload);
-      // const crypto = res.locals.crypto;
-      console.log('here: ', crypto);
+      this.logger.debug('sendOtp called with body: ' + reqBody);
 
-      const decrypted = await decryptKms(body.payload);
-      const requestBody = new TempUserAccountDto();
-      Object.assign(requestBody, decrypted);
+      // console.log('body: ', body);
+      // const decrypted = await decryptKms(body.payload);
 
       this.logger.debug(
-        'sendOtp decrypted payload: ' + JSON.stringify(requestBody),
+        'sendOtp decrypted payload: ' + JSON.stringify(reqBody),
       );
 
       const authResponse = await this.authService.sendOtp(
-        requestBody.email,
-        requestBody.mobile,
+        reqBody.email,
+        reqBody.mobile,
       );
 
-      // encrypt the response
       const payload = createResponse('otp sent successfully', authResponse);
-      // const encryptedPayload = await encryptPayload(payload);
-
       this.logger.debug('sendOtp clear response: ' + JSON.stringify(payload));
-
-      // this.logger.debug(
-      //   'sendOtp encrypted payload: ' + JSON.stringify(encryptedPayload),
-      // );
-
-      // if (crypto)
-      //   return res
-      //     .status(HttpStatus.OK)
-      //     .json(createEncryptedResponse(encryptedPayload));
-      // else return res.status(HttpStatus.OK).json(payload);
       return payload;
     } catch (error) {
       this.logger.error(
         'Auth Controller with error message: ' + error.message,
         ' with error: ' + error,
       );
-      // return res
-      //   .status(HttpStatus.BAD_REQUEST)
-      //   .json(createError('400 send otp failed'));
+
       throw new HttpException('send otp failed', HttpStatus.BAD_REQUEST);
     }
   }

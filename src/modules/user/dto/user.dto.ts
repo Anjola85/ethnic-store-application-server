@@ -27,10 +27,6 @@ export class UserDto {
   })
   id: string;
 
-  // @IsNotEmpty()
-  // @IsString()
-  // code: string;
-
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ description: 'The first name of the person', example: 'John' })

@@ -1,3 +1,8 @@
+/**
+ * This class is used to encrypt the response payload
+ *
+ */
+
 import {
   CallHandler,
   ExecutionContext,
