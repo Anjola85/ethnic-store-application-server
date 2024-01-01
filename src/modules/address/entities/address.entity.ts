@@ -13,7 +13,7 @@ export class Address extends CommonEntity {
   @JoinColumn()
   user: User;
 
-  @Column()
+  @Column({ default: true, nullable: false, type: 'boolean' })
   primary: boolean;
 
   @Column()

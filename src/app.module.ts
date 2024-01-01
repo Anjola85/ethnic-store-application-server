@@ -140,7 +140,7 @@ export class AppModule implements NestModule {
 
     consumer
       .apply(DecryptionMiddleware)
-      .exclude('auth/encrypt', 'auth/decrypt')
+      .exclude('auth/encrypt', 'auth/decrypt', 'auth/verify')
       .forRoutes('*');
   }
 }

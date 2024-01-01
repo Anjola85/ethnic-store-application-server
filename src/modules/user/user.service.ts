@@ -12,6 +12,9 @@ import { UserRepository } from './user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
 import { AddressDto } from '../address/dto/address.dto';
+import { compareMobiles } from 'src/common/util/mobileUtil';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { entityToMobile } from 'src/common/mapper/mobile-mapper';
 
 @Injectable()
 export class UserService {
@@ -31,40 +34,48 @@ export class UserService {
       userDto.mobile,
     );
 
-    if (!auth.user || auth.user == null) {
+    if (!auth.user) {
       userExists = false;
     } else {
       userExists = true;
       userModel = auth.user;
+
+      const existingMobile =
+        userDto.mobile && auth.mobile ? entityToMobile(auth.mobile) : null;
+
+      if (userDto.email == auth.email) throw new Error('Email already exists');
+      else if (compareMobiles(userDto.mobile, existingMobile))
+        throw new Error('Mobile already exists');
     }
 
-    if (!userExists) {
-      const address = userDto.address[0];
-      address.id = await this.addressService.addAddress(userDto.address[0]);
-      userDto.address = [address];
+    const address: AddressDto = userDto.address[0];
+    address.primary = true;
+    address.id = await this.addressService.addAddress(address);
+    userDto.address = [address];
 
-      const newUserEntity = new User();
+    const newUserEntity = new User();
 
-      if (!userDto.profileImage) {
-        // if image provided
-        userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
-      } else {
-        // if image not provided
-        userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
-          newUserEntity.id,
-          userDto.profileImage,
-        );
-      }
+    // generate random avatar
+    if (!userDto.profileImage)
+      userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
+    else
+      userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
+        newUserEntity.id,
+        userDto.profileImage,
+      );
 
-      // map modified field
-      userDtoToEntity(userDto, newUserEntity);
+    // map modified field
+    userDtoToEntity(userDto, newUserEntity);
 
-      userModel = await this.userRepository.create(newUserEntity).save();
+    // add new user to db
+    userModel = await this.userRepository.create(newUserEntity).save();
 
-      await this.authService.updateAuthUserId(auth.id, userModel);
-      address.user = userModel;
-      await this.addressService.updateAddress(address);
-    }
+    // update auth with reference to user
+    await this.authService.updateAuthUserId(auth.id, userModel);
+
+    // update address with reference to user
+    address.user = userModel;
+    await this.addressService.updateAddress(address);
 
     const input: InputObject = { id: auth.id };
     const authObj = await this.authService.getAllUserInfo(input);

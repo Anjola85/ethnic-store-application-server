@@ -190,7 +190,10 @@ export class AuthController {
       );
 
       const payload = createResponse('otp sent successfully', authResponse);
-      this.logger.debug('sendOtp clear response: ' + JSON.stringify(payload));
+      this.logger.debug(
+        'sendOtp returned successfull response at time ' +
+          new Date().toISOString(),
+      );
       return payload;
     } catch (error) {
       this.logger.error(

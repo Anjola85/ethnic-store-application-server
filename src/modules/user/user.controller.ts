@@ -88,7 +88,6 @@ export class UserController {
         'sign up called with body: ' + JSON.stringify(requestBody),
       );
 
-      // map decrypted object to userDto
       const userDto = requestBody;
       userDto.profileImage = files?.profileImage[0] || null;
 
@@ -98,12 +97,14 @@ export class UserController {
         userExists: boolean;
       } = await this.userService.create(userDto);
 
+      console.log('response: ' + JSON.stringify(response));
+
       if (response.userExists)
-        return createResponse('user already exists', response);
+        return createResponse('user with credentials already exist');
       else return createResponse('user successfully registered', response);
     } catch (error) {
       this.logger.error(
-        "Error occurred in 'create' method of UserController with error: " +
+        "Error occurred in 'register' method of UserController with error: " +
           error,
       );
       // Handle any error that occurs during the registration process

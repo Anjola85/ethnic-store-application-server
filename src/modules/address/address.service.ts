@@ -25,9 +25,7 @@ export class AddressService {
    * @returns the id of the newly created address
    */
   async addAddress(addressDto: AddressDto): Promise<string> {
-    if (addressDto.user) {
-      addressDto.primary = true;
-    }
+    console.log('addressDto', addressDto);
 
     await this.geoCodingService.setCoordinates(addressDto);
     const addressEntity: Address = addressDtoToEntity(addressDto);

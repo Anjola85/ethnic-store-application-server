@@ -42,26 +42,21 @@ export default class TwilioService {
       from: senderPhoneNumber,
     };
     try {
-      // send otp code to phone number
       this.client.messages.create(options);
 
-      // mask phone number
       const maskedNumber = phone_number;
-      // replace first 5 digits with *
       const maskedPhoneNumber = maskedNumber.replace(
         maskedNumber.substring(0, 5),
         '*****',
       );
 
-      // log success repsonse
-      this.logger.log(
+      this.logger.debug(
         'SMS sent successfully to: \n' +
           maskedPhoneNumber +
-          '\nwith expiry time: ' +
+          ' with expiry time: ' +
           expiryTime,
       );
 
-      // return success response to client
       return {
         status: true,
         message: 'SMS sent successfully',
@@ -69,11 +64,10 @@ export default class TwilioService {
         expiryTime: expiryTime,
       };
     } catch (error) {
-      // log error response
       this.logger.error('Error sending sms:', error);
-      // return error response to client
+
       throw new HttpException(
-        'Failed to send email',
+        'Failed to send sms',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
