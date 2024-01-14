@@ -1,3 +1,8 @@
+/**
+ * This middleware validates the token attached to the header request
+ *
+ */
+
 import {
   Injectable,
   NestMiddleware,

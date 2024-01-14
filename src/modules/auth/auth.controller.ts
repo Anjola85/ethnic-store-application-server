@@ -164,7 +164,6 @@ export class AuthController {
       type: 'object',
       properties: {
         payload: {
-          // just include the object you want to encrypt here
           example:
             'AQICAHjLuDRTnKVsgRzvUy74xztM2frynZUHkg/Nv5ZSxXo+PgEfnog+SPjBWqGB',
         },
@@ -175,25 +174,13 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Failed to send OTP' })
   async sendOtp(@Body() reqBody: TempUserAccountDto) {
     try {
-      this.logger.debug('sendOtp called with body: ' + reqBody);
-
-      // console.log('body: ', body);
-      // const decrypted = await decryptKms(body.payload);
-
-      this.logger.debug(
-        'sendOtp decrypted payload: ' + JSON.stringify(reqBody),
-      );
-
       const authResponse = await this.authService.sendOtp(
         reqBody.email,
         reqBody.mobile,
       );
 
-      const payload = createResponse('otp sent successfully', authResponse);
-      this.logger.debug(
-        'sendOtp returned successfull response at time ' +
-          new Date().toISOString(),
-      );
+      const payload = createResponse(authResponse.message, authResponse.token);
+
       return payload;
     } catch (error) {
       this.logger.error(
@@ -201,7 +188,11 @@ export class AuthController {
         ' with error: ' + error,
       );
 
-      throw new HttpException('send otp failed', HttpStatus.BAD_REQUEST);
+      // if its input validation error, throw bad request
+      throw new HttpException(
+        'send otp failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

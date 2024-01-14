@@ -4,7 +4,7 @@ import { AddressDto } from './dto/address.dto';
 export function addressDtoToEntity(address: AddressDto): Address {
   const addressEntity = new Address();
   if (address.id) addressEntity.id = address.id;
-  addressEntity.primary = address.primary;
+  addressEntity.isPrimary = address.primary;
   addressEntity.unit = address.unit;
   addressEntity.street = address.street;
   addressEntity.city = address.city;
@@ -22,7 +22,7 @@ export function entityToAddressDto(address: Address): AddressDto {
   const addressDto = new AddressDto();
 
   addressDto.id = address.id;
-  addressDto.primary = address.primary;
+  addressDto.primary = address.isPrimary;
   addressDto.unit = address.unit;
   addressDto.street = address.street;
   addressDto.city = address.city;

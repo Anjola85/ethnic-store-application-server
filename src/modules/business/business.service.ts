@@ -9,7 +9,7 @@ import {
 import { ImagesDto } from './dto/image.dto';
 import { Address } from '../address/entities/address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { businessDtoToEntity } from './business-mapper';
+// import { businessDtoToEntity } from './business-mapper';
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { AddressService } from '../address/address.service';
 import { Business } from './entities/business.entity';
@@ -32,7 +32,8 @@ export class BusinessService {
     await this.uploadBusinessImages(businessDto);
 
     // map business data
-    const businessEntity: Business = businessDtoToEntity(businessDto);
+    // const businessEntity: Business = businessDtoToEntity(businessDto);
+    const businessEntity: Business = null;
 
     const createdBusiness = await this.businessRepository.addBusiness(
       businessEntity,

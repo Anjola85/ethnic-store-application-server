@@ -14,7 +14,7 @@ export class Address extends CommonEntity {
   user: User;
 
   @Column({ default: true, nullable: false, type: 'boolean' })
-  primary: boolean;
+  isPrimary: boolean;
 
   @Column()
   unit: string;

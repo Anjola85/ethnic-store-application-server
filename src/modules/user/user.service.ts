@@ -1,5 +1,4 @@
 import { AddressService } from './../address/address.service';
-import { InputObject } from './../auth/auth.repository';
 import { Injectable } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
@@ -7,7 +6,7 @@ import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { AuthService } from '../auth/auth.service';
 import { UserFileService } from '../files/user-files.service';
-import { mapAuthToUser, userDtoToEntity } from './user-mapper';
+// import { mapAuthToUser, userDtoToEntity } from './user-mapper';
 import { UserRepository } from './user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateAuthDto } from '../auth/dto/create-auth.dto';
@@ -15,6 +14,7 @@ import { AddressDto } from '../address/dto/address.dto';
 import { compareMobiles } from 'src/common/util/mobileUtil';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { entityToMobile } from 'src/common/mapper/mobile-mapper';
+import { AuthParams } from '../auth/entities/auth.entity';
 
 @Injectable()
 export class UserService {
@@ -40,8 +40,22 @@ export class UserService {
       userExists = true;
       userModel = auth.user;
 
-      const existingMobile =
-        userDto.mobile && auth.mobile ? entityToMobile(auth.mobile) : null;
+      let existingMobile: {
+        phoneNumber: string;
+        isoType: string;
+        countryCode: string;
+      };
+
+      if (userDto.mobile && auth.mobile) {
+        existingMobile = {
+          phoneNumber: auth.mobile.phoneNumber,
+          isoType: auth.mobile.isoType,
+          countryCode: auth.mobile.countryCode,
+        };
+      }
+
+      // const existingMobile =
+      //   userDto.mobile && auth.mobile ? entityToMobile(auth.mobile) : null;
 
       if (userDto.email == auth.email) throw new Error('Email already exists');
       else if (compareMobiles(userDto.mobile, existingMobile))
@@ -65,7 +79,7 @@ export class UserService {
       );
 
     // map modified field
-    userDtoToEntity(userDto, newUserEntity);
+    // userDtoToEntity(userDto, newUserEntity);
 
     // add new user to db
     userModel = await this.userRepository.create(newUserEntity).save();
@@ -77,9 +91,10 @@ export class UserService {
     address.user = userModel;
     await this.addressService.updateAddress(address);
 
-    const input: InputObject = { id: auth.id };
+    const input: AuthParams = { authId: auth.id };
     const authObj = await this.authService.getAllUserInfo(input);
-    const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
+    // const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
+    const user = null;
 
     const privateKey = fs.readFileSync('./secrets/private_key.pem');
     const token = jsonwebtoken.sign(
@@ -105,7 +120,7 @@ export class UserService {
    */
   async updateUser(userDto: UserDto): Promise<void> {
     const userEntity = new User();
-    userDtoToEntity(userDto, userEntity);
+    // userDtoToEntity(userDto, userEntity);
     const resp = await this.userRepository.updateUser(userEntity);
   }
 
@@ -131,8 +146,8 @@ export class UserService {
 
     // update user account
     if (userDto.firstName || userDto.lastName) {
-      if (userDto.firstName) user.first_name = userDto.firstName;
-      if (userDto.lastName) user.last_name = userDto.lastName;
+      if (userDto.firstName) user.firstName = userDto.firstName;
+      if (userDto.lastName) user.lastName = userDto.lastName;
 
       this.userRepository.updateUser(user);
     }

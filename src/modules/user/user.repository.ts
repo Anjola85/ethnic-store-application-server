@@ -64,8 +64,8 @@ export class UserRepository extends Repository<User> {
     try {
       const updatedUser = await this.createQueryBuilder('user')
         .update(User)
-        .set({ profile_image: imageUrl })
-        .set({ updated_at: new Date() })
+        .set({ profileImage: imageUrl })
+        .set({ updatedAt: new Date() })
         .where('id = :id', { id })
         .execute();
       return updatedUser;

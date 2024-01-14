@@ -8,7 +8,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { MobileGroupDto } from 'src/common/dto/mobile.dto';
+import { MobileDto, MobileGroupDto } from 'src/common/dto/mobile.dto';
 import { ScheduleDto } from 'src/modules/business/dto/schedule.dto';
 import { GeoLocationDto } from './geolocation.dto';
 import { User } from 'src/modules/user/entities/user.entity';
@@ -57,7 +57,7 @@ export class BusinessDto {
   @IsObject()
   @ValidateNested()
   @Type(() => MobileGroupDto)
-  mobile: MobileGroupDto;
+  mobile: MobileDto;
 
   @ApiProperty()
   @IsObject()

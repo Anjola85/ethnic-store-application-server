@@ -29,7 +29,7 @@ import {
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { mapAuthToUser } from './user-mapper';
+// import { mapAuthToUser } from './user-mapper';
 import {
   ApiBody,
   ApiHeader,
@@ -211,7 +211,8 @@ export class UserController {
       const userInfo = await this.authService.getAllUserInfo({
         userId: userDto.id,
       });
-      const user: UserDto = mapAuthToUser(userInfo); // rename to map user from Auth
+      // const user: UserDto = mapAuthToUser(userInfo); // rename to map user from Auth
+      const user = null;
 
       const payload = {
         message: 'Update successful',

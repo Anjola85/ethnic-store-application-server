@@ -1,15 +1,15 @@
 import { Business } from 'src/modules/business/entities/business.entity';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 @Entity('favourites')
 export class Favourite extends CommonEntity {
-  @OneToOne(() => Business, (business) => business.id)
-  @JoinColumn()
+  @ManyToOne(() => Business, (business) => business.favourites)
+  @JoinColumn({ name: 'business_id' })
   business: Business;
 
-  @OneToOne(() => User, (user) => user.id)
-  @JoinColumn()
+  @ManyToOne(() => User, (user) => user.favourites)
+  @JoinColumn({ name: 'user_id ' })
   user: User;
 }

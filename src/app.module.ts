@@ -35,6 +35,8 @@ import { UserDto } from './modules/user/dto/user.dto';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CryptoInterceptor } from './interceptors/crypto.interceptor';
 import { DecryptionMiddleware } from './middleware/decryption.middleware';
+import { Mobile } from './modules/mobile/mobile.entity';
+import { MobileModule } from './modules/mobile/mobile.module';
 
 @ApiExtraModels(UserDto)
 @Module({
@@ -79,8 +81,9 @@ import { DecryptionMiddleware } from './middleware/decryption.middleware';
         WaitlistCustomer,
         WaitlistBusiness,
         WaitlistShopper,
+        Mobile,
       ],
-      // synchronize: true, // comment this out in production
+      synchronize: true, // comment this out in production
       // ssl: {
       //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
       // },
@@ -111,6 +114,7 @@ import { DecryptionMiddleware } from './middleware/decryption.middleware';
     FavouriteModule,
     AddressModule,
     WaitlistModule,
+    MobileModule,
   ],
   controllers: [AppController],
   providers: [

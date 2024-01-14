@@ -1,26 +1,31 @@
-import { EntityMobileDto } from 'src/common/dto/mobile.dto';
 import { CommonEntity } from 'src/modules/common/base.entity';
+import { Mobile } from 'src/modules/mobile/mobile.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+
+export interface AuthParams {
+  authId?: string;
+  email?: string;
+  userId?: string;
+}
 
 @Entity('auth')
 export class Auth extends CommonEntity {
-  @Column({ unique: true, default: '' })
+  @Column({ unique: true, nullable: true })
   email: string;
 
-  @Column({ type: 'jsonb', nullable: true, unique: true })
-  mobile: EntityMobileDto;
+  @Column({ name: 'account_verified', type: 'boolean', default: false })
+  accountVerified: boolean;
 
-  @Column({ type: 'boolean', default: false })
-  account_verified: boolean;
+  @Column({ name: 'verification_code', default: null })
+  otpCode: string;
 
-  @Column({ default: null })
-  verification_code: string;
+  @Column({ name: 'verification_code_expiration' })
+  otpExpiry: Date;
 
-  @Column()
-  verification_code_expiration: Date;
-
-  @OneToOne(() => User, (user) => user.id)
-  @JoinColumn()
+  @OneToOne(() => User, (user) => user.auth)
   user: User;
+
+  @OneToMany(() => Mobile, (mobile) => mobile.auth)
+  mobile: Mobile;
 }

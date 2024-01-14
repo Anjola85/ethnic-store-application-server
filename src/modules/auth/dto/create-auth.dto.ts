@@ -39,11 +39,11 @@ export class CreateAuthDto {
 
   @IsOptional()
   @IsString()
-  verificationCode?: string;
+  otpCode?: string;
 
   @IsOptional()
   @IsDateString()
-  verificationCodeExpiration?: Date;
+  otpExpiry?: Date;
 
   @IsOptional()
   user?: User;
