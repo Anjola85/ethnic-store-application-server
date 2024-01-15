@@ -1,5 +1,5 @@
 /**
- * This middleware decrypts the payload sent by the client.
+ * This middleware decrypts the payload request made by the client.
  */
 
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';

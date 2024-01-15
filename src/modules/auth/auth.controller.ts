@@ -7,6 +7,8 @@ import {
   Logger,
   UseInterceptors,
   HttpException,
+  UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -29,6 +31,7 @@ import {
   toBuffer,
 } from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
+import { VerifyOtpDto } from './dto/otp-verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -94,66 +97,6 @@ export class AuthController {
     }
   }
 
-  /**
-   * Verifies the otp
-   * @param body
-   * @param res
-   * @returns
-   */
-  @Post('verify')
-  async verifyOtp(@Body() body: any, @Res() res: Response) {
-    try {
-      this.logger.debug(
-        'verifyOtp called with payload: ' + JSON.stringify(body),
-      );
-
-      if (body && body.code !== '') {
-        // const decryptedData = await decryptKms(body.payload);
-
-        // this.logger.debug(
-        //   'verifyOtp decrypted payload: ' + JSON.stringify(decryptedData),
-        // );
-
-        const authId = res.locals.id;
-        // const { code } = decryptedData;
-
-        const { code } = body;
-
-        const isOtpVerified = await this.authService.verifyOtp(authId, code);
-
-        if (!isOtpVerified.status) {
-          return res
-            .status(HttpStatus.BAD_REQUEST)
-            .json(
-              createError('otp verification failed', isOtpVerified.message),
-            );
-        }
-
-        this.logger.debug(
-          'response from verifyOtp: ' + JSON.stringify(isOtpVerified),
-        );
-
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse('otp verification successful'));
-      } else {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('payload is required'));
-      }
-    } catch (error) {
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('otp verification failed', error.message));
-      } else {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('otp verification failed', error.message));
-      }
-    }
-  }
-
   @Post('sendOtp')
   @ApiOperation({
     summary: 'Send OTP to user',
@@ -188,7 +131,9 @@ export class AuthController {
         ' with error: ' + error,
       );
 
-      // if its input validation error, throw bad request
+      if (error instanceof ConflictException)
+        throw new HttpException(error.message, HttpStatus.CONFLICT);
+
       throw new HttpException(
         'send otp failed',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -196,18 +141,34 @@ export class AuthController {
     }
   }
 
-  @Post('sendOTPBySms')
-  async sendOTPBySms(@Body() requestBody: any, @Res() res: Response) {
-    const { phone_number } = requestBody;
+  /**
+   * Verifies the otp
+   * @param body
+   * @param res
+   * @returns
+   */
+  @Post('verifyOtp')
+  async verifyOtp(@Body() body: VerifyOtpDto) {
     try {
-      await this.authService.sendOtp(phone_number);
-      return res
-        .status(HttpStatus.OK)
-        .json(createResponse('SMS sent successfully.'));
+      const { authId, code } = body;
+
+      const isOtpVerified = await this.authService.verifyOtp(authId, code);
+
+      if (!isOtpVerified.status) {
+        throw new HttpException(isOtpVerified.message, HttpStatus.BAD_REQUEST);
+      }
+      const payload = createResponse('otp verification successful');
+      return payload;
     } catch (error) {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('Failed to send SMS.', error.message));
+      this.logger.debug('Auth Controller with error: ' + error);
+
+      if (error instanceof UnauthorizedException)
+        throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+
+      throw new HttpException(
+        'verify otp failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

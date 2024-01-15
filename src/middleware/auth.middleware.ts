@@ -29,7 +29,13 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     try {
-      await this.validate(res, token);
+      const { authId, userId } = await this.validateToken(res, token);
+
+      if (req.body.authId || req.body.authId === '')
+        req.body.authId = authId || '';
+
+      if (req.body.userId || req.body.userId === '')
+        req.body.userId = userId || '';
 
       next();
     } catch (error) {
@@ -46,7 +52,10 @@ export class AuthMiddleware implements NestMiddleware {
     }
   }
 
-  private async validate(res: Response, token: string): Promise<void> {
+  private async validateToken(
+    res: Response,
+    token: string,
+  ): Promise<{ authId: string; userId: string }> {
     const privateKey = fs.readFileSync('./secrets/private_key.pem');
 
     const decoded: any = await jsonwebtoken.verify(
@@ -54,8 +63,11 @@ export class AuthMiddleware implements NestMiddleware {
       privateKey.toString(),
     );
 
-    //TODO: rename below to specify what kind of ids are being passed
-    // add user id to response object
-    res.locals.id = decoded?.id || null;
+    const ids = {
+      authId: decoded?.authId || null,
+      userId: decoded?.userId || null,
+    };
+
+    return ids;
   }
 }

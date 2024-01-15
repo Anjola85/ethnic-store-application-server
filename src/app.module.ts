@@ -136,7 +136,7 @@ export class AppModule implements NestModule {
       .apply(AuthMiddleware)
       .forRoutes(
         'user/info',
-        'auth/verify',
+        'auth/verifyOtp',
         'user/signup',
         'auth/login',
         'auth/resendOtp',
@@ -144,7 +144,7 @@ export class AppModule implements NestModule {
 
     consumer
       .apply(DecryptionMiddleware)
-      .exclude('auth/encrypt', 'auth/decrypt', 'auth/verify')
+      .exclude('auth/encrypt', 'auth/decrypt', 'auth/verifyOtp')
       .forRoutes('*');
   }
 }

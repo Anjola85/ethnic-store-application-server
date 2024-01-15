@@ -12,8 +12,8 @@ import { UserDto } from '../user/dto/user.dto';
 import { UserFileService } from '../files/user-files.service';
 import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { MobileRepository } from '../mobile/mobile.repository';
 import { Mobile } from '../mobile/mobile.entity';
+import { MobileService } from '../mobile/mobile.service';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +21,7 @@ export class AuthService {
 
   constructor(
     private authRepository: AuthRepository,
-    private mobileRepository: MobileRepository,
+    private mobileService: MobileService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
     private readonly userFileService: UserFileService,
@@ -62,31 +62,42 @@ export class AuthService {
 
       // if mobile was provided, check if mobile exists in the database(means auth exists)
       if (mobile && mobile.phoneNumber) {
-        // check if mobile exists in the DB
-        const mobileArray: Mobile = await this.mobileRepository.getMobile({
-          mobile,
-        });
+        const mobileEntity = new Mobile();
+        Object.assign(mobileEntity, mobile);
 
-        const mobileExist = mobileArray ? mobileArray[0] : null;
+        // check if mobile exists in the DB
+        const mobileExist: Mobile = await this.mobileService.getMobile(
+          mobileEntity,
+        );
 
         let auth: Auth;
 
-        if (mobileExist) {
+        if (mobileExist && mobileExist.auth) {
+          console.log("just updating the auth's otp code");
+          // theres a user with this mobile, update the auth record with the new otp
           auth = mobileExist.auth;
           await this.authRepository.update(auth.id, {
             ...authModel,
           });
+        } else if (mobileExist && mobileExist.business) {
+          console.log('mobile is registered to business');
+          // if mobile exists and its for a business, create an auth record for it
         } else {
-          auth = await this.authRepository.create(authModel).save();
+          console.log("mobile doesn't exist, creating a new auth record");
+          // the provided mobile doesnt exist, is this sendOTP for a user or business?
+          // Assumption: its for a user
+
+          auth = await this.addAuth(authModel);
+          console.log('auth: ' + JSON.stringify(auth));
+
           let newMobile = new Mobile();
-          // set new mobile as primary
-          newMobile.isPrimary = true;
           Object.assign(newMobile, {
             ...mobile,
             auth,
           });
-          newMobile = await this.mobileRepository.create(newMobile).save();
-          newMobile.auth = auth;
+
+          newMobile = await this.mobileService.addUserMobile(newMobile, auth);
+          console.log('newMobile: ' + JSON.stringify(newMobile));
         }
 
         authModel.id = auth.id;
@@ -104,7 +115,7 @@ export class AuthService {
       }
 
       // generate token with user id
-      const token = this.generateJwt(authModel.id);
+      const token = this.generateJwt(authModel);
 
       // return response with token
       const otpResponse = { ...response, token };
@@ -132,21 +143,21 @@ export class AuthService {
     const entryTime = new Date(Date.now()).toISOString();
 
     if (entryTime <= expiryTime) {
+      // otp still valid
       if (otp === auth.otpCode) {
+        // otp matches
         await this.authRepository.update(authId, {
           ...auth,
           accountVerified: true,
         });
 
         return { message: 'OTP successfully verified', status: true };
-      } else {
-        // return { message: 'OTP has expired', status: false };
-        throw new UnauthorizedException('OTP does not match');
       }
-    } else {
-      //return { message: 'OTP does not match', status: false };
-      throw new UnauthorizedException('OTP has expired');
+      // otp does not match
+      else throw new UnauthorizedException('OTP does not match');
     }
+    // otp has expired
+    else throw new UnauthorizedException('OTP has expired');
   }
 
   async findByEmailOrMobile(
@@ -224,10 +235,8 @@ export class AuthService {
           'User has incomlete registeration, please complete registeration',
         );
 
-      const userAcct = authAcct.user;
-
       // generate token with userID
-      const token = this.generateJwt(userAcct.id);
+      const token = this.generateJwt(authAcct.user);
 
       // const user: UserDto = mapAuthToUser(authAcct);
       const user: UserDto = null;
@@ -235,6 +244,33 @@ export class AuthService {
       return { token, user };
     } catch (e) {
       throw new Error(`From AuthService.login: ${e.message}`);
+    }
+  }
+
+  // method to add a new auth record to database
+  async addAuth(auth: Auth): Promise<Auth> {
+    try {
+      if (!auth) throw new Error('auth is required');
+
+      const params = {
+        authId: auth.id,
+        email: auth.email,
+      };
+
+      console.log('params: ' + JSON.stringify(params));
+
+      const authExist = await this.authRepository.findByUniq(params);
+
+      if (authExist) throw new Error('Auth account already exists');
+
+      const newAuth = await this.authRepository.create(auth).save();
+
+      return newAuth;
+    } catch (e) {
+      throw new Error(
+        `Error from addAuth method in auth.service.ts.
+        with error message: ${e.message}`,
+      );
     }
   }
 
@@ -248,12 +284,36 @@ export class AuthService {
    * @param id
    * @returns jwt token
    */
-  public generateJwt(id: string) {
-    const privateKey = fs.readFileSync('./secrets/private_key.pem');
-    const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
-      expiresIn: '1d',
-    });
-    return token;
+  // public generateJwt(id: string) {
+  //   const privateKey = fs.readFileSync('./secrets/private_key.pem');
+  //   const token = jsonwebtoken.sign({ id }, privateKey.toString(), {
+  //     expiresIn: '1d',
+  //   });
+  //   return token;
+  // }
+
+  public generateJwt(obj: Auth | User) {
+    if (obj instanceof Auth) {
+      const privateKey = fs.readFileSync('./secrets/private_key.pem');
+      const token = jsonwebtoken.sign(
+        { authId: obj.id },
+        privateKey.toString(),
+        {
+          expiresIn: '1d',
+        },
+      );
+      return token;
+    } else if (obj instanceof User) {
+      const privateKey = fs.readFileSync('./secrets/private_key.pem');
+      const token = jsonwebtoken.sign(
+        { userId: obj.id },
+        privateKey.toString(),
+        {
+          expiresIn: '1d',
+        },
+      );
+      return token;
+    }
   }
 
   /**

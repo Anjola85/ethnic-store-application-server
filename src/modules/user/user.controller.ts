@@ -39,6 +39,7 @@ import {
 } from '@nestjs/swagger';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { SignupResponseDtoEncrypted } from 'src/common/responseDTO/signupResponse.dto';
+import { User } from './entities/user.entity';
 
 @Controller('user')
 export class UserController {
@@ -207,7 +208,11 @@ export class UserController {
           .json(createError('user update failed', 'Could not find user'));
 
       await this.userService.updateUserInfo(userDto, authObj.id);
-      const token = this.authService.generateJwt(userDto.id);
+
+      // convert dto to user
+      const userEntity = new User();
+      Object.assign(userEntity, userDto);
+      const token = this.authService.generateJwt(userEntity);
       const userInfo = await this.authService.getAllUserInfo({
         userId: userDto.id,
       });

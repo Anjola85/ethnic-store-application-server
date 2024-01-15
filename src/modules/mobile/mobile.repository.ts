@@ -51,7 +51,31 @@ export class MobileRepository extends Repository<Mobile> {
    * @param params business id, auth id or mobile
    * @returns - Mobile[]
    */
-  async getMobile(params: MobileParams) {
+  async getMobile(mobile: Mobile): Promise<Mobile> {
+    try {
+      const mobileEntity = await this.createQueryBuilder('mobile')
+        .where('mobile.phone_number = :phoneNumber', {
+          phoneNumber: mobile.phoneNumber,
+        })
+        .andWhere('mobile.country_code = :countryCode', {
+          countryCode: mobile.countryCode,
+        })
+        .andWhere('mobile.iso_type = :isoType', {
+          isoType: mobile.isoType,
+        })
+        .leftJoinAndSelect('mobile.auth', 'auth') // Join and select the auth relation
+        .getOne();
+
+      return mobileEntity;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in mobile.repository.ts, getMobile method: ${error.message}`,
+      );
+      throw new Error('Unable to retrieve mobile from the database');
+    }
+  }
+
+  async getMobileArr(params: MobileParams): Promise<Mobile[]> {
     try {
       if (
         (params.auth && typeof params.auth == 'string') ||
@@ -61,11 +85,9 @@ export class MobileRepository extends Repository<Mobile> {
         // grab auth using either business or authId
         let mobileArray;
 
-        const query = this.createQueryBuilder('mobile');
-
         if (params.mobile) {
           // retrieve record by mobile object
-          mobileArray = query
+          mobileArray = await this.createQueryBuilder('mobile')
             .where('mobile.phone_number = :phoneNumber', {
               phoneNumber: params.mobile.phoneNumber,
             })
@@ -74,7 +96,8 @@ export class MobileRepository extends Repository<Mobile> {
             })
             .andWhere('mobile.iso_type = :isoType', {
               isoType: params.mobile.isoType,
-            });
+            })
+            .getOne();
         } else {
           // get by auth id or business id
           mobileArray = await this.createQueryBuilder('mobile')
@@ -92,10 +115,6 @@ export class MobileRepository extends Repository<Mobile> {
       );
       throw new Error('Unable to retrieve mobile from the database');
     }
-  }
-
-  async getMobileById(id: string) {
-    return id;
   }
 
   /**

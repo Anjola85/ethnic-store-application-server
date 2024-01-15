@@ -9,24 +9,18 @@ import { MobileRepository } from '../mobile/mobile.repository';
 export class AuthRepository extends Repository<Auth> {
   private readonly logger = new Logger(AuthRepository.name);
 
-  constructor(
-    private dataSource: DataSource,
-    private mobileRepository: MobileRepository,
-  ) {
+  constructor(private dataSource: DataSource) {
     super(Auth, dataSource.createEntityManager());
   }
 
-  // TODO: might be removed
   async findByUniq(param: AuthParams): Promise<Auth> {
     try {
-      const { authId, email, userId } = param;
+      const { authId, email } = param;
 
       // get auth by email or userId
       const auth = await this.createQueryBuilder('auth')
         .where('auth.id = :id', { id: authId })
         .orWhere('auth.email = :email', { email })
-        .orWhere('auth.userId = :userId', { userId })
-        .leftJoinAndSelect('auth.user', 'user')
         .getOne();
       return auth || null;
     } catch (error) {
