@@ -86,7 +86,7 @@ export class MobileService {
    * @param params
    * @returns
    */
-  async updateMobile(mobile: any, params: any) {
+  async updateMobile(mobile: Mobile, params: MobileParams) {
     return this.mobileRepository.updateMobile(mobile, params);
   }
 

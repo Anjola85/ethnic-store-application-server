@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as fs from 'fs';
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Auth, AuthParams } from './entities/auth.entity';
@@ -81,11 +86,24 @@ export class AuthService {
           });
         } else if (mobileExist && mobileExist.business) {
           console.log('mobile is registered to business');
+
+          throw new ConflictException('Mobile is registered to a business');
+
           // if mobile exists and its for a business, create an auth record for it
+          this.logger.debug(
+            'mobile is registered to business, but creating an auth record for it',
+          );
+
+          // create an auth record for it
+          auth = await this.addAuth(authModel);
+
+          // save the mobile with the auth record
+          mobileExist.auth = auth;
+          this.mobileService.updateMobile(mobileExist, { auth });
         } else {
-          console.log("mobile doesn't exist, creating a new auth record");
-          // the provided mobile doesnt exist, is this sendOTP for a user or business?
-          // Assumption: its for a user
+          this.logger.debug(
+            `mobile doesnt exist, creating a new auth and mobile record for ${mobile.phoneNumber}`,
+          );
 
           auth = await this.addAuth(authModel);
           console.log('auth: ' + JSON.stringify(auth));

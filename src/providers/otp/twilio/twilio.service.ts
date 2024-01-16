@@ -26,22 +26,23 @@ export default class TwilioService {
     codeLength = 4,
     expirationMinutes = 6,
   ) {
-    this.logger.debug('phone number is: ' + phoneNumber);
-
-    // quickmartdev from phone number
-    const senderPhoneNumber = '+18738000976';
-
-    // generate otp code
-    const otpResponse = generateOtpCode(codeLength, expirationMinutes);
-    const otpCode: string = otpResponse.code;
-    const expiryTime: string = otpResponse.expiryTime;
-
-    const options: MessageListInstanceCreateOptions = {
-      to: phoneNumber,
-      body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
-      from: senderPhoneNumber,
-    };
     try {
+      this.logger.debug('phone-number to send sms to is: ' + phoneNumber);
+
+      const senderPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+      // generate otp code
+      const { code, expiryTime } = generateOtpCode(
+        codeLength,
+        expirationMinutes,
+      );
+
+      const options: MessageListInstanceCreateOptions = {
+        to: phoneNumber,
+        body: `Quickmart: Please use this OTP to complete verification: ${code}, expires in ${expirationMinutes} minutes.`,
+        from: senderPhoneNumber,
+      };
+
       this.client.messages.create(options);
 
       const maskedNumber = phoneNumber;
@@ -49,19 +50,19 @@ export default class TwilioService {
         maskedNumber.substring(0, 5),
         '*****',
       );
-
-      this.logger.debug(
+      const message: string =
         'SMS sent successfully to: \n' +
-          maskedPhoneNumber +
-          ' with expiry time: ' +
-          expiryTime,
-      );
+        maskedPhoneNumber +
+        ' with expiry time: ' +
+        expiryTime;
+
+      this.logger.debug(message);
 
       return {
         status: true,
-        message: 'SMS sent successfully',
-        code: otpCode,
-        expiryTime: expiryTime,
+        message,
+        code,
+        expiryTime,
       };
     } catch (error) {
       this.logger.error('Error sending sms:', error);

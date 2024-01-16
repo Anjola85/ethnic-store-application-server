@@ -42,61 +42,6 @@ export class AuthController {
     private readonly geocodingService: GeocodingService,
   ) {}
 
-  @Post('login')
-  async login(@Body() body: any, @Res() res: Response) {
-    try {
-      if (body.payload && body.payload !== '') {
-        this.logger.debug('login called with payload: ' + body.payload);
-        const decryptedData = await decryptKms(body.payload);
-        const loginDto = new secureLoginDto();
-        Object.assign(loginDto, decryptedData);
-
-        const auth = await this.authService.findByEmailOrMobile(
-          loginDto.email,
-          loginDto.mobile,
-        );
-
-        if (!auth) {
-          return res
-            .status(HttpStatus.BAD_REQUEST)
-            .json(createError('user not found'));
-        }
-
-        const loginResponse: { token: string; user: UserDto } =
-          await this.authService.login(loginDto);
-
-        this.logger.debug(
-          'login clear response: ' + JSON.stringify(loginResponse),
-        );
-        // const payload = {
-        //   payload: loginResponse,
-        // };
-
-        const payload = createResponse('login successful', loginResponse, true);
-
-        const encryptedResp = await encryptPayload(payload);
-
-        return res
-          .status(HttpStatus.OK)
-          .json(createEncryptedResponse(encryptedResp));
-      } else {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('payload is required'));
-      }
-    } catch (error) {
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('login failed', error.message));
-      } else {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('login failed', error.message));
-      }
-    }
-  }
-
   @Post('sendOtp')
   @ApiOperation({
     summary: 'Send OTP to user',
@@ -169,6 +114,61 @@ export class AuthController {
         'verify otp failed',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  @Post('login')
+  async login(@Body() body: any, @Res() res: Response) {
+    try {
+      if (body.payload && body.payload !== '') {
+        this.logger.debug('login called with payload: ' + body.payload);
+        const decryptedData = await decryptKms(body.payload);
+        const loginDto = new secureLoginDto();
+        Object.assign(loginDto, decryptedData);
+
+        const auth = await this.authService.findByEmailOrMobile(
+          loginDto.email,
+          loginDto.mobile,
+        );
+
+        if (!auth) {
+          return res
+            .status(HttpStatus.BAD_REQUEST)
+            .json(createError('user not found'));
+        }
+
+        const loginResponse: { token: string; user: UserDto } =
+          await this.authService.login(loginDto);
+
+        this.logger.debug(
+          'login clear response: ' + JSON.stringify(loginResponse),
+        );
+        // const payload = {
+        //   payload: loginResponse,
+        // };
+
+        const payload = createResponse('login successful', loginResponse, true);
+
+        const encryptedResp = await encryptPayload(payload);
+
+        return res
+          .status(HttpStatus.OK)
+          .json(createEncryptedResponse(encryptedResp));
+      } else {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('payload is required'));
+      }
+    } catch (error) {
+      if (error instanceof InternalServerError) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(createResponse('login failed', error.message));
+      } else {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('login failed', error.message));
+      }
     }
   }
 
