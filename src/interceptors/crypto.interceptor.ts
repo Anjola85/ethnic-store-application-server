@@ -21,6 +21,15 @@ export class CryptoInterceptor implements NestInterceptor {
         const ctx = context.switchToHttp();
         const request = ctx.getRequest<Request>();
 
+        const requestUrl = request.url;
+
+        // ignore routes that don't need encryption
+        if (
+          requestUrl.includes('auth/decrypt') ||
+          requestUrl.includes('auth/encrypt')
+        )
+          return data;
+
         if (
           request.headers['crypto'] === 'true' ||
           request.headers['crypto'] === undefined

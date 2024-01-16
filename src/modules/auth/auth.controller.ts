@@ -218,6 +218,7 @@ export class AuthController {
   async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {
     try {
       const data = requestBody.payload;
+      console.log('data to encrypt: ' + JSON.stringify(data, null, 2));
       const buffer: Buffer = toBuffer(data);
       const encryptedData = await encryptKms(buffer);
       return res.status(HttpStatus.OK).json({
