@@ -67,6 +67,8 @@ export class AuthService {
 
       // if mobile was provided, check if mobile exists in the database(means auth exists)
       if (mobile && mobile.phoneNumber) {
+        this.logger.debug(`mobile provided: ${JSON.stringify(mobile)}`);
+
         const mobileEntity = new Mobile();
         Object.assign(mobileEntity, mobile);
 
@@ -78,14 +80,17 @@ export class AuthService {
         let auth: Auth;
 
         if (mobileExist && mobileExist.auth) {
-          console.log("just updating the auth's otp code");
+          this.logger.debug(
+            `mobile exists, updating the auth's otp code for ${mobile.phoneNumber}`,
+          );
+
           // theres a user with this mobile, update the auth record with the new otp
           auth = mobileExist.auth;
           await this.authRepository.update(auth.id, {
             ...authModel,
           });
         } else if (mobileExist && mobileExist.business) {
-          console.log('mobile is registered to business');
+          this.logger.debug(`mobile ${mobile} is registered to business`);
 
           throw new ConflictException('Mobile is registered to a business');
 
@@ -120,13 +125,19 @@ export class AuthService {
 
         authModel.id = auth.id;
       } else {
+        this.logger.debug(`email provided: ${email}`);
+
         let authAcct = await this.authRepository.findOneBy({ email });
+
         if (authAcct) {
+          this.logger.debug('auth account exists, updating otp code');
           await this.authRepository.update(authAcct.id, {
             ...authModel,
           });
         } else {
-          authAcct = await this.authRepository.create(authModel).save();
+          this.logger.debug('auth account does not exist, creating one');
+          authAcct = await this.addAuth(authModel);
+          // authAcct = await this.authRepository.create(authModel).save();
         }
 
         authModel.id = authAcct.id;
@@ -152,45 +163,34 @@ export class AuthService {
     otp: string,
   ): Promise<{ message: string; status: boolean }> {
     this.logger.debug(`Verifying OTP for authId: ${authId}`);
+
     const auth = await this.authRepository.findOneBy({ id: authId });
 
     if (auth == null) throw new Error('Could not find associated account');
 
     const expiryTime = new Date(auth.otpExpiry).toISOString();
 
-    const entryTime = new Date(Date.now()).toISOString();
+    const currentTime = new Date(Date.now()).toISOString();
 
-    if (entryTime <= expiryTime) {
-      // otp still valid
-      if (otp === auth.otpCode) {
-        // otp matches
+    if (currentTime <= expiryTime) {
+      const validOtpCode = auth.otpCode == otp;
+
+      if (validOtpCode) {
+        // mark account as verified
         await this.authRepository.update(authId, {
           ...auth,
           accountVerified: true,
         });
-
         return { message: 'OTP successfully verified', status: true };
-      }
-      // otp does not match
-      else throw new UnauthorizedException('OTP does not match');
-    }
-    // otp has expired
-    else throw new UnauthorizedException('OTP has expired');
+      } else throw new UnauthorizedException('OTP does not match');
+    } else throw new UnauthorizedException('OTP has expired');
   }
 
-  async findByEmailOrMobile(
-    email: string,
-    mobileDto: MobileDto,
-  ): Promise<Auth> {
+  async findByEmail(email: string): Promise<Auth> {
     try {
-      const mobile = mobileToEntity(mobileDto);
-
       const auth = await this.authRepository
         .createQueryBuilder('auth')
         .where('auth.email = :email', { email })
-        .orWhere('auth.mobile = :mobile', {
-          mobile,
-        })
         .leftJoinAndSelect('auth.user', 'user')
         .getOne();
 
@@ -274,8 +274,6 @@ export class AuthService {
         authId: auth.id,
         email: auth.email,
       };
-
-      console.log('params: ' + JSON.stringify(params));
 
       const authExist = await this.authRepository.findByUniq(params);
 

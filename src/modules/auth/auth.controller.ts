@@ -99,9 +99,9 @@ export class AuthController {
 
       const isOtpVerified = await this.authService.verifyOtp(authId, code);
 
-      if (!isOtpVerified.status) {
+      if (!isOtpVerified.status)
         throw new HttpException(isOtpVerified.message, HttpStatus.BAD_REQUEST);
-      }
+
       const payload = createResponse('otp verification successful');
       return payload;
     } catch (error) {
@@ -126,10 +126,7 @@ export class AuthController {
         const loginDto = new secureLoginDto();
         Object.assign(loginDto, decryptedData);
 
-        const auth = await this.authService.findByEmailOrMobile(
-          loginDto.email,
-          loginDto.mobile,
-        );
+        const auth = await this.authService.findByEmail(loginDto.email);
 
         if (!auth) {
           return res

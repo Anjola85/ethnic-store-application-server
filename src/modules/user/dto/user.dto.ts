@@ -13,6 +13,7 @@ import { UserProfile } from '../user.enums';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { BusinessDto } from 'src/modules/business/dto/business.dto';
+import { CreateAuthDto } from 'src/modules/auth/dto/create-auth.dto';
 
 /**
  * Generic DTO
@@ -92,4 +93,7 @@ export class UserDto {
   @IsString()
   @ApiProperty({ description: 'test-description', example: 'test-value' })
   profileImageUrl: string;
+
+  @IsOptional()
+  auth: CreateAuthDto;
 }

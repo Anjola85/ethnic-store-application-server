@@ -96,7 +96,7 @@ export class UserController {
         token: string;
         user: UserDto;
         userExists: boolean;
-      } = await this.userService.create(userDto);
+      } = await this.userService.register(userDto);
 
       console.log('response: ' + JSON.stringify(response));
 

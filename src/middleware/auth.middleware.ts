@@ -1,5 +1,5 @@
 /**
- * This middleware validates the token attached to the header request
+ * This middleware validates and extract ids from the token attached to the header request
  *
  */
 
@@ -52,6 +52,12 @@ export class AuthMiddleware implements NestMiddleware {
     }
   }
 
+  /**
+   * Validate and extract ids from token
+   * @param res
+   * @param token
+   * @returns
+   */
   private async validateToken(
     res: Response,
     token: string,

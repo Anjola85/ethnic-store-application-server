@@ -8,14 +8,11 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { BaseDto } from 'src/common/dto/base.dto';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { User } from 'src/modules/user/entities/user.entity';
 
-export class CreateAuthDto {
-  @IsOptional()
-  @IsString()
-  id? = '';
-
+export class CreateAuthDto extends BaseDto {
   @IsOptional()
   @IsEmail()
   @ApiProperty({

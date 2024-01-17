@@ -15,86 +15,125 @@ import { compareMobiles } from 'src/common/util/mobileUtil';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { entityToMobile } from 'src/common/mapper/mobile-mapper';
 import { AuthParams } from '../auth/entities/auth.entity';
+import { MobileService } from '../mobile/mobile.service';
+import { Mobile } from '../mobile/mobile.entity';
+import { Address } from '../address/entities/address.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     private userRepository: UserRepository,
     private addressService: AddressService,
+    private mobileService: MobileService,
     private authService: AuthService,
     private userFileService: UserFileService,
   ) {}
 
-  async create(userDto: UserDto): Promise<any> {
+  async register(userDto: UserDto): Promise<any> {
     let userModel: User;
     let userExists: boolean;
 
-    const auth = await this.authService.findByEmailOrMobile(
-      userDto.email,
-      userDto.mobile,
-    );
+    // if mobile provided, check if mobile exists
+    if (userDto.mobile) {
+      const mobile = new Mobile();
+      Object.assign(mobile, userDto.mobile);
+      // check if mobile exists
+      const mobileExist = this.mobileService.getMobile(mobile);
+      if (mobileExist) {
+        console.log('mobile exists, checking if user exists');
+        // check if auth exists on mobile (and if it does, check if a user is associated with it)
+        if (mobile.auth && mobile.auth.user) {
+          // user exists
+          userExists = true;
+          userModel = mobile.auth.user;
 
-    if (!auth.user) {
-      userExists = false;
-    } else {
-      userExists = true;
-      userModel = auth.user;
+          console.log(
+            'user already registered,  pulling user info: ' + userModel,
+          );
+        } else if (mobile.auth && !mobile.auth.user) {
+          console.log(`mobile exists without user, this is the expected case`);
 
-      let existingMobile: {
-        phoneNumber: string;
-        isoType: string;
-        countryCode: string;
-      };
+          // user does not exist, so register user and map it with existing auth
+          userExists = false;
 
-      if (userDto.mobile && auth.mobile) {
-        existingMobile = {
-          phoneNumber: auth.mobile.phoneNumber,
-          isoType: auth.mobile.isoType,
-          countryCode: auth.mobile.countryCode,
-        };
+          // map auth to user
+          userDto.auth = mobile.auth;
+
+          // create user
+          userModel = await this.addUser(userDto);
+
+          // update auth with reference to user
+          await this.authService.updateAuthUserId(mobile.auth.id, userModel);
+
+          console.log(
+            'user does not exist during signup, creating user: ' + userModel,
+          );
+        } else {
+          // THIS SHOULD NEVER HAPPEN
+          console.log(
+            "mobile doesnt have auth, shouldn't happen, if verifyOTP was called before signup",
+          );
+
+          // mobile does not have auth, so create auth and associate with user
+          userExists = false;
+
+          throw new Error(
+            'Mobile exists without auth and user, this SHOULD NEVER HAPPEN, sendOTP should be called before this',
+          );
+        }
+      } else {
+        // THIS SHOULD NEVER HAPPEN. SENDOTP should be called before this SIGN UP
+        console.log(
+          "mobile doesn't exist, shouldn't happen, if sendOTP was called before signup",
+        );
+
+        // mobile does not exist, so create mobile, auth and user
+        userExists = false;
+
+        throw new Error(
+          'Mobile, auth and user do not exist, this SHOULD NEVER HAPPEN, sendOTP should be called before this',
+        );
       }
+    } else if (userDto.email) {
+      // mobile not provided, so check if email exists
+      const auth = await this.authService.findByEmail(userDto.email);
 
-      // const existingMobile =
-      //   userDto.mobile && auth.mobile ? entityToMobile(auth.mobile) : null;
+      if (auth) {
+        // if email exists, check if auth has user
+        if (auth.user) {
+          // if user exists, return user
+          userExists = true;
+          userModel = auth.user;
+        } else {
+          // if user does not exist, create user and associate with auth
+          userExists = false;
 
-      if (userDto.email == auth.email) throw new Error('Email already exists');
-      else if (compareMobiles(userDto.mobile, existingMobile))
-        throw new Error('Mobile already exists');
+          // create user
+          userDto.auth = auth;
+          userModel = await this.addUser(userDto);
+
+          // update auth with reference to user
+          await this.authService.updateAuthUserId(auth.id, userModel);
+        }
+      } else {
+        // email, auth and user do not exist, so create auth and user?
+        throw new Error(
+          'Email, auth and user do not exist, this SHOULD NEVER HAPPEN, verifyOTP/sendOTP should be called before this',
+        );
+      }
+    } else {
+      // email or phone wasnt provided
+      throw new Error('Email or phone number is required');
     }
 
-    const address: AddressDto = userDto.address[0];
-    address.primary = true;
-    address.id = await this.addressService.addAddress(address);
-    userDto.address = [address];
-
-    const newUserEntity = new User();
-
     // generate random avatar
-    if (!userDto.profileImage)
-      userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
-    else
-      userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
-        newUserEntity.id,
-        userDto.profileImage,
-      );
-
-    // map modified field
-    // userDtoToEntity(userDto, newUserEntity);
-
-    // add new user to db
-    userModel = await this.userRepository.create(newUserEntity).save();
-
-    // update auth with reference to user
-    await this.authService.updateAuthUserId(auth.id, userModel);
-
-    // update address with reference to user
-    address.user = userModel;
-    await this.addressService.updateAddress(address);
-
-    const input: AuthParams = { authId: auth.id };
-    const authObj = await this.authService.getAllUserInfo(input);
-    // const user: UserDto = mapAuthToUser(authObj); // rename to map user from Auth
-    const user = null;
+    // if (!userDto.profileImage)
+    //   userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
+    // else
+    //   userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
+    //     newUserEntity.id,
+    //     userDto.profileImage,
+    //   );
 
     const privateKey = fs.readFileSync('./secrets/private_key.pem');
     const token = jsonwebtoken.sign(
@@ -105,7 +144,31 @@ export class UserService {
       },
     );
 
-    return { token, user, userExists };
+    return { token, userModel, userExists };
+  }
+
+  /**
+   * This method registers a user and its address and returns the user
+   * @param user
+   */
+  async addUser(user: UserDto): Promise<User> {
+    // add user to DB
+    const userEntity = new User();
+    Object.assign(userEntity, user);
+    // const newUser = this.userRepository.addUser(userEntity);
+    const newUser: User = await this.userRepository.create(userEntity).save();
+
+    // add address to DB
+    user.address[0].user = userEntity; // there should only be one address in the array at this stage
+    const newAddress = await this.addressService.addAddress(user.address[0]);
+
+    // update user with address
+    newUser.addresses = [newAddress];
+
+    // save the user
+    await this.userRepository.updateUser(newUser);
+
+    return userEntity;
   }
 
   async getUserById(id: string): Promise<User> {
@@ -118,11 +181,11 @@ export class UserService {
    * @param userDto
    * @returns the updated user info
    */
-  async updateUser(userDto: UserDto): Promise<void> {
-    const userEntity = new User();
-    // userDtoToEntity(userDto, userEntity);
-    const resp = await this.userRepository.updateUser(userEntity);
-  }
+  // async updateUser(userDto: UserDto): Promise<void> {
+  //   const userEntity = new User();
+  //   // userDtoToEntity(userDto, userEntity);
+  //   const resp = await this.userRepository.updateUser(userEntity);
+  // }
 
   /**
    * This should check for what input fields has been provided and do the necessary update

@@ -28,8 +28,8 @@ export class Address extends CommonEntity {
   @Column()
   province: string;
 
-  @Column()
-  postal_code: string;
+  @Column({ name: 'postal_code' })
+  postalCode: string;
 
   @Column()
   country: string;

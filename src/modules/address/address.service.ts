@@ -22,15 +22,24 @@ export class AddressService {
   /**
    * Adds a new address to the DB
    * @param addressDto
-   * @returns the id of the newly created address
+   * @returns the newly added address
    */
-  async addAddress(addressDto: AddressDto): Promise<string> {
+  async addAddress(addressDto: AddressDto): Promise<Address> {
     console.log('addressDto', addressDto);
 
+    // set coordinates
     await this.geoCodingService.setCoordinates(addressDto);
-    const addressEntity: Address = addressDtoToEntity(addressDto);
-    const response = await this.addressRepository.addAddress(addressEntity);
-    return response.identifiers[0].id;
+
+    // map dto to entity
+    const addressEntity = new Address();
+    Object.assign(addressEntity, addressDto);
+
+    // save to db
+    const newAddress = await this.addressRepository
+      .create(addressEntity)
+      .save();
+
+    return newAddress;
   }
 
   /**

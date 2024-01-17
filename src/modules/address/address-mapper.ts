@@ -9,7 +9,7 @@ export function addressDtoToEntity(address: AddressDto): Address {
   addressEntity.street = address.street;
   addressEntity.city = address.city;
   addressEntity.province = address.province;
-  addressEntity.postal_code = address.postalCode;
+  addressEntity.postalCode = address.postalCode;
   addressEntity.country = address.country;
   addressEntity.user = address.user;
   addressEntity.business = address.business;
@@ -27,7 +27,7 @@ export function entityToAddressDto(address: Address): AddressDto {
   addressDto.street = address.street;
   addressDto.city = address.city;
   addressDto.province = address.province;
-  addressDto.postalCode = address.postal_code;
+  addressDto.postalCode = address.postalCode;
   addressDto.country = address.country;
   addressDto.user = address.user;
   addressDto.business = address.business;
