@@ -81,15 +81,13 @@ export class UserController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   async register(
-    @Body() requestBody: UserDto,
+    @Body() userDto: UserDto,
     @UploadedFiles() files: any,
   ): Promise<any> {
     try {
-      this.logger.debug(
-        'sign up called with body: ' + JSON.stringify(requestBody),
-      );
+      this.logger.debug('sign up called with body: ' + JSON.stringify(userDto));
 
-      const userDto = requestBody;
+      // TODO: remove this line if we're not assigning profile image
       userDto.profileImage = files?.profileImage[0] || null;
 
       const response: {
@@ -101,7 +99,7 @@ export class UserController {
       console.log('response: ' + JSON.stringify(response));
 
       if (response.userExists)
-        return createResponse('user with credentials already exist');
+        return createResponse('user with credentials already exist', response);
       else return createResponse('user successfully registered', response);
     } catch (error) {
       this.logger.error(
@@ -129,7 +127,8 @@ export class UserController {
           .status(HttpStatus.BAD_REQUEST)
           .json(createError('400 user not found', 'token invalid'));
 
-      const userObj = await this.authService.getAllUserInfo({ userId });
+      // TODO: come back here to fix
+      const userObj = await this.authService.getAllUserInfo({ authId: userId });
 
       const payload = { payload: userObj, status: true, message: 'user found' };
       const encryptedResp = await encryptPayload(payload);
@@ -199,7 +198,8 @@ export class UserController {
 
       userDto.id = userId;
 
-      const authObj = await this.authService.getAuth({ userId });
+      // TODO: come back here to fix
+      const authObj = await this.authService.getAuth({ authId: userId });
 
       // user not found
       if (authObj == null)
@@ -213,8 +213,9 @@ export class UserController {
       const userEntity = new User();
       Object.assign(userEntity, userDto);
       const token = this.authService.generateJwt(userEntity);
+      // TODO: come back below to fix
       const userInfo = await this.authService.getAllUserInfo({
-        userId: userDto.id,
+        authId: userDto.id,
       });
       // const user: UserDto = mapAuthToUser(userInfo); // rename to map user from Auth
       const user = null;

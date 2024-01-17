@@ -30,7 +30,10 @@ export class User extends CommonEntity {
   @Column({ type: 'boolean', default: true })
   active: boolean;
 
-  @OneToOne(() => Auth, (auth) => auth.user)
+  @OneToOne(() => Auth, (auth) => auth.user, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   auth: Auth;
 

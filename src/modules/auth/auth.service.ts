@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -11,7 +13,6 @@ import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
 import TwilioService from 'src/providers/otp/twilio/twilio.service';
 import { User } from '../user/entities/user.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
-import { secureLoginDto } from './dto/secure-login.dto';
 import { AuthRepository } from './auth.repository';
 import { UserDto } from '../user/dto/user.dto';
 import { UserFileService } from '../files/user-files.service';
@@ -19,6 +20,7 @@ import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { Mobile } from '../mobile/mobile.entity';
 import { MobileService } from '../mobile/mobile.service';
+import { SecureLoginDto } from './dto/secure-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -111,7 +113,6 @@ export class AuthService {
           );
 
           auth = await this.addAuth(authModel);
-          console.log('auth: ' + JSON.stringify(auth));
 
           let newMobile = new Mobile();
           Object.assign(newMobile, {
@@ -120,7 +121,6 @@ export class AuthService {
           });
 
           newMobile = await this.mobileService.addUserMobile(newMobile, auth);
-          console.log('newMobile: ' + JSON.stringify(newMobile));
         }
 
         authModel.id = auth.id;
@@ -239,29 +239,65 @@ export class AuthService {
    * @param loginDto
    * @returns
    */
-  async login(loginDto: secureLoginDto): Promise<any> {
+  async login(loginDto: SecureLoginDto): Promise<any> {
     try {
+      this.logger.debug(
+        `login endpoint called with body LoginDto: ${JSON.stringify(loginDto)}`,
+      );
+
+      // verify if OTP is correct
+
+      if (!loginDto.email && !loginDto.mobile)
+        throw new Error('email or mobile is required');
+
+      let authId: string;
+
+      if (loginDto.mobile) {
+        const mobileEntity: Mobile = await this.mobileService.getMobile(
+          loginDto.mobile,
+        );
+
+        if (!mobileEntity) {
+          throw new HttpException('User not registered', HttpStatus.NOT_FOUND);
+        } else if (!mobileEntity.auth)
+          throw new Error('Mobile is not registered to a user');
+
+        authId = mobileEntity.auth.id;
+      }
+
       const input: AuthParams = {
         email: loginDto.email,
+        authId,
       };
+
+      // pull all user info from the database
       const authAcct = await this.getAllUserInfo(input);
 
-      if (!authAcct) throw new Error('Invalid credentials');
+      if (!authAcct) {
+        this.logger.debug('Unable to retrieve auth account: ', authAcct);
+        throw new Error('Unable to retrieve auth accoun');
+      }
 
-      if (!authAcct.user)
-        throw new Error(
-          'User has incomlete registeration, please complete registeration',
+      if (!authAcct.user) {
+        this.logger.debug(
+          'User has incomplete registeration with user: ',
+          authAcct.user,
         );
+        throw new Error(
+          'User has incomplete registeration, please complete registeration',
+        );
+      }
 
       // generate token with userID
       const token = this.generateJwt(authAcct.user);
 
       // const user: UserDto = mapAuthToUser(authAcct);
-      const user: UserDto = null;
+      const user: UserDto = new UserDto();
+      Object.assign(user, authAcct.user);
 
       return { token, user };
     } catch (e) {
-      throw new Error(`From AuthService.login: ${e.message}`);
+      throw new Error(`From AuthService.login: ${e}`);
     }
   }
 

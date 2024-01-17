@@ -9,7 +9,11 @@ export class Address extends CommonEntity {
   @JoinColumn()
   business: Business;
 
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
+  @ManyToOne(() => User, (user) => user.id, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   user: User;
 

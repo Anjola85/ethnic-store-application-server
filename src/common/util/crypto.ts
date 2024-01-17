@@ -116,7 +116,6 @@ export const toBuffer = (data: any) => {
   if (typeof data === 'string') {
     buffer = Buffer.from(data);
   } else if (typeof data === 'object' && data !== null) {
-    console.log('before converting data to JSON string: ', data);
     const json = JSON.stringify(data);
     buffer = Buffer.from(json);
   } else {

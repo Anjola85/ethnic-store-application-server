@@ -76,8 +76,16 @@ export class MobileService {
     return await this.mobileRepository.getMobileArr(params);
   }
 
-  async getMobile(mobile: Mobile): Promise<Mobile> {
-    return await this.mobileRepository.getMobile(mobile);
+  async getMobile(mobileParam: Mobile | MobileDto): Promise<Mobile> {
+    let mobile: Mobile;
+    if (mobileParam instanceof MobileDto) {
+      mobile = new Mobile();
+      Object.assign(mobile, mobileParam);
+    } else {
+      mobile = mobileParam;
+    }
+    const mobileResp = await this.mobileRepository.getMobile(mobile);
+    return mobileResp;
   }
 
   /**

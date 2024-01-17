@@ -25,10 +25,10 @@ export class AddressService {
    * @returns the newly added address
    */
   async addAddress(addressDto: AddressDto): Promise<Address> {
-    console.log('addressDto', addressDto);
-
     // set coordinates
     await this.geoCodingService.setCoordinates(addressDto);
+
+    console.log('done setting coordinates');
 
     // map dto to entity
     const addressEntity = new Address();

@@ -9,6 +9,7 @@ import {
   HttpException,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -21,7 +22,7 @@ import {
   createResponse,
   createEncryptedResponse,
 } from '../../common/util/response';
-import { secureLoginDto } from './dto/secure-login.dto';
+import { SecureLoginDto } from './dto/secure-login.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserDto } from '../user/dto/user.dto';
 import {
@@ -32,6 +33,7 @@ import {
 } from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
+import { NotFoundError } from 'rxjs';
 
 @Controller('auth')
 export class AuthController {
@@ -118,53 +120,26 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: any, @Res() res: Response) {
+  async login(@Body() loginDto: SecureLoginDto) {
     try {
-      if (body.payload && body.payload !== '') {
-        this.logger.debug('login called with payload: ' + body.payload);
-        const decryptedData = await decryptKms(body.payload);
-        const loginDto = new secureLoginDto();
-        Object.assign(loginDto, decryptedData);
+      const loginResponse = await this.authService.login(loginDto);
 
-        const auth = await this.authService.findByEmail(loginDto.email);
+      const payload = createResponse('login successful', loginResponse, true);
 
-        if (!auth) {
-          return res
-            .status(HttpStatus.BAD_REQUEST)
-            .json(createError('user not found'));
-        }
-
-        const loginResponse: { token: string; user: UserDto } =
-          await this.authService.login(loginDto);
-
-        this.logger.debug(
-          'login clear response: ' + JSON.stringify(loginResponse),
-        );
-        // const payload = {
-        //   payload: loginResponse,
-        // };
-
-        const payload = createResponse('login successful', loginResponse, true);
-
-        const encryptedResp = await encryptPayload(payload);
-
-        return res
-          .status(HttpStatus.OK)
-          .json(createEncryptedResponse(encryptedResp));
-      } else {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('payload is required'));
-      }
+      return payload;
     } catch (error) {
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('login failed', error.message));
+      if (error instanceof HttpException) {
+        this.logger.debug('Auth Controller with error: ' + error);
+        throw new HttpException(error.message, error.getStatus());
       } else {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('login failed', error.message));
+        this.logger.debug(
+          'Auth Controller with internal server error, details:' + error,
+        );
+
+        throw new HttpException(
+          "Something went wrong, we're working on it",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
     }
   }

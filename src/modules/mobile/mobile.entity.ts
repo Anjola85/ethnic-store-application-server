@@ -24,7 +24,11 @@ export class Mobile extends CommonEntity {
   @Column({ name: 'is_primary', type: 'boolean', default: false })
   isPrimary: boolean;
 
-  @ManyToOne(() => Auth, (auth) => auth.mobile, { nullable: true })
+  @ManyToOne(() => Auth, (auth) => auth.mobile, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   auth: Auth;
 

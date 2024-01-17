@@ -6,7 +6,6 @@ import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 export interface AuthParams {
   authId?: string;
   email?: string;
-  userId?: string;
 }
 
 @Entity('auth')

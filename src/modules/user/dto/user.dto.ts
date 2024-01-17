@@ -68,7 +68,7 @@ export class UserDto {
   })
   email: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @ValidateNested()
   @Type(() => MobileDto)
   @ApiProperty({

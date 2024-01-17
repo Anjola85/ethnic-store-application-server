@@ -33,11 +33,10 @@ export class AuthRepository extends Repository<Auth> {
 
   async getUserWithAuth(param: AuthParams): Promise<Auth> {
     try {
-      const { authId, email, userId } = param;
+      const { authId, email } = param;
       const auth = await this.createQueryBuilder('auth')
         .where('auth.id = :id', { id: authId })
         .orWhere('auth.email = :email', { email })
-        .orWhere('auth.userId = :userId', { userId })
         .leftJoinAndSelect('auth.user', 'user')
         .leftJoinAndSelect('user.addresses', 'address')
         .leftJoinAndSelect('user.favourites', 'favourites')

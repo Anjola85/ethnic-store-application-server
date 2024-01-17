@@ -1,5 +1,5 @@
 import { AddressService } from './../address/address.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import * as fs from 'fs';
@@ -14,13 +14,15 @@ import { AddressDto } from '../address/dto/address.dto';
 import { compareMobiles } from 'src/common/util/mobileUtil';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { entityToMobile } from 'src/common/mapper/mobile-mapper';
-import { AuthParams } from '../auth/entities/auth.entity';
+import { Auth, AuthParams } from '../auth/entities/auth.entity';
 import { MobileService } from '../mobile/mobile.service';
 import { Mobile } from '../mobile/mobile.entity';
 import { Address } from '../address/entities/address.entity';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     private userRepository: UserRepository,
     private addressService: AddressService,
@@ -29,122 +31,63 @@ export class UserService {
     private userFileService: UserFileService,
   ) {}
 
+  /**
+   * This method registers a user and returns the user
+   * pre-condition: userDto must have mobile provided
+   * @param userDto
+   * @returns
+   */
   async register(userDto: UserDto): Promise<any> {
-    let userModel: User;
-    let userExists: boolean;
+    try {
+      let userModel: User;
+      let userExists: boolean;
 
-    // if mobile provided, check if mobile exists
-    if (userDto.mobile) {
       const mobile = new Mobile();
       Object.assign(mobile, userDto.mobile);
-      // check if mobile exists
-      const mobileExist = this.mobileService.getMobile(mobile);
-      if (mobileExist) {
-        console.log('mobile exists, checking if user exists');
-        // check if auth exists on mobile (and if it does, check if a user is associated with it)
-        if (mobile.auth && mobile.auth.user) {
-          // user exists
-          userExists = true;
-          userModel = mobile.auth.user;
 
-          console.log(
-            'user already registered,  pulling user info: ' + userModel,
-          );
-        } else if (mobile.auth && !mobile.auth.user) {
-          console.log(`mobile exists without user, this is the expected case`);
+      const registeredMobile = await this.mobileService.getMobile(mobile);
 
-          // user does not exist, so register user and map it with existing auth
-          userExists = false;
-
-          // map auth to user
-          userDto.auth = mobile.auth;
-
-          // create user
-          userModel = await this.addUser(userDto);
-
-          // update auth with reference to user
-          await this.authService.updateAuthUserId(mobile.auth.id, userModel);
-
-          console.log(
-            'user does not exist during signup, creating user: ' + userModel,
-          );
-        } else {
-          // THIS SHOULD NEVER HAPPEN
-          console.log(
-            "mobile doesnt have auth, shouldn't happen, if verifyOTP was called before signup",
-          );
-
-          // mobile does not have auth, so create auth and associate with user
-          userExists = false;
-
-          throw new Error(
-            'Mobile exists without auth and user, this SHOULD NEVER HAPPEN, sendOTP should be called before this',
-          );
-        }
-      } else {
-        // THIS SHOULD NEVER HAPPEN. SENDOTP should be called before this SIGN UP
-        console.log(
-          "mobile doesn't exist, shouldn't happen, if sendOTP was called before signup",
-        );
-
-        // mobile does not exist, so create mobile, auth and user
-        userExists = false;
-
-        throw new Error(
-          'Mobile, auth and user do not exist, this SHOULD NEVER HAPPEN, sendOTP should be called before this',
-        );
-      }
-    } else if (userDto.email) {
-      // mobile not provided, so check if email exists
-      const auth = await this.authService.findByEmail(userDto.email);
+      const auth: Auth = registeredMobile?.auth || null;
 
       if (auth) {
-        // if email exists, check if auth has user
         if (auth.user) {
-          // if user exists, return user
+          // user already exists
           userExists = true;
           userModel = auth.user;
         } else {
-          // if user does not exist, create user and associate with auth
+          // user does not exist
           userExists = false;
-
-          // create user
           userDto.auth = auth;
           userModel = await this.addUser(userDto);
-
-          // update auth with reference to user
-          await this.authService.updateAuthUserId(auth.id, userModel);
         }
+
+        // generate random avatar
+        // if (!userDto.profileImage)
+        //   userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
+        // else
+        //   userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
+        //     newUserEntity.id,
+        //     userDto.profileImage,
+        //   );
+
+        this.logger.debug(
+          'user registered successfully: ' + JSON.stringify(userModel),
+        );
+
+        // generate jwt token with user id
+        const token = this.authService.generateJwt(userModel);
+
+        return { token, userModel, userExists };
       } else {
-        // email, auth and user do not exist, so create auth and user?
         throw new Error(
-          'Email, auth and user do not exist, this SHOULD NEVER HAPPEN, verifyOTP/sendOTP should be called before this',
+          'Mobile does not have auth, this SHOULD NEVER HAPPEN, sendOTP should be called before this',
         );
       }
-    } else {
-      // email or phone wasnt provided
-      throw new Error('Email or phone number is required');
+    } catch (error) {
+      this.logger.debug(
+        'Error thrown in user.service.ts, register method: ' + error,
+      );
     }
-
-    // generate random avatar
-    // if (!userDto.profileImage)
-    //   userDto.profileImageUrl = await this.userFileService.getRandomAvatar();
-    // else
-    //   userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
-    //     newUserEntity.id,
-    //     userDto.profileImage,
-    //   );
-
-    const privateKey = fs.readFileSync('./secrets/private_key.pem');
-    const token = jsonwebtoken.sign(
-      { id: userModel.id },
-      privateKey.toString(),
-      {
-        expiresIn: '1d',
-      },
-    );
-
-    return { token, userModel, userExists };
   }
 
   /**
@@ -152,23 +95,35 @@ export class UserService {
    * @param user
    */
   async addUser(user: UserDto): Promise<User> {
-    // add user to DB
-    const userEntity = new User();
-    Object.assign(userEntity, user);
-    // const newUser = this.userRepository.addUser(userEntity);
-    const newUser: User = await this.userRepository.create(userEntity).save();
+    try {
+      // add user to DB
+      let userEntity = new User();
+      Object.assign(userEntity, user);
+      // const newUser = this.userRepository.addUser(userEntity);
+      const newUser: User = await this.userRepository.create(userEntity).save();
 
-    // add address to DB
-    user.address[0].user = userEntity; // there should only be one address in the array at this stage
-    const newAddress = await this.addressService.addAddress(user.address[0]);
+      // add address to DB
+      const address = new Address();
+      Object.assign(address, user.address[0]);
+      address.user = newUser;
+      const newAddress = await this.addressService.addAddress(user.address[0]);
 
-    // update user with address
-    newUser.addresses = [newAddress];
+      console.log('done adding address to DB');
 
-    // save the user
-    await this.userRepository.updateUser(newUser);
+      // update user with address
+      newUser.addresses = [newAddress];
 
-    return userEntity;
+      // save the user
+      userEntity = await this.userRepository.save(newUser);
+
+      console.log("updating user with address's id");
+
+      return userEntity;
+    } catch (error) {
+      this.logger.debug(
+        'Error thrown in user.service.ts, addUser method: ' + error,
+      );
+    }
   }
 
   async getUserById(id: string): Promise<User> {
