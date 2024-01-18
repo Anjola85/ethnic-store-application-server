@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 import * as aws from 'aws-sdk';
+// import * as aws from 'aws-sdk-js-codemod';
 import { AwsSecretKey } from './secret';
 
 const iv = Buffer.from('EjRWeJ_aZpQ0TEhKT0dKSg==', 'base64');

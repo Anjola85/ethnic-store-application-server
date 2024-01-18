@@ -1,6 +1,7 @@
 // shared/aws-s3.service.ts
 import { Injectable } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
+// import * as AWS from 'aws-sdk-js-codemod';
 
 @Injectable()
 export class AwsS3Service {

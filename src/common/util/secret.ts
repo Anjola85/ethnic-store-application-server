@@ -1,5 +1,6 @@
 import * as AWS from 'aws-sdk';
 import { Injectable } from '@nestjs/common';
+// import * as aws from 'aws-sdk-js-codemod';
 
 @Injectable()
 export class AwsSecretKey {
