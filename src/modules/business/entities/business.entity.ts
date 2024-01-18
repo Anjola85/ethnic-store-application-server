@@ -4,6 +4,7 @@ import {
   Entity,
   Index,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
@@ -20,24 +21,11 @@ import { CommonEntity } from 'src/modules/common/base.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { Address } from 'src/modules/address/entities/address.entity';
 import { ImagesDto, UploadedImagesDto } from '../dto/image.dto';
+import { Mobile } from 'src/modules/mobile/mobile.entity';
+import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 
 @Entity('business')
 export class Business extends CommonEntity {
-  @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn()
-  user: User;
-
-  @ManyToOne(() => Country, (country) => country.name)
-  @JoinColumn()
-  country: Country;
-
-  @OneToMany(() => Country, (country) => country.name)
-  @JoinColumn()
-  other_countries: Country[];
-
-  @OneToMany(() => Category, (category) => category.name)
-  categories: Category[];
-
   @Column({ nullable: false })
   @Index({ unique: true })
   name: string;
@@ -45,14 +33,8 @@ export class Business extends CommonEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @OneToOne(() => Address, (address) => address.id)
-  address: Address;
-
   @Column()
   email: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  mobile: { primary: EntityMobileDto; secondary: EntityMobileDto };
 
   @Column({ type: 'jsonb', nullable: true })
   schedule: ScheduleDto;
@@ -66,6 +48,12 @@ export class Business extends CommonEntity {
   @Column({ type: 'jsonb', nullable: false })
   images: ImagesDto;
 
+  @OneToOne(() => Address, (address) => address.id)
+  address: Address;
+
+  @OneToMany(() => Mobile, (mobile) => mobile.business)
+  mobiles: Mobile[];
+
   @Column({
     type: 'geometry',
     spatialFeatureType: 'Point',
@@ -74,6 +62,24 @@ export class Business extends CommonEntity {
   })
   geolocation: GeoLocationDto;
 
-  @Column({ type: 'varchar', default: 'grocery' })
-  business_type: string;
+  @Column({ name: 'business_type', type: 'varchar', default: 'grocery' })
+  businessType: string;
+
+  @OneToMany(() => Favourite, (favourite) => favourite.business)
+  favourites: Favourite[];
+
+  @ManyToOne(() => User, (user) => user.business)
+  @JoinColumn()
+  owner: User;
+
+  @ManyToOne(() => Country, (country) => country.name)
+  @JoinColumn({ name: 'primary_country' })
+  primaryCountry: Country;
+
+  @ManyToMany(() => Country, (country) => country.name)
+  @JoinColumn({ name: 'other_countries' })
+  otherCountries: Country[];
+
+  @OneToMany(() => Category, (category) => category.name)
+  categories: Category[];
 }

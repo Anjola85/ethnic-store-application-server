@@ -17,7 +17,7 @@ export function createError(message: string, error?: any) {
   };
 }
 
-export function encryptedResponse(encryptedData: string) {
+export function createEncryptedResponse(encryptedData: string) {
   return {
     data: encryptedData,
   };

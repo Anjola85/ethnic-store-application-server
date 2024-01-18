@@ -9,19 +9,14 @@ export const encryptKms = async (buffer: Buffer) => {
   const kmsClient = new aws.KMS({
     region: 'us-east-1',
     accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   });
-
-  // const awsSecretKey = new AwsSecretKey();
-
-  // const key = await awsSecretKey.getSecretKey()
-  const key = process.env.SECRET_KEY;
 
   const params = {
     KeyId: process.env.AWS_KMS_KEY_ID,
     Plaintext: buffer,
     EncryptionContext: {
-      key,
+      key: process.env.SECRET_KEY,
     },
   };
 
@@ -38,40 +33,48 @@ export const encryptKms = async (buffer: Buffer) => {
  * @returns
  */
 export const decryptKms = async (data: string) => {
-  const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'base64');
+  try {
+    const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'base64');
+    // console.log('buffer: ', buffer);
 
-  const kmsClient = new aws.KMS({
-    region: 'us-east-1',
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
-  });
+    const kmsClient = new aws.KMS({
+      region: 'us-east-1',
+      accessKeyId: process.env.AWS_ACCESS_KEY,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    });
+    // console.log('kmsClient: ', kmsClient);
 
-  // const awsSecretKey = new AwsSecretKey();
-  // const key = await awsSecretKey.getSecretKey();
-  const key = process.env.SECRET_KEY;
+    const params = {
+      KeyId: process.env.AWS_KMS_KEY_ID,
+      CiphertextBlob: buffer,
+      EncryptionContext: {
+        key: process.env.SECRET_KEY,
+      },
+    };
+    // console.log('params: ', params);
 
-  const params = {
-    KeyId: process.env.AWS_KMS_KEY_ID,
-    CiphertextBlob: buffer,
-    EncryptionContext: {
-      key,
-    },
-  };
+    //TODO: error below
+    const decryptedBuffer = await kmsClient.decrypt(params).promise();
 
-  const decryptedBuffer = await kmsClient.decrypt(params).promise();
+    // console.log('decryptedBuffer: ', decryptedBuffer);
 
-  const clearText = decryptedBuffer.Plaintext.toString();
+    const clearText = decryptedBuffer.Plaintext!.toString();
 
-  let decryptedData;
+    // console.log('clearText: ', clearText);
 
-  // check if clearText is a JSON object
-  if (clearText[0] === '{') {
-    decryptedData = JSON.parse(clearText);
-  } else {
-    decryptedData = clearText;
+    let decryptedData;
+
+    // check if clearText is a JSON object
+    if (clearText[0] === '{') {
+      decryptedData = JSON.parse(clearText);
+    } else {
+      decryptedData = clearText;
+    }
+
+    return decryptedData;
+  } catch (error) {
+    console.log(`Error thrown in crypto.ts, decryptKms method: ${error}`);
   }
-
-  return decryptedData;
 };
 
 export const encryptData = (keyIn: string, data: any): string => {
@@ -122,9 +125,9 @@ export const toBuffer = (data: any) => {
 };
 
 export const encryptPayload = async (payload: {
+  payload: any;
   status: boolean;
   message: string;
-  payload: any;
 }) => {
   // convert payload to buffer
   const payloadToEncryptBuffer = toBuffer(payload);

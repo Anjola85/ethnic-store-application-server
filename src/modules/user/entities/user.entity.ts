@@ -1,34 +1,48 @@
 import { CommonEntity } from 'src/modules/common/base.entity';
-import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { UserProfile } from '../user.enums';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { Address } from 'src/modules/address/entities/address.entity';
+import { Auth } from 'src/modules/auth/entities/auth.entity';
+import { Business } from 'src/modules/business/entities/business.entity';
 
 @Entity('users')
 export class User extends CommonEntity {
-  @Column()
-  first_name: string;
+  @Column({ name: 'first_name', type: 'varchar', nullable: true })
+  firstName: string;
 
-  @Column()
-  last_name: string;
+  @Column({ name: 'last_name', type: 'varchar', nullable: true })
+  lastName: string;
 
-  @OneToMany(() => Address, (address) => address.user)
-  @JoinColumn()
-  addresses: Address[];
-
-  @OneToMany(() => Favourite, (favourite) => favourite.business)
-  @JoinColumn()
-  favourites: Favourite[];
-
-  @Column({ type: 'varchar', default: UserProfile.CUSTOMER })
-  user_profile: string;
+  @Column({
+    name: 'user_profile',
+    type: 'varchar',
+    default: UserProfile.CUSTOMER,
+  })
+  userProfile: string;
 
   @Column({ type: 'varchar', nullable: true })
   dob: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  profile_image: string;
+  @Column({ name: 'profile_image', type: 'varchar', nullable: true })
+  profileImage: string;
 
   @Column({ type: 'boolean', default: true })
   active: boolean;
+
+  @OneToOne(() => Auth, (auth) => auth.user, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  auth: Auth;
+
+  @OneToOne(() => Business, (business) => business.owner)
+  business: Auth;
+
+  @OneToMany(() => Address, (address) => address.user, { nullable: true })
+  addresses: Address[];
+
+  @OneToMany(() => Favourite, (favourite) => favourite.user)
+  favourites: Favourite[];
 }

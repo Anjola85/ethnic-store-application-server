@@ -8,6 +8,21 @@ export class UserRepository extends Repository<User> {
     super(User, dataSource.createEntityManager());
   }
 
+  async getUserByAuthId(authId: string): Promise<User> {
+    try {
+      const user = await this.createQueryBuilder('user')
+        .leftJoinAndSelect('user.addresses', 'address')
+        .where('user.authId = :authId', { authId })
+        .getOne();
+      return user || null;
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, getUserByAuthId method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async getUserById(id: string): Promise<User> {
     try {
       const user = await this.createQueryBuilder('user')
@@ -40,6 +55,7 @@ export class UserRepository extends Repository<User> {
   }
 
   /**
+   * TODO: ERROR HERE - BUT GETTING EXPECTED CASE
    * Updates the user entity with provided fields
    * @param user
    * @returns
@@ -64,8 +80,8 @@ export class UserRepository extends Repository<User> {
     try {
       const updatedUser = await this.createQueryBuilder('user')
         .update(User)
-        .set({ profile_image: imageUrl })
-        .set({ updated_at: new Date() })
+        .set({ profileImage: imageUrl })
+        .set({ updatedAt: new Date() })
         .where('id = :id', { id })
         .execute();
       return updatedUser;

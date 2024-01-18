@@ -11,6 +11,12 @@ export class AddressRepository extends Repository<Address> {
     super(Address, dataSource.createEntityManager());
   }
 
+  /**
+   * REPLACE THIS FUNCTION WITH CREATE(provided by typeORM)
+   * This inserts a new address into the database
+   * @param address
+   * @returns
+   */
   async addAddress(address: Address) {
     try {
       const newAddress = await this.createQueryBuilder('address')
@@ -93,7 +99,12 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  // update a single address
+  /**
+   * Updates a single address
+   * @param addressId
+   * @param address
+   * @returns
+   */
   async updateAddressById(
     addressId: string,
     address: Address,
@@ -123,7 +134,11 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  // findone address by id
+  /**
+   * Gets an address by Id
+   * @param addressId
+   * @returns
+   */
   async findOneById(addressId: string) {
     try {
       const address = await this.createQueryBuilder('address')
