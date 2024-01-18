@@ -58,7 +58,7 @@ export const decryptKms = async (data: string) => {
 
     // console.log('decryptedBuffer: ', decryptedBuffer);
 
-    const clearText = decryptedBuffer.Plaintext.toString();
+    const clearText = decryptedBuffer.Plaintext!.toString();
 
     // console.log('clearText: ', clearText);
 

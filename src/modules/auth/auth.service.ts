@@ -48,16 +48,16 @@ export class AuthService {
       let response: { message; code; expiryTime };
 
       // TODO: replace this with a call to the microservice to handle call to sendgrid and twilio through Kafka or RabbitMQ
-      // if (mobile && mobile?.phoneNumber)
-      //   response = await this.twilioService.sendSms(mobile.phoneNumber);
-      // else if (email) response = await this.sendgridService.sendOTPEmail(email);
+      if (mobile && mobile?.phoneNumber)
+        response = await this.twilioService.sendSms(mobile.phoneNumber);
+      else if (email) response = await this.sendgridService.sendOTPEmail(email);
 
       // TODO: take out below - debug mode
-      response = {
-        code: '123456',
-        expiryTime: new Date(Date.now() + 60000),
-        message: 'OTP sent successfully',
-      };
+      // response = {
+      //   code: '123456',
+      //   expiryTime: new Date(Date.now() + 60000),
+      //   message: 'OTP sent successfully',
+      // };
 
       const authModel: Auth = new Auth();
 
@@ -91,22 +91,6 @@ export class AuthService {
           await this.authRepository.update(auth.id, {
             ...authModel,
           });
-        } else if (mobileExist && mobileExist.business) {
-          this.logger.debug(`mobile ${mobile} is registered to business`);
-
-          throw new ConflictException('Mobile is registered to a business');
-
-          // if mobile exists and its for a business, create an auth record for it
-          this.logger.debug(
-            'mobile is registered to business, but creating an auth record for it',
-          );
-
-          // create an auth record for it
-          auth = await this.addAuth(authModel);
-
-          // save the mobile with the auth record
-          mobileExist.auth = auth;
-          this.mobileService.updateMobile(mobileExist, { auth });
         } else {
           this.logger.debug(
             `mobile doesnt exist, creating a new auth and mobile record for ${mobile.phoneNumber}`,

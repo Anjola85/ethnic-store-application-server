@@ -38,6 +38,7 @@ import { NotFoundError } from 'rxjs';
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly awsSecretKey: AwsSecretKey,
@@ -64,6 +65,10 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Failed to send OTP' })
   async sendOtp(@Body() reqBody: TempUserAccountDto) {
     try {
+      this.logger.debug(
+        'SendOTP endpoint called with request body: ' +
+          JSON.stringify(reqBody, null, 2),
+      );
       const authResponse = await this.authService.sendOtp(
         reqBody.email,
         reqBody.mobile,
@@ -97,6 +102,10 @@ export class AuthController {
   @Post('verifyOtp')
   async verifyOtp(@Body() body: VerifyOtpDto) {
     try {
+      this.logger.debug(
+        'VerifyOTP endpoint called with request body: ' +
+          JSON.stringify(body, null, 2),
+      );
       const { authId, code } = body;
 
       const isOtpVerified = await this.authService.verifyOtp(authId, code);
@@ -122,6 +131,11 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: SecureLoginDto) {
     try {
+      this.logger.debug(
+        'Login endpoint called with request body: ' +
+          JSON.stringify(loginDto, null, 2),
+      );
+
       const loginResponse = await this.authService.login(loginDto);
 
       const payload = createResponse('login successful', loginResponse, true);
