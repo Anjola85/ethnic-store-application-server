@@ -85,7 +85,9 @@ export class UserController {
     @UploadedFiles() files: any,
   ): Promise<any> {
     try {
-      this.logger.debug('sign up called with body: ' + JSON.stringify(userDto));
+      this.logger.debug(
+        'sign up endpoint called with body: ' + JSON.stringify(userDto),
+      );
 
       // TODO: remove this line if we're not assigning profile image
       userDto.profileImage = files?.profileImage[0] || null;
