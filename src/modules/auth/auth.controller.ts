@@ -34,6 +34,8 @@ import {
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
 import { NotFoundError } from 'rxjs';
+import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
+import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
 
 @Controller('auth')
 export class AuthController {
@@ -123,6 +125,33 @@ export class AuthController {
 
       throw new HttpException(
         'verify otp failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('request-login')
+  async loginOtpRequest(@Body() body: LoginOtpRequest) {
+    try {
+      this.logger.debug(
+        'LoginOTPRequest endpoint called with request body: ' +
+          JSON.stringify(body, null, 2),
+      );
+
+      const resp: OtpResponse = await this.authService.loginOtpRequest(body);
+
+      const payload = createResponse(resp.message, resp.token);
+
+      return payload;
+    } catch (error) {
+      this.logger.debug('Auth Controller with error: ' + error);
+
+      if (error instanceof NotFoundError) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+
+      throw new HttpException(
+        "Something went wrong, we're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

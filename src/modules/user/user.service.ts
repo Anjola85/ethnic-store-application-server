@@ -1,5 +1,6 @@
+import { SignupOtpRequest } from './../../contract/version1/request/auth/signupOtp.request';
 import { AddressService } from './../address/address.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import * as fs from 'fs';
@@ -18,6 +19,7 @@ import { Auth, AuthParams } from '../auth/entities/auth.entity';
 import { MobileService } from '../mobile/mobile.service';
 import { Mobile } from '../mobile/mobile.entity';
 import { Address } from '../address/entities/address.entity';
+import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
 
 @Injectable()
 export class UserService {
@@ -30,6 +32,51 @@ export class UserService {
     private authService: AuthService,
     private userFileService: UserFileService,
   ) {}
+
+  /**
+   * If user exists, throw error
+   * If user does not exist, sendOTP
+   * @param body
+   */
+  async signupOtpRequest(body: SignupOtpRequest): Promise<OtpResponse> {
+    try {
+      const { email, mobile } = body;
+
+      if (mobile) {
+        console.log('checking if mobile exists');
+        const registeredMobile = await this.mobileService.getMobile(mobile);
+
+        if (registeredMobile)
+          throw new ConflictException('phone number already exists');
+
+        console.log('mobile does not exist');
+      } else if (email) {
+        const auth = await this.authService.findByEmail(body.email);
+
+        if (auth) throw new ConflictException('email already exists');
+      }
+
+      console.log('sending otp');
+
+      const auth: OtpResponse = await this.authService.sendOtp(
+        body.email,
+        body.mobile,
+      );
+
+      console.log(auth);
+
+      if (null == auth)
+        throw new Error('From signupOtpRequest: sendOTP returned null');
+
+      return auth;
+    } catch (error) {
+      this.logger.debug(
+        'Error thrown in user.service.ts, requestSignup method: ' + error,
+      );
+
+      throw error;
+    }
+  }
 
   /**
    * This method registers a user and returns the user

@@ -84,9 +84,9 @@ import { MobileModule } from './modules/mobile/mobile.module';
         Mobile,
       ],
       synchronize: true, // comment this out in production
-      // ssl: {
-      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-      // },
+      ssl: {
+        rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      },
     }),
     BullModule.forRoot({
       redis: {
@@ -144,7 +144,7 @@ export class AppModule implements NestModule {
 
     consumer
       .apply(DecryptionMiddleware)
-      .exclude('auth/encrypt', 'auth/decrypt', 'auth/verifyOtp')
+      .exclude('auth/encrypt', 'auth/decrypt', 'auth/verifyOtp', 'waitlist/*')
       .forRoutes('*');
   }
 }
