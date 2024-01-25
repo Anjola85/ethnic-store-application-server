@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -34,6 +35,8 @@ import {
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
 import { NotFoundError } from 'rxjs';
+import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
+import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
 
 @Controller('auth')
 export class AuthController {
@@ -123,6 +126,33 @@ export class AuthController {
 
       throw new HttpException(
         'verify otp failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('request-login')
+  async loginOtpRequest(@Body() body: LoginOtpRequest) {
+    try {
+      this.logger.debug(
+        'LoginOTPRequest endpoint called with request body: ' +
+          JSON.stringify(body, null, 2),
+      );
+
+      const resp: OtpResponse = await this.authService.loginOtpRequest(body);
+
+      const payload = createResponse(resp.message, resp.token);
+
+      return payload;
+    } catch (error) {
+      this.logger.debug('Auth Controller with error: ' + error);
+
+      if (error instanceof NotFoundError) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+
+      throw new HttpException(
+        "Something went wrong, we're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -245,6 +275,20 @@ export class AuthController {
         message: `400 decrypt failed from auth.controller.ts`,
         error: error.message,
       });
+    }
+  }
+
+  // api to delete all records on auth, user, mobile and address
+  @Get('delete')
+  async deleteAllRecords() {
+    try {
+      await this.authService.deleteAllRecords();
+      return createResponse('delete successful');
+    } catch (error) {
+      throw new HttpException(
+        'delete failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

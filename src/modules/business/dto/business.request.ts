@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
@@ -15,13 +16,12 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
-import { S3BusinessImagesResponse } from './image.dto';
 
-export class BusinessDto {
-  @IsOptional()
+export class BusinessRequestDto {
   @ApiProperty()
-  @IsObject()
-  owner?: User;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
   @ApiProperty()
   @IsObject()
@@ -29,15 +29,12 @@ export class BusinessDto {
 
   @ApiProperty()
   @IsArray()
+  @IsNotEmpty()
   otherCountries: Country[];
 
-  @ApiProperty()
-  @IsArray()
-  categories: Category[];
-
-  @ApiProperty()
-  @IsString()
-  name: string; // name has to be unique
+  // @ApiProperty()
+  // @IsArray()
+  // categories: Category[];
 
   @ApiProperty()
   @IsString()
@@ -47,6 +44,7 @@ export class BusinessDto {
   @IsObject()
   @ValidateNested()
   @Type(() => AddressDto)
+  @IsNotEmpty()
   address: AddressDto;
 
   @ApiProperty()
@@ -74,25 +72,17 @@ export class BusinessDto {
   @IsString()
   rating: string;
 
-  @ApiProperty({ type: 'string', format: 'string' })
-  featuredImage: string;
+  @ApiProperty({ type: 'string', format: 'binary' })
+  @IsOptional()
+  featuredImage: Express.Multer.File;
 
   @ApiProperty({ type: 'string', format: 'binary' })
-  backgroundImage: string;
+  @IsOptional()
+  backgroundImage: Express.Multer.File;
 
   @ApiProperty({ type: 'string', format: 'binary' })
-  logoImage: string;
-
   @IsOptional()
-  @ApiProperty({ description: 'test-description', example: 'test-value' })
-  images: S3BusinessImagesResponse;
-
-  @ApiProperty({ description: 'test-description', example: 'test-value' })
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => GeoLocationDto)
-  geolocation: GeoLocationDto;
+  profileImage: Express.Multer.File;
 
   @ApiProperty({ description: 'test-description', example: 'test-value' })
   @IsString()

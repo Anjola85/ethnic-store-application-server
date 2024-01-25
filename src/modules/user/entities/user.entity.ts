@@ -1,3 +1,8 @@
+/**
+ * This file currently represents the User(Customer) entity
+ * TODO: this file should be broken down to customer and owner and driver.
+ * This should then serve as the parent class
+ */
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { UserProfile } from '../user.enums';
@@ -5,6 +10,7 @@ import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { Address } from 'src/modules/address/entities/address.entity';
 import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { Business } from 'src/modules/business/entities/business.entity';
+import { Country } from 'src/modules/country/entities/country.entity';
 
 @Entity('users')
 export class User extends CommonEntity {
@@ -45,4 +51,8 @@ export class User extends CommonEntity {
 
   @OneToMany(() => Favourite, (favourite) => favourite.user)
   favourites: Favourite[];
+
+  @OneToOne(() => Country, (country) => country.name, { nullable: true })
+  @JoinColumn()
+  country: Country;
 }

@@ -173,11 +173,11 @@ export class ImagesController {
     // call businessFileServices.uploadBusinessImages
     try {
       const business_id: string = body.business_id;
-      const resp = await this.businessFileServices.uploadBusinessImages({
+      const resp = await this.businessFileServices.uploadBusinessImagesToS3({
         business_id,
-        background_blob: files.background_image[0],
-        feature_image_blob: files.featured_image[0],
-        logo_blob: files.logo_image[0],
+        background_image_blob: files.background_image[0],
+        featured_image_blob: files.featured_image[0],
+        profile_image_blob: files.logo_image[0],
       });
 
       return res.status(HttpStatus.OK).json({

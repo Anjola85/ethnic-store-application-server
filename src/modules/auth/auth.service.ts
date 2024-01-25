@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as fs from 'fs';
@@ -21,6 +23,12 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { Mobile } from '../mobile/mobile.entity';
 import { MobileService } from '../mobile/mobile.service';
 import { SecureLoginDto } from './dto/secure-login.dto';
+import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
+import { NotFoundError } from 'rxjs';
+import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
+import { MobileRepository } from '../mobile/mobile.repository';
+import { UserRepository } from '../user/user.repository';
+import { AddressRepository } from '../address/address.respository';
 
 @Injectable()
 export class AuthService {
@@ -31,19 +39,18 @@ export class AuthService {
     private mobileService: MobileService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
-    private readonly userFileService: UserFileService,
+    private readonly mobileRepository: MobileRepository,
+    private readonly userRepository: UserRepository,
+    private readonly addressRepository: AddressRepository,
   ) {}
 
   /**
-   * Sends otp to provided email or mobile
+   * Sends otp to provided email or mobile and update auth record with otp code
    * @param email
    * @param mobile
    * @returns
    */
-  async sendOtp(
-    email?: string,
-    mobile?: MobileDto,
-  ): Promise<{ message; code; expiryTime; token }> {
+  async sendOtp(email?: string, mobile?: MobileDto): Promise<OtpResponse> {
     try {
       let response: { message; code; expiryTime };
 
@@ -52,7 +59,7 @@ export class AuthService {
         response = await this.twilioService.sendSms(mobile.phoneNumber);
       else if (email) response = await this.sendgridService.sendOTPEmail(email);
 
-      // TODO: take out below - debug mode
+      // TODO: below is for debugging purposes only, remove when done
       // response = {
       //   code: '123456',
       //   expiryTime: new Date(Date.now() + 60000),
@@ -67,17 +74,10 @@ export class AuthService {
         otpExpiry: response.expiryTime,
       });
 
-      // if mobile was provided, check if mobile exists in the database(means auth exists)
       if (mobile && mobile.phoneNumber) {
         this.logger.debug(`mobile provided: ${JSON.stringify(mobile)}`);
 
-        const mobileEntity = new Mobile();
-        Object.assign(mobileEntity, mobile);
-
-        // check if mobile exists in the DB
-        const mobileExist: Mobile = await this.mobileService.getMobile(
-          mobileEntity,
-        );
+        const mobileExist: Mobile = await this.mobileService.getMobile(mobile);
 
         let auth: Auth;
 
@@ -86,7 +86,6 @@ export class AuthService {
             `mobile exists, updating the auth's otp code for ${mobile.phoneNumber}`,
           );
 
-          // theres a user with this mobile, update the auth record with the new otp
           auth = mobileExist.auth;
           await this.authRepository.update(auth.id, {
             ...authModel,
@@ -121,7 +120,6 @@ export class AuthService {
         } else {
           this.logger.debug('auth account does not exist, creating one');
           authAcct = await this.addAuth(authModel);
-          // authAcct = await this.authRepository.create(authModel).save();
         }
 
         authModel.id = authAcct.id;
@@ -131,7 +129,7 @@ export class AuthService {
       const token = this.generateJwt(authModel);
 
       // return response with token
-      const otpResponse = { ...response, token };
+      const otpResponse: OtpResponse = { ...response, token };
 
       return otpResponse;
     } catch (error) {
@@ -170,7 +168,7 @@ export class AuthService {
     } else throw new UnauthorizedException('OTP has expired');
   }
 
-  async findByEmail(email: string): Promise<Auth> {
+  async getAuthByEmail(email: string): Promise<Auth> {
     try {
       const auth = await this.authRepository
         .createQueryBuilder('auth')
@@ -285,6 +283,45 @@ export class AuthService {
     }
   }
 
+  async loginOtpRequest(body: LoginOtpRequest): Promise<OtpResponse> {
+    try {
+      const { email, mobile } = body;
+
+      if (!email && !mobile)
+        throw new BadRequestException('email or mobile is required');
+
+      if (mobile) {
+        const registeredMobile = this.mobileService.getMobile(mobile);
+
+        if (!registeredMobile)
+          throw new NotFoundException('Mobile is not registered');
+      } else {
+        const authExist = await this.authRepository.findByUniq({ email });
+
+        if (!authExist) throw new NotFoundException('Email is not registered');
+      }
+
+      const response = await this.sendOtp(email, mobile);
+
+      return response;
+    } catch (e) {
+      throw new Error(`From AuthService.requestLoginOtp: ${e}`);
+    }
+  }
+
+  // find auth account by email
+  async findByEmail(email: string): Promise<Auth> {
+    try {
+      const auth = await this.authRepository.findByUniq({ email });
+      return auth || null;
+    } catch (e) {
+      throw new Error(
+        `Error from findByEmail method in auth.service.ts.
+        with error message: ${e.message}`,
+      );
+    }
+  }
+
   // method to add a new auth record to database
   async addAuth(auth: Auth): Promise<Auth> {
     try {
@@ -360,6 +397,19 @@ export class AuthService {
   async getAuth(input: AuthParams): Promise<Auth> {
     const auth = await this.authRepository.findByUniq(input);
     return auth || null;
+  }
+
+  async deleteAllRecords() {
+    try {
+      // delete all auth, address, user and mobile records
+      await this.authRepository.createQueryBuilder().delete().execute();
+      await this.mobileRepository.createQueryBuilder().delete().execute();
+      await this.userRepository.createQueryBuilder().delete().execute();
+      await this.addressRepository.createQueryBuilder().delete().execute();
+      return true;
+    } catch (error) {
+      throw error;
+    }
   }
 
   // async deleteRegisteredUsers() {

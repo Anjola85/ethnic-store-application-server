@@ -1,26 +1,33 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class ImagesDto {
+export class S3BusinessImagesResponse {
   @IsOptional()
   @IsString()
-  featured?: string;
+  featuredImage?: string;
 
   @IsOptional()
   @IsString()
-  background?: string;
+  backgroundImage?: string;
 
   @IsOptional()
   @IsString()
-  logo?: string;
+  profileImage?: string;
 }
 
-export class UploadedImagesDto {
+export class ImagesRequestDto {
   @IsOptional()
-  featured?: Express.Multer.File;
+  featuredImage?: Express.Multer.File;
 
   @IsOptional()
-  background?: Express.Multer.File;
+  backgroundImage?: Express.Multer.File;
 
   @IsOptional()
-  logo?: Express.Multer.File;
+  profileImage?: Express.Multer.File;
+}
+
+export interface S3BusinessImagesRequest {
+  business_id: string;
+  background_image_blob?: Express.Multer.File;
+  featured_image_blob?: Express.Multer.File;
+  profile_image_blob?: Express.Multer.File;
 }

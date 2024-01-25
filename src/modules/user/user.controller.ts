@@ -10,6 +10,8 @@ import {
   UploadedFiles,
   UseInterceptors,
   Get,
+  ConflictException,
+  HttpException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
@@ -40,6 +42,8 @@ import {
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { SignupResponseDtoEncrypted } from 'src/common/responseDTO/signupResponse.dto';
 import { User } from './entities/user.entity';
+import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
+import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
 
 @Controller('user')
 export class UserController {
@@ -85,6 +89,8 @@ export class UserController {
     @UploadedFiles() files: any,
   ): Promise<any> {
     try {
+      // perform validation and map the request body to the userDto
+
       this.logger.debug(
         'sign up endpoint called with body: ' + JSON.stringify(userDto),
       );
@@ -97,8 +103,6 @@ export class UserController {
         user: UserDto;
         userExists: boolean;
       } = await this.userService.register(userDto);
-
-      console.log('response: ' + JSON.stringify(response));
 
       if (response.userExists)
         return createResponse('user with credentials already exist', response);
@@ -113,6 +117,34 @@ export class UserController {
         throw new UnauthorizedException(error.message);
 
       throw new InternalServerError(error.message);
+    }
+  }
+
+  @Post('request-signup')
+  async SignupOtpRequest(@Body() body: SignupOtpRequest) {
+    try {
+      this.logger.debug(
+        'request-signup endpoint called with body: ' + JSON.stringify(body),
+      );
+
+      const resp: OtpResponse = await this.userService.signupOtpRequest(body);
+
+      const payload = createResponse(resp.message, resp.token);
+
+      return payload;
+    } catch (error) {
+      this.logger.error(
+        "Error occurred in 'requestSignup' method of UserController with error: " +
+          error,
+      );
+      // Handle any error that occurs during the registration process
+      if (error instanceof ConflictException)
+        throw new ConflictException(error.message);
+
+      throw new HttpException(
+        "Something went wrong, we're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
