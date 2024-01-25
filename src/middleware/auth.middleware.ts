@@ -1,3 +1,8 @@
+/**
+ * This middleware validates and extract ids from the token attached to the header request
+ *
+ */
+
 import {
   Injectable,
   NestMiddleware,
@@ -24,7 +29,13 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     try {
-      await this.validate(res, token);
+      const { authId, userId } = await this.validateToken(res, token);
+
+      if (req.body.authId || req.body.authId === '')
+        req.body.authId = authId || '';
+
+      if (req.body.userId || req.body.userId === '')
+        req.body.userId = userId || '';
 
       next();
     } catch (error) {
@@ -41,15 +52,28 @@ export class AuthMiddleware implements NestMiddleware {
     }
   }
 
-  private async validate(res: Response, token: string): Promise<void> {
-    const privateKey = fs.readFileSync('./private_key.pem');
+  /**
+   * Validate and extract ids from token
+   * @param res
+   * @param token
+   * @returns
+   */
+  private async validateToken(
+    res: Response,
+    token: string,
+  ): Promise<{ authId: string; userId: string }> {
+    const privateKey = fs.readFileSync('./secrets/private_key.pem');
 
     const decoded: any = await jsonwebtoken.verify(
       token,
       privateKey.toString(),
     );
 
-    // add user id to response object
-    res.locals.id = decoded?.id || null;
+    const ids = {
+      authId: decoded?.authId || null,
+      userId: decoded?.userId || null,
+    };
+
+    return ids;
   }
 }

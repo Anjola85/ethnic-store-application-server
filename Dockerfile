@@ -21,4 +21,4 @@ RUN npm run build
 EXPOSE 7080
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main.js"]m

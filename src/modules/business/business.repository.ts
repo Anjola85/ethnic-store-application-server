@@ -1,5 +1,5 @@
 import { DataSource, Repository } from 'typeorm';
-import { Business } from './entities/business.entity';
+import { Business, BusinessParam } from './entities/business.entity';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { GeoLocationDto } from './dto/geolocation.dto';
 
@@ -32,13 +32,25 @@ export class BusinessRepository extends Repository<Business> {
     }
   }
 
-  async findByName(name: string): Promise<Business> {
+  async findByUniq(params: BusinessParam): Promise<Business> {
+    const { name, email, businessId } = params;
+
     try {
-      const business = await this.findBy({ name });
+      console.log(
+        `looking for record with params: name:${name}, email:${email}`,
+      );
+
+      const business = await this.createQueryBuilder('business')
+        .setFindOptions({
+          where: { name, email, id: businessId },
+        })
+        .getOne();
+
+      console.log('business is: ', business);
 
       if (typeof business === undefined) return null;
 
-      return business[0];
+      return business;
     } catch (error) {
       this.logger.error(
         `Error thrown in business.repository.ts, findByName method: ${error.message}`,

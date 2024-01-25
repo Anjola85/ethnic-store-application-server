@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
-// import { DatabseModule } from './modules/database/database.module';
 import { CategoryModule } from './modules/category/category.module';
 import { BusinessModule } from './modules/business/business.module';
 import { CountryModule } from './modules/country/country.module';
@@ -16,7 +15,6 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
-// import { ImagesModule } from './modules/files/images.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/user/entities/user.entity';
 import { Business } from './modules/business/entities/business.entity';
@@ -32,7 +30,15 @@ import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business'
 import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper';
 import { WaitlistModule } from './modules/waitlist/waitlist.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ApiExtraModels } from '@nestjs/swagger';
+import { UserDto } from './modules/user/dto/user.dto';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CryptoInterceptor } from './interceptors/crypto.interceptor';
+import { DecryptionMiddleware } from './middleware/decryption.middleware';
+import { Mobile } from './modules/mobile/mobile.entity';
+import { MobileModule } from './modules/mobile/mobile.module';
 
+@ApiExtraModels(UserDto)
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -75,8 +81,9 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
         WaitlistCustomer,
         WaitlistBusiness,
         WaitlistShopper,
+        Mobile,
       ],
-      // synchronize: true, // comment this out in production
+      synchronize: true, // comment this out in production
       ssl: {
         rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
       },
@@ -107,6 +114,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     FavouriteModule,
     AddressModule,
     WaitlistModule,
+    MobileModule,
   ],
   controllers: [AppController],
   providers: [
@@ -116,36 +124,32 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       provide: 'APP_GUARD',
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CryptoInterceptor,
+    },
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .exclude(
-        '/',
-        '/test-validation',
-        'user/register',
-        'business/nearby',
-        'business/register',
-        'business/all',
-        'auth/test',
-        'auth/sendOtp',
+      .forRoutes(
+        'user/info',
+        'auth/verifyOtp',
+        'user/signup',
+        'auth/login',
         'auth/resendOtp',
-        'auth/sendOTPBySms',
-        'auth/reset',
+      );
+
+    consumer
+      .apply(DecryptionMiddleware)
+      .exclude(
         'auth/encrypt',
         'auth/decrypt',
-        'images/upload',
-        'images/test',
-        'images/upload-s3',
-        'images/upload-business-images',
-        'images/upload-avatar',
-        'images/get-random-avatar',
-        'images/upload-profile-picture',
-        'waitlist/join-customer',
-        'waitlist/join-shopper',
-        'waitlist/join-business',
+        'auth/verifyOtp',
+        'waitlist/*',
+        'business/register',
       )
       .forRoutes('*');
   }

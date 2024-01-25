@@ -22,58 +22,53 @@ export default class TwilioService {
   }
 
   public async sendSms(
-    phone_number: string,
+    phoneNumber: string,
     codeLength = 4,
     expirationMinutes = 6,
   ) {
-    this.logger.debug('phone number is: ' + phone_number);
-
-    // phone number of sender is quickmartdev
-    const senderPhoneNumber = '+14318133976';
-
-    // generate otp code
-    const otpResponse = generateOtpCode(codeLength, expirationMinutes);
-    const otpCode: string = otpResponse.code;
-    const expiryTime: string = otpResponse.expiryTime;
-
-    const options: MessageListInstanceCreateOptions = {
-      to: phone_number,
-      body: `Quickmart: Please use this OTP to complete verification: ${otpCode}, expires in ${expirationMinutes} minutes.`,
-      from: senderPhoneNumber,
-    };
     try {
-      // send otp code to phone number
+      this.logger.debug('phone-number to send sms to is: ' + phoneNumber);
+
+      const senderPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+      // generate otp code
+      const { code, expiryTime } = generateOtpCode(
+        codeLength,
+        expirationMinutes,
+      );
+
+      const options: MessageListInstanceCreateOptions = {
+        to: phoneNumber,
+        body: `Quickmart: Please use this OTP to complete verification: ${code}, expires in ${expirationMinutes} minutes.`,
+        from: senderPhoneNumber,
+      };
+
       this.client.messages.create(options);
 
-      // mask phone number
-      const maskedNumber = phone_number;
-      // replace first 5 digits with *
+      const maskedNumber = phoneNumber;
       const maskedPhoneNumber = maskedNumber.replace(
         maskedNumber.substring(0, 5),
         '*****',
       );
-
-      // log success repsonse
-      this.logger.log(
+      const message: string =
         'SMS sent successfully to: \n' +
-          maskedPhoneNumber +
-          '\nwith expiry time: ' +
-          expiryTime,
-      );
+        maskedPhoneNumber +
+        ' with expiry time: ' +
+        expiryTime;
 
-      // return success response to client
+      this.logger.debug(message);
+
       return {
         status: true,
-        message: 'SMS sent successfully',
-        code: otpCode,
-        expiryTime: expiryTime,
+        message,
+        code,
+        expiryTime,
       };
     } catch (error) {
-      // log error response
       this.logger.error('Error sending sms:', error);
-      // return error response to client
+
       throw new HttpException(
-        'Failed to send email',
+        'Failed to send sms',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

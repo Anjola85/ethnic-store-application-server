@@ -14,6 +14,7 @@ import { AuthRepository } from 'src/modules/auth/auth.repository';
 import { UserRepository } from 'src/modules/user/user.repository';
 import { AddressRepository } from 'src/modules/address/address.respository';
 import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
+import { MobileRepository } from 'src/modules/mobile/mobile.repository';
 
 @Global()
 @Module({
@@ -37,6 +38,7 @@ import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
     UserRepository,
     AddressRepository,
     GeocodingService,
+    MobileRepository,
   ],
   exports: [SendgridService, TwilioService],
 })

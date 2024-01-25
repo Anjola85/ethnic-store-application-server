@@ -7,6 +7,8 @@ import {
   Res,
   HttpStatus,
   Logger,
+  HttpException,
+  Get,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { BusinessDto } from './dto/business.dto';
@@ -14,6 +16,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { createError, createResponse } from 'src/common/util/response';
 import { Response } from 'express';
+import { BusinessRequestDto } from './dto/business.request';
 
 @Controller('business')
 export class BusinessController {
@@ -35,39 +38,29 @@ export class BusinessController {
       { name: 'logoImage', maxCount: 1 },
     ]),
   )
-  async create(
-    @Body() createBusinessDto: BusinessDto,
-    @UploadedFiles() files: any,
-    @Res() res: Response,
-  ) {
-    createBusinessDto.featuredImage = files?.featuredImage[0] || null;
-    createBusinessDto.backgroundImage = files?.backgroundImage[0] || null;
-    createBusinessDto.logoImage = files?.logoImage[0] || null;
+  async register(@Body() requestBody: any, @UploadedFiles() files: any) {
+    console.log('requestBody: ', JSON.stringify(requestBody, null, 2));
+
+    const businessBody = Object.assign(new BusinessRequestDto(), requestBody);
+
+    // replace the images with the placeholder images from s3
+    businessBody.featuredImage = files?.featuredImage[0] || null;
+    businessBody.backgroundImage = files?.backgroundImage[0] || null;
+    businessBody.logoImage = files?.logoImage[0] || null;
 
     try {
-      this.logger.debug('sign up called with body: ' + createBusinessDto);
+      const createdBusiness = await this.businessService.register(businessBody);
 
-      const createdBusiness = await this.businessService.register(
-        createBusinessDto,
-      );
-
-      this.logger.debug('created business: ' + createdBusiness);
-
-      return res
-        .status(HttpStatus.CREATED)
-        .json(
-          createResponse(
-            'Business registered successfully',
-            createdBusiness,
-            true,
-          ),
-        );
+      return createResponse('Business registered successfully', {
+        business: createdBusiness,
+      });
     } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to register business',
-        error: error.message,
-      };
+      this.logger.debug('From register in business.controller.ts ', error);
+
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -80,7 +73,6 @@ export class BusinessController {
   @Post('nearby')
   async findNearbyBusinesses(
     @Body() body: { latitude: number; longitude: number },
-    @Res() res: Response,
   ): Promise<any> {
     try {
       const geolocationDto = new GeoLocationDto();
@@ -88,39 +80,36 @@ export class BusinessController {
       const businesses = await this.businessService.findStoresNearby(
         geolocationDto,
       );
+      return createResponse('Nearby businesses fetched successfully', {
+        businesses,
+      });
     } catch (error) {
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json(createError('Failed to fetch nearby businesses', error.message));
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
   /**
    * Gell all businesses by location
    */
-  // @Post('nearby')
-  // async findByLocation(
-  //   @Body() body: { lat: number; lng: number; radius: number },
-  //   @Res() res: Response,
-  // ): Promise<any> {
-  //   try {
-  //     const business = await this.businessService.findStoresNearby(
-  //       body.lat,
-  //       body.lng,
-  //       body.radius,
-  //     );
-  //     const length: number = Object.keys(business).length;
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: `Fetched ${length} businesses`,
-  //       business,
-  //     });
-  //   } catch (error) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to get list of businesses',
-  //       error: error.message,
-  //     });
-  //   }
-  // }
+  @Get('all')
+  async findAll(): Promise<any> {
+    try {
+      const business = await this.businessService.findAll();
+      const length: number = Object.keys(business).length;
+      return createResponse('businesses fetched successfully', {
+        business,
+        length,
+      });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

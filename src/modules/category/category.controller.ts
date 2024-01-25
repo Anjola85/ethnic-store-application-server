@@ -8,64 +8,57 @@ import {
   Delete,
   HttpStatus,
   Res,
+  HttpException,
+  ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Response } from 'express';
+import { createResponse } from 'src/common/util/response';
 
 @Controller('category')
 export class CategoryController {
-  // constructor(private readonly categoryService: CategoryService) {}
-  // @Post('register')
-  // async create(
-  //   @Body() createCategoryDto: CreateCategoryDto,
-  //   @Res() res: Response,
-  // ): Promise<any> {
-  //   try {
-  //     // check if category exists
-  //     const categoryExists = await this.categoryService.findCategoryByName(
-  //       createCategoryDto.name,
-  //     );
-  //     // category found
-  //     if (Object.keys(categoryExists).length != 0) {
-  //       return res.status(HttpStatus.CONFLICT).json({
-  //         success: false,
-  //         message: ' category exists',
-  //         category: null,
-  //       });
-  //     }
-  //     const category = await this.categoryService.create(createCategoryDto);
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: 'category successfully added',
-  //       category: category,
-  //     });
-  //   } catch (err) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to register user',
-  //       error: err.message,
-  //     });
-  //   }
-  // }
-  // @Get('all')
-  // async findAll(@Res() res: Response): Promise<any> {
-  //   try {
-  //     const category = await this.categoryService.findAll();
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: 'category successfully added',
-  //       category,
-  //     });
-  //   } catch (error) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to get list of categories',
-  //       error: error.message,
-  //     });
-  //   }
-  // }
+  private readonly logger = new Logger(CategoryController.name);
+  constructor(private readonly categoryService: CategoryService) {}
+  @Post('register')
+  async create(@Body() createCategoryDto: CreateCategoryDto): Promise<any> {
+    try {
+      const resp = await this.categoryService.create(createCategoryDto);
+
+      return createResponse('Category registered successfully', resp);
+    } catch (error) {
+      this.logger.debug(error);
+
+      if (error instanceof ConflictException) {
+        throw new HttpException(error.message, HttpStatus.CONFLICT);
+      }
+
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('all')
+  async findAll(): Promise<any> {
+    try {
+      const category = await this.categoryService.findAll();
+      return createResponse('List of categories', {
+        result: category,
+        size: category.length,
+      });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // @Get(':id')
   // async findOne(@Param('id') id: string, @Res() res: Response): Promise<any> {
   //   try {

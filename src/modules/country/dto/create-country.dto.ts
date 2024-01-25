@@ -16,11 +16,4 @@ export class CreateCountryDto {
     description: 'The ID of the continent the country belongs to',
   })
   continentId: Types.ObjectId;
-
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty({
-    description: 'The type of the continent the country belongs to',
-  })
-  continentType: string;
 }

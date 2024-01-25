@@ -1,21 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { AwsS3Service } from './aws-s3.service';
-import { ImagesDto } from '../business/dto/image.dto';
-
-export interface BusinessImages {
-  business_id: string;
-  background_blob?: Express.Multer.File;
-  feature_image_blob?: Express.Multer.File;
-  logo_blob?: Express.Multer.File;
-}
+import {
+  S3BusinessImagesRequest,
+  S3BusinessImagesResponse,
+} from '../business/dto/image.dto';
 
 @Injectable()
 export class BusinessFilesService {
   private readonly rootFolder = 'business_assets';
   private readonly imageFolders: { [key: string]: string } = {
-    background_blob: 'background_image',
-    feature_image_blob: 'feature_image',
-    logo_blob: 'logo_image',
+    background_image_blob: 'background_image',
+    featured_image_blob: 'feature_image',
+    profile_image_blob: 'logo_image',
   };
 
   constructor(private awsS3Service: AwsS3Service) {}
@@ -25,14 +21,16 @@ export class BusinessFilesService {
    * @param data
    * @returns
    */
-  async uploadBusinessImages(data: BusinessImages): Promise<ImagesDto> {
+  async uploadBusinessImagesToS3(
+    data: S3BusinessImagesRequest,
+  ): Promise<S3BusinessImagesResponse> {
     const { business_id } = data;
 
     const uploadPromises: Promise<string | null>[] = []; // Use null as the default value
 
     for (const [prop, folder] of Object.entries(this.imageFolders)) {
       const imageBlob: Express.Multer.File | string =
-        data[prop as keyof BusinessImages];
+        data[prop as keyof S3BusinessImagesRequest];
 
       if (imageBlob && typeof imageBlob !== 'string') {
         const folderPath = `${this.rootFolder}/${business_id}/${folder}/${imageBlob.originalname}`;
@@ -51,10 +49,10 @@ export class BusinessFilesService {
       ]),
     );
 
-    const imagesUrl: ImagesDto = {
-      background: result.background_blob || null,
-      featured: result.feature_image_blob || null,
-      logo: result.logo_blob || null,
+    const imagesUrl: S3BusinessImagesResponse = {
+      backgroundImage: result.background_image_blob || '',
+      featuredImage: result.featured_image_blob || '',
+      profileImage: result.profile_image_blob || '',
     };
 
     return imagesUrl;

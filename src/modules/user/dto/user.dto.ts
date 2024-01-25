@@ -13,6 +13,7 @@ import { UserProfile } from '../user.enums';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { BusinessDto } from 'src/modules/business/dto/business.dto';
+import { CreateAuthDto } from 'src/modules/auth/dto/create-auth.dto';
 
 /**
  * Generic DTO
@@ -21,11 +22,11 @@ import { BusinessDto } from 'src/modules/business/dto/business.dto';
 export class UserDto {
   @IsOptional()
   @IsString()
+  @ApiProperty({
+    description: 'User ID',
+    example: '00733fab-e715-41be-ad9d-dc417ae60858',
+  })
   id: string;
-
-  // @IsNotEmpty()
-  // @IsString()
-  // code: string;
 
   @IsNotEmpty()
   @IsString()
@@ -67,7 +68,7 @@ export class UserDto {
   })
   email: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @ValidateNested()
   @Type(() => MobileDto)
   @ApiProperty({
@@ -77,9 +78,11 @@ export class UserDto {
   mobile: MobileDto;
 
   @IsOptional()
+  @ApiProperty({ description: 'The Date of birth', example: '2005-06-15' })
   dob: string;
 
   @IsOptional()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   favourites: BusinessDto[];
 
   @IsOptional()
@@ -88,5 +91,9 @@ export class UserDto {
 
   @IsOptional()
   @IsString()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
   profileImageUrl: string;
+
+  @IsOptional()
+  auth: CreateAuthDto;
 }

@@ -7,6 +7,7 @@ export class GeocodingService {
   private readonly logger = new Logger(GeocodingService.name);
 
   async setCoordinates(addressDto: AddressDto): Promise<AddressDto> {
+    this.logger.debug('Setting coordinates');
     const addressString = `${addressDto.street}, ${addressDto.city}, ${addressDto.province}, ${addressDto.postalCode}, ${addressDto.country}`;
     const apiKey = process.env.GCP_GEOCODING_API_KEY;
 
@@ -16,6 +17,8 @@ export class GeocodingService {
           addressString,
         )}&key=${apiKey}`,
       );
+
+      this.logger.debug('Geocoding response: ', response.data);
 
       const { results } = response.data;
 

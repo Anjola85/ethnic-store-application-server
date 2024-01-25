@@ -9,12 +9,16 @@ export class Address extends CommonEntity {
   @JoinColumn()
   business: Business;
 
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
+  @ManyToOne(() => User, (user) => user.id, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   user: User;
 
-  @Column()
-  primary: boolean;
+  @Column({ default: true, nullable: false, type: 'boolean' })
+  isPrimary: boolean;
 
   @Column()
   unit: string;
@@ -28,8 +32,8 @@ export class Address extends CommonEntity {
   @Column()
   province: string;
 
-  @Column()
-  postal_code: string;
+  @Column({ name: 'postal_code' })
+  postalCode: string;
 
   @Column()
   country: string;
