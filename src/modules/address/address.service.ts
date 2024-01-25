@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AddressDto } from './dto/address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { addressDtoToEntity, entityToAddressDto } from './address-mapper';
@@ -14,6 +14,7 @@ export interface AddressParams {
 
 @Injectable()
 export class AddressService {
+  private readonly logger = new Logger(AddressService.name);
   constructor(
     private readonly addressRepository: AddressRepository,
     private readonly geoCodingService: GeocodingService,
@@ -25,21 +26,26 @@ export class AddressService {
    * @returns the newly added address
    */
   async addAddress(addressDto: AddressDto): Promise<Address> {
-    // set coordinates
-    await this.geoCodingService.setCoordinates(addressDto);
+    try {
+      // set coordinates
+      await this.geoCodingService.setCoordinates(addressDto);
 
-    console.log('done setting coordinates');
+      // map dto to entity
+      const addressEntity = new Address();
+      Object.assign(addressEntity, addressDto);
 
-    // map dto to entity
-    const addressEntity = new Address();
-    Object.assign(addressEntity, addressDto);
+      // save to db
+      const newAddress = await this.addressRepository
+        .create(addressEntity)
+        .save();
 
-    // save to db
-    const newAddress = await this.addressRepository
-      .create(addressEntity)
-      .save();
-
-    return newAddress;
+      return newAddress;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in address.service.ts, addAddress method: ${error}`,
+      );
+      throw error;
+    }
   }
 
   /**

@@ -1,97 +1,120 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { Country } from './entities/country.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCountryDto } from './dto/create-country.dto';
+import { ContinentParams } from '../continent/entities/continent.entity';
 
 @Injectable()
 export class CountryService {
+  private readonly logger = new Logger(CountryService.name);
+
   constructor(
     @InjectRepository(Country)
     protected countryRepository: Repository<Country>,
   ) {}
 
-  async create(createCountryDto: CreateCountryDto) {
-    const country = await this.countryRepository
-      .create(createCountryDto)
-      .save();
-    return country;
+  async create(createCountryDto: CreateCountryDto): Promise<any> {
+    try {
+      const countryExist = await this.countryRepository
+        .createQueryBuilder('continent')
+        .where('continent.name = :name', { name: createCountryDto.name })
+        .getOne();
+
+      if (countryExist) {
+        this.logger.log(`Databse returned continentExist: ${countryExist}`);
+
+        throw new ConflictException(
+          `Continent with name ${createCountryDto.name} already exists`,
+        );
+      }
+
+      const country = new Country();
+      country.name = createCountryDto.name;
+      const newCountry = await this.countryRepository.save(country);
+      return newCountry;
+    } catch (error) {
+      throw error;
+    }
   }
-  // async findAll() {
+
+  async findAll() {
+    try {
+      const country = await this.countryRepository.find({
+        select: ['name'],
+      });
+      return country;
+    } catch (error) {
+      throw new Error(
+        `Error retrieving all country from mongo
+        \nfrom findAll method in country.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  // async findOne(params: CategoryParams): Promise<any> {
   //   try {
-  //     const categories = await this.countryModel.find().exec();
-  //     return categories;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error retrieving all categories from mongo
-  //       \nfrom findAll method in country.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
-  // async findOne(id: string): Promise<any> {
-  //   try {
-  //     const country = await this.countryModel.findById(id).exec();
-  //     // throw error if country does not exist
-  //     if (!country) {
-  //       throw new Error(`country with id ${id} not found`);
+  //     const category = await this.categoryRepository
+  //       .createQueryBuilder('category')
+  //       .where('category.id = :id', { id: params.id })
+  //       .orWhere('category.name = :name', { name: params.name })
+  //       .getOne();
+
+  //     if (!category) {
+  //       if (params.id)
+  //         throw new NotFoundException(`category with  ${params} not found`);
+  //       else if (params.name)
+  //         throw new NotFoundException(`category with  ${params} not found`);
   //     }
-  //     if (country.deleted) {
-  //       throw new Error(`country with id ${id} has been deleted`);
-  //     }
-  //     return country;
+
+  //     if (category.deleted)
+  //       throw new NotFoundException(`category with ${params} has been deleted`);
+
+  //     return category;
   //   } catch (error) {
   //     throw new Error(
-  //       `Error getting country information for country with id ${id},
-  //       \nfrom findOne method in country.service.ts.
+  //       `Error getting category information for category ${params},
+  //       \nfrom findOne method in category.service.ts.
   //       \nWith error message: ${error.message}`,
   //     );
   //   }
   // }
-  // async update(id: string, updateCountryDto: UpdateCountryDto): Promise<void> {
+
+  // async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<any> {
   //   try {
-  //     await this.countryModel.updateOne({
-  //       _id: id,
-  //       ...updateCountryDto,
-  //     });
+  //     const cateogryResp = await this.categoryRepository
+  //       .createQueryBuilder('category')
+  //       .where('category.id = :id', { id })
+  //       .getOne();
+
+  //     if (!cateogryResp)
+  //       throw new NotFoundException(`category with id ${id} not found`);
+
+  //     cateogryResp.name = updateCategoryDto.name;
+  //     const updatedCategory = await this.categoryRepository.save(cateogryResp);
+
+  //     return updatedCategory;
   //   } catch (error) {
   //     throw new Error(
-  //       `Error update country information for country with id ${id},
-  //       \nfrom update method in country.service.ts.
+  //       `Error update category information for category with id ${id},
+  //       \nfrom update method in category.service.ts.
   //       \nWith error message: ${error.message}`,
   //     );
   //   }
   // }
-  // async remove(id: string): Promise<any> {
+
+  // async remove(params: CategoryParams): Promise<boolean> {
   //   try {
-  //     const country = await this.countryModel
-  //       .findById(id, { deleted: 'true' })
-  //       .exec();
-  //     if (!country) {
-  //       throw new Error(
-  //         `Mongoose error with deleting country with country id ${id}
-  //         In remove method country.service.ts with dev error message: country with id:${id} not found`,
-  //       );
-  //     }
-  //     return country;
+  //     const category = await this.findOne(params);
+  //     category.deleted = true;
+  //     await this.categoryRepository.save(category);
+
+  //     return true;
   //   } catch (error) {
   //     throw new Error(
-  //       `Error from remove method in country.service.ts.
+  //       `Error from remove method in category.service.ts.
   //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
-  // /**
-  //  * Helper methods
-  //  */
-  // async findCountryByName(name: string): Promise<any> {
-  //   try {
-  //     const country = await this.countryModel.find({ name }).exec();
-  //     return country;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from findCountryByName method in country.service.ts.
-  //         \nWith error message: ${error.message}`,
   //     );
   //   }
   // }

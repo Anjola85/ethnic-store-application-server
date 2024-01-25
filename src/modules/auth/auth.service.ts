@@ -26,6 +26,9 @@ import { SecureLoginDto } from './dto/secure-login.dto';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
 import { NotFoundError } from 'rxjs';
 import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
+import { MobileRepository } from '../mobile/mobile.repository';
+import { UserRepository } from '../user/user.repository';
+import { AddressRepository } from '../address/address.respository';
 
 @Injectable()
 export class AuthService {
@@ -36,7 +39,9 @@ export class AuthService {
     private mobileService: MobileService,
     private readonly sendgridService: SendgridService,
     private readonly twilioService: TwilioService,
-    private readonly userFileService: UserFileService,
+    private readonly mobileRepository: MobileRepository,
+    private readonly userRepository: UserRepository,
+    private readonly addressRepository: AddressRepository,
   ) {}
 
   /**
@@ -392,6 +397,19 @@ export class AuthService {
   async getAuth(input: AuthParams): Promise<Auth> {
     const auth = await this.authRepository.findByUniq(input);
     return auth || null;
+  }
+
+  async deleteAllRecords() {
+    try {
+      // delete all auth, address, user and mobile records
+      await this.authRepository.createQueryBuilder().delete().execute();
+      await this.mobileRepository.createQueryBuilder().delete().execute();
+      await this.userRepository.createQueryBuilder().delete().execute();
+      await this.addressRepository.createQueryBuilder().delete().execute();
+      return true;
+    } catch (error) {
+      throw error;
+    }
   }
 
   // async deleteRegisteredUsers() {

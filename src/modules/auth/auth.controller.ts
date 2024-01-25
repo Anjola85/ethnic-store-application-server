@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -274,6 +275,20 @@ export class AuthController {
         message: `400 decrypt failed from auth.controller.ts`,
         error: error.message,
       });
+    }
+  }
+
+  // api to delete all records on auth, user, mobile and address
+  @Get('delete')
+  async deleteAllRecords() {
+    try {
+      await this.authService.deleteAllRecords();
+      return createResponse('delete successful');
+    } catch (error) {
+      throw new HttpException(
+        'delete failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

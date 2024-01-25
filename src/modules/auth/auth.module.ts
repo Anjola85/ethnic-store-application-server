@@ -13,6 +13,7 @@ import { AuthRepository } from './auth.repository';
 import { UserRepository } from '../user/user.repository';
 import { AddressRepository } from '../address/address.respository';
 import { GeocodingService } from '../geocoding/geocoding.service';
+import { MobileRepository } from '../mobile/mobile.repository';
 
 @Global()
 @Module({
@@ -28,6 +29,7 @@ import { GeocodingService } from '../geocoding/geocoding.service';
     AuthRepository,
     UserRepository,
     GeocodingService,
+    MobileRepository,
   ],
   exports: [AuthService, AwsSecretKey, AwsS3Service],
 })

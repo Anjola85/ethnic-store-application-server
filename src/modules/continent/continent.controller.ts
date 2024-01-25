@@ -8,64 +8,57 @@ import {
   Delete,
   HttpStatus,
   Res,
+  Logger,
+  HttpException,
+  ConflictException,
 } from '@nestjs/common';
 import { ContinentService } from './continent.service';
 import { CreateContinentDto } from './dto/create-continent.dto';
 import { UpdateContinentDto } from './dto/update-continent.dto';
 import { Response } from 'express';
+import { createResponse } from 'src/common/util/response';
 
 @Controller('continent')
 export class ContinentController {
-  // constructor(private readonly continentService: ContinentService) {}
-  // @Post('register')
-  // async create(
-  //   @Body() createContinentDto: CreateContinentDto,
-  //   @Res() res: Response,
-  // ): Promise<any> {
-  //   try {
-  //     // check if continent exists
-  //     const continentExists = await this.continentService.findContinentByName(
-  //       createContinentDto.name,
-  //     );
-  //     // continent found
-  //     if (Object.keys(continentExists).length != 0) {
-  //       return res.status(HttpStatus.CONFLICT).json({
-  //         success: false,
-  //         message: ' continent exists',
-  //         continent: null,
-  //       });
-  //     }
-  //     const continent = await this.continentService.create(createContinentDto);
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: 'continent successfully added',
-  //       continent: continent,
-  //     });
-  //   } catch (err) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to register user',
-  //       error: err.message,
-  //     });
-  //   }
-  // }
-  // @Get('all')
-  // async findAll(@Res() res: Response): Promise<any> {
-  //   try {
-  //     const continent = await this.continentService.findAll();
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: 'continent successfully added',
-  //       continent,
-  //     });
-  //   } catch (error) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to get list of continents',
-  //       error: error.message,
-  //     });
-  //   }
-  // }
+  private readonly logger = new Logger(ContinentController.name);
+  constructor(private readonly continentService: ContinentService) {}
+
+  @Post('register')
+  async create(@Body() createContinentDto: CreateContinentDto): Promise<any> {
+    try {
+      const resp = await this.continentService.create(createContinentDto);
+      return createResponse('Continent registered successfully', resp);
+    } catch (err) {
+      this.logger.debug(err);
+
+      if (err instanceof ConflictException) {
+        throw new HttpException(err.message, HttpStatus.CONFLICT);
+      }
+
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('all')
+  async findAll(): Promise<any> {
+    try {
+      const continent = await this.continentService.findAll();
+      return createResponse('List of continents', {
+        result: continent,
+        size: continent.length,
+      });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // @Get(':id')
   // async findOne(@Param('id') id: string, @Res() res: Response): Promise<any> {
   //   try {

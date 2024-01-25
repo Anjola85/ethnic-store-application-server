@@ -1,18 +1,15 @@
 import { BusinessRepository } from './business.repository';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BusinessDto } from './dto/business.dto';
-import { Repository } from 'typeorm';
 import {
-  BusinessFilesService,
-  BusinessImages,
-} from '../files/business-files.service';
-import { ImagesDto } from './dto/image.dto';
-import { Address } from '../address/entities/address.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-// import { businessDtoToEntity } from './business-mapper';
+  S3BusinessImagesRequest,
+  S3BusinessImagesResponse,
+} from './dto/image.dto';
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { AddressService } from '../address/address.service';
 import { Business } from './entities/business.entity';
+import { BusinessRequestDto } from './dto/business.request';
+import { BusinessFilesService } from '../files/business-files.service';
 
 @Injectable()
 export class BusinessService {
@@ -22,69 +19,75 @@ export class BusinessService {
     private addressService: AddressService,
   ) {}
 
-  async register(businessDto: BusinessDto): Promise<any> {
-    await this.checkBusinessExist(businessDto);
+  async register(reqBody: BusinessRequestDto): Promise<any> {
+    console.log('req body is: ', reqBody);
+    const businessExist = await this.businessRepository.findByUniq({
+      name: reqBody.name,
+      email: reqBody.email,
+    });
+
+    if (businessExist)
+      throw new HttpException(
+        `Business with name ${businessExist.name} already exists`,
+        HttpStatus.CONFLICT,
+      );
+
+    const businessDto: BusinessDto = Object.assign(new BusinessDto(), reqBody);
 
     businessDto.address.id = await this.addressService.addAddress(
-      businessDto.address,
+      reqBody.address,
     );
 
-    await this.uploadBusinessImages(businessDto);
+    const {
+      profileImage,
+      featuredImage,
+      backgroundImage,
+    }: S3BusinessImagesResponse = await this.processBusinessImages(reqBody);
 
-    // map business data
-    // const businessEntity: Business = businessDtoToEntity(businessDto);
-    const businessEntity: Business = null;
+    // map the returned images to the businessDto
+    businessDto.images = {
+      profileImage: profileImage,
+      featuredImage: featuredImage,
+      backgroundImage: backgroundImage,
+    };
 
+    // map business dto data to business entity
+    const businessEntity: Business = Object.assign(new Business(), businessDto);
+
+    // save the business to the database
     const createdBusiness = await this.businessRepository.addBusiness(
       businessEntity,
     );
 
-    // map the business data back to businessDto
-
-    // return the created business information
     return createdBusiness;
   }
 
-  private async uploadBusinessImages(businessDto: BusinessDto) {
-    const { featuredImage, backgroundImage, logoImage, ...businessData } =
-      businessDto;
+  /**
+   * Does necessary mapping and uploads business images to AWS S3
+   * @param businessDto
+   * @returns
+   */
+  private async processBusinessImages(
+    businessDto: BusinessRequestDto,
+  ): Promise<S3BusinessImagesResponse> {
+    const { featuredImage, backgroundImage, profileImage } = businessDto;
 
-    // set the businessId to be name in AWS S3
+    // set the businessId to be name in AWS S3 since name is always unique
     let businessName = businessDto.name;
 
     // replace the space in the business name with underscore
     businessName = businessName.replace(/\s/g, '_');
-    const businessImages: BusinessImages = {
+    const businessImages: S3BusinessImagesRequest = {
       business_id: businessName,
-      background_blob: backgroundImage,
-      logo_blob: logoImage,
-      feature_image_blob: featuredImage,
+      background_image_blob: backgroundImage,
+      profile_image_blob: profileImage,
+      featured_image_blob: featuredImage,
     };
 
-    const imagesUrl: ImagesDto =
-      await this.businessFileService.uploadBusinessImages(businessImages);
+    const imagesUrl: S3BusinessImagesResponse =
+      await this.businessFileService.uploadBusinessImagesToS3(businessImages);
 
-    const images: ImagesDto = {
-      background: imagesUrl.background,
-      featured: imagesUrl.featured,
-      logo: imagesUrl.logo,
-    };
-
-    // save the image url to the database
-    businessDto.images = images;
-  }
-
-  private async checkBusinessExist(businessDto: BusinessDto): Promise<void> {
-    const businessExists = await this.businessRepository.findByName(
-      businessDto.name,
-    );
-
-    if (businessExists) {
-      throw new HttpException(
-        `Business with name ${businessExists.name} already exists`,
-        HttpStatus.CONFLICT,
-      );
-    }
+    return imagesUrl;
   }
 
   async findStoresNearby(geolocation: GeoLocationDto): Promise<any> {
@@ -95,18 +98,18 @@ export class BusinessService {
     return businesses;
   }
 
-  // async findAll() {
-  //   try {
-  //     const businesses = await this.businessModel.find().exec();
-  //     return businesses;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error retrieving all businesses from mongo
-  //       \nfrom findAll method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+  async findAll() {
+    try {
+      const businesses = await this.businessRepository.find();
+      return businesses;
+    } catch (error) {
+      throw new Error(
+        `Error retrieving all businesses from mongo
+        \nfrom findAll method in business.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
 
   // async findOne(id: string): Promise<any> {
   //   try {
