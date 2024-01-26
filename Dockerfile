@@ -8,8 +8,7 @@ RUN npm install
 
 COPY . .
 
-# COPY config/.env /quickmart/src/app
-
+COPY config/.env /quickmart/src/app
 
 RUN npm run build
 
