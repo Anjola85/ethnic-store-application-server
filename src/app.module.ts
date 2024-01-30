@@ -84,9 +84,9 @@ import { MobileModule } from './modules/mobile/mobile.module';
         Mobile,
       ],
       synchronize: true, // comment this out in production
-      ssl: {
-        rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-      },
+      // ssl: {
+      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+      // },
     }),
     BullModule.forRoot({
       redis: {

@@ -17,14 +17,11 @@ import { User } from '../user/entities/user.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { AuthRepository } from './auth.repository';
 import { UserDto } from '../user/dto/user.dto';
-import { UserFileService } from '../files/user-files.service';
-import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { Mobile } from '../mobile/mobile.entity';
 import { MobileService } from '../mobile/mobile.service';
 import { SecureLoginDto } from './dto/secure-login.dto';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
-import { NotFoundError } from 'rxjs';
 import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
 import { MobileRepository } from '../mobile/mobile.repository';
 import { UserRepository } from '../user/user.repository';
@@ -103,7 +100,8 @@ export class AuthService {
             auth,
           });
 
-          newMobile = await this.mobileService.addUserMobile(newMobile, auth);
+          // TODO: bad code, move this to controller
+          newMobile = await this.mobileService.addMobile(newMobile, true);
         }
 
         authModel.id = auth.id;

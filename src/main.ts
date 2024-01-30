@@ -26,6 +26,14 @@ async function bootstrap() {
   );
   const logger = new Logger();
 
+  // comment below should only be removed on local
+  const cors: CorsOptions = {
+    origin: '*', // Allow requests from all origins
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  };
+  app.enableCors(cors);
+
   const config = new DocumentBuilder()
     .setTitle('Quickmart Server')
     .setDescription('Server API description')

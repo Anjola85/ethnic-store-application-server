@@ -1,5 +1,6 @@
 /**
- * This class intercepts the response and encrypts the response payload body being sent to the client.
+ *
+ * This class intercepts the API response and encrypts the response payload body being sent to the client.
  *
  */
 

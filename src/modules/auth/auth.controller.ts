@@ -27,7 +27,7 @@ import { SecureLoginDto } from './dto/secure-login.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserDto } from '../user/dto/user.dto';
 import {
-  decryptKms,
+  decryptPayload,
   encryptKms,
   encryptPayload,
   toBuffer,
@@ -220,51 +220,25 @@ export class AuthController {
   // }
 
   @Post('encrypt')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        payload: {
-          // just include the object you want to encrypt here
-          example: 'this is a test',
-        },
-      },
-    },
-  })
-  async encrypt(@Body() requestBody: any, @Res() res: Response): Promise<any> {
+  async encrypt(@Body() requestBody: any): Promise<any> {
     try {
       const data = requestBody.payload;
       console.log('data to encrypt: ' + JSON.stringify(data, null, 2));
-      const buffer: Buffer = toBuffer(data);
-      const encryptedData = await encryptKms(buffer);
-      return res.status(HttpStatus.OK).json({
-        status: true,
-        data: encryptedData.toString('base64'),
-      });
+      const encryptedData = await encryptPayload(data);
+      const resp = createResponse('encryption successful', encryptedData);
+      return resp;
     } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        status: false,
-        message: `400 encrypt failed from auth.controller.ts`,
-        error: error.message,
-      });
+      throw new HttpException(
+        'encryption failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
   @Post('decrypt')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        payload: {
-          // just include the encrypted data here
-          example: 'this is a test',
-        },
-      },
-    },
-  })
   async decrypt(@Body() requestBody: any, @Res() res: Response) {
     try {
-      const decryptedData = await decryptKms(requestBody.payload);
+      const decryptedData = await decryptPayload(requestBody.payload);
       return res.status(HttpStatus.OK).json({
         status: true,
         data: decryptedData,

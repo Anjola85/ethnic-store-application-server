@@ -1,9 +1,7 @@
 import { DataSource, Repository } from 'typeorm';
 import { Auth, AuthParams } from './entities/auth.entity';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { mobileToEntity } from 'src/common/mapper/mobile-mapper';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { MobileRepository } from '../mobile/mobile.repository';
 
 @Injectable()
 export class AuthRepository extends Repository<Auth> {
@@ -57,8 +55,6 @@ export class AuthRepository extends Repository<Auth> {
 
   async updateAuth(authId: string, authDto: CreateAuthDto): Promise<any> {
     try {
-      const mobile = mobileToEntity(authDto.mobile);
-
       const auth = await this.createQueryBuilder('auth')
         .update(Auth)
         .set({ email: authDto.email })

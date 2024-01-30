@@ -5,7 +5,11 @@ import { Entity, OneToOne, JoinColumn, ManyToOne, Column } from 'typeorm';
 
 @Entity('address')
 export class Address extends CommonEntity {
-  @OneToOne(() => Business, (business) => business.id, { nullable: true })
+  @OneToOne(() => Business, (business) => business.id, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   business: Business;
 

@@ -1,4 +1,4 @@
-import { BusinessDto } from '../business/dto/business.dto';
+import { CreateBusinessDto } from '../business/dto/create-business.dto';
 import { Business } from '../business/entities/business.entity';
 import { User } from '../user/entities/user.entity';
 import { Favourite } from './entities/favourite.entity';
@@ -12,7 +12,7 @@ export function businessToFavourite(business: Business, user: User): Favourite {
 
 // returns for each favourite: {Business, User}
 export function favouriteDtoToFavourite(
-  businessDto: BusinessDto[],
+  businessDto: CreateBusinessDto[],
   user: User,
 ): Favourite[] {
   // const businesses: Business[];

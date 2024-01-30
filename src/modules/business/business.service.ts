@@ -1,6 +1,6 @@
+import { MobileService } from './../mobile/mobile.service';
 import { BusinessRepository } from './business.repository';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { BusinessDto } from './dto/business.dto';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   S3BusinessImagesRequest,
   S3BusinessImagesResponse,
@@ -8,58 +8,87 @@ import {
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { AddressService } from '../address/address.service';
 import { Business } from './entities/business.entity';
-import { BusinessRequestDto } from './dto/business.request';
 import { BusinessFilesService } from '../files/business-files.service';
+import { CreateBusinessDto } from './dto/create-business.dto';
 
 @Injectable()
 export class BusinessService {
+  private readonly logger = new Logger(BusinessService.name);
+
   constructor(
     private businessRepository: BusinessRepository,
     private businessFileService: BusinessFilesService,
     private addressService: AddressService,
+    private mobileService: MobileService,
   ) {}
 
-  async register(reqBody: BusinessRequestDto): Promise<any> {
-    console.log('req body is: ', reqBody);
-    const businessExist = await this.businessRepository.findByUniq({
-      name: reqBody.name,
-      email: reqBody.email,
-    });
+  /**
+   * Register a business
+   * @param reqBody
+   * @returns
+   */
+  async register(reqBody: CreateBusinessDto): Promise<any> {
+    try {
+      const { businessExist, type } = await this.businessRepository.findByUniq({
+        name: reqBody.name,
+        email: reqBody.email,
+      });
 
-    if (businessExist)
-      throw new HttpException(
-        `Business with name ${businessExist.name} already exists`,
-        HttpStatus.CONFLICT,
+      if (businessExist) {
+        this.logger.debug(`Business with ${type} already exists`);
+        throw new HttpException(
+          `Business with ${type} already exists`,
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      // map request object of DTO
+      const businessDto: CreateBusinessDto = Object.assign(
+        new CreateBusinessDto(),
+        reqBody,
       );
 
-    const businessDto: BusinessDto = Object.assign(new BusinessDto(), reqBody);
+      const mobile = await this.mobileService.addMobile(reqBody.mobile, false);
 
-    businessDto.address.id = await this.addressService.addAddress(
-      reqBody.address,
-    );
+      const address = await this.addressService.addAddress(reqBody.address);
 
-    const {
-      profileImage,
-      featuredImage,
-      backgroundImage,
-    }: S3BusinessImagesResponse = await this.processBusinessImages(reqBody);
+      // S3 integratino should run below regardless of whether the user has uploaded images or not
+      if (
+        businessDto.images &&
+        (businessDto.images.backgroundImage ||
+          businessDto.images.featuredImage ||
+          businessDto.images.profileImage)
+      ) {
+        const { profileImage, backgroundImage }: S3BusinessImagesResponse =
+          await this.processBusinessImages(reqBody);
 
-    // map the returned images to the businessDto
-    businessDto.images = {
-      profileImage: profileImage,
-      featuredImage: featuredImage,
-      backgroundImage: backgroundImage,
-    };
+        businessDto.images = {
+          profileImage: profileImage,
+          backgroundImage: backgroundImage,
+        };
+      }
 
-    // map business dto data to business entity
-    const businessEntity: Business = Object.assign(new Business(), businessDto);
+      // map business dto data to business entity
+      const businessEntity: Business = Object.assign(
+        new Business(),
+        businessDto,
+      );
 
-    // save the business to the database
-    const createdBusiness = await this.businessRepository.addBusiness(
-      businessEntity,
-    );
+      // save the business to the database
+      const createdBusiness = await this.businessRepository
+        .create(businessEntity)
+        .save();
 
-    return createdBusiness;
+      return createdBusiness;
+    } catch (error) {
+      this.logger.debug(
+        `Error thrown in business.service.ts, register method: ${error.message}`,
+      );
+      throw new Error(
+        `Error from register method in business.service.ts.
+    \nWith error message: ${error.message}`,
+      );
+    }
   }
 
   /**
@@ -68,7 +97,7 @@ export class BusinessService {
    * @returns
    */
   private async processBusinessImages(
-    businessDto: BusinessRequestDto,
+    businessDto: CreateBusinessDto,
   ): Promise<S3BusinessImagesResponse> {
     const { featuredImage, backgroundImage, profileImage } = businessDto;
 

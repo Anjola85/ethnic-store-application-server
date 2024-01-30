@@ -11,12 +11,11 @@ import {
   Get,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
-import { BusinessDto } from './dto/business.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { createError, createResponse } from 'src/common/util/response';
 import { Response } from 'express';
-import { BusinessRequestDto } from './dto/business.request';
+import { CreateBusinessDto } from './dto/create-business.dto';
 
 @Controller('business')
 export class BusinessController {
@@ -38,15 +37,14 @@ export class BusinessController {
       { name: 'logoImage', maxCount: 1 },
     ]),
   )
-  async register(@Body() requestBody: any, @UploadedFiles() files: any) {
-    console.log('requestBody: ', JSON.stringify(requestBody, null, 2));
-
-    const businessBody = Object.assign(new BusinessRequestDto(), requestBody);
-
+  async register(
+    @Body() businessBody: CreateBusinessDto,
+    @UploadedFiles() files: any,
+  ) {
     // replace the images with the placeholder images from s3
     businessBody.featuredImage = files?.featuredImage[0] || null;
     businessBody.backgroundImage = files?.backgroundImage[0] || null;
-    businessBody.logoImage = files?.logoImage[0] || null;
+    businessBody.profileImage = files?.profileImage[0] || null;
 
     try {
       const createdBusiness = await this.businessService.register(businessBody);
@@ -56,6 +54,8 @@ export class BusinessController {
       });
     } catch (error) {
       this.logger.debug('From register in business.controller.ts ', error);
+
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         "We're working on it",

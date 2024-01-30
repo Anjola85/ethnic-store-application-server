@@ -6,3 +6,4 @@ npm-debug.log# Elastic Beanstalk Files
 .elasticbeanstalk/*
 .git
 .gitignore
+# config/.env

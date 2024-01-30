@@ -23,7 +23,7 @@ import {
   createEncryptedResponse,
 } from '../../common/util/response';
 import {
-  decryptKms,
+  decryptPayload,
   encryptKms,
   encryptPayload,
   toBuffer,
@@ -213,7 +213,7 @@ export class UserController {
   ): Promise<any> {
     try {
       const crypto = res.locals.crypto;
-      const decryptedBody = await decryptKms(requestBody.payload);
+      const decryptedBody = await decryptPayload(requestBody.payload);
 
       // map decrypted body to userDto
       const userDto = new UpdateUserDto();

@@ -7,10 +7,10 @@ import {
   Logger,
   HttpStatus,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { WaitlistService } from './waitlist.service';
 import { Response } from 'express';
-import { decryptKms } from 'src/common/util/crypto';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { createResponse } from 'src/common/util/response';
 import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
@@ -21,6 +21,7 @@ import {
   customerValidation,
   shopperValidation,
 } from './validation/validation';
+import { InternalServerError } from '@aws-sdk/client-dynamodb';
 
 @Controller('waitlist')
 export class WaitlistController {
@@ -29,190 +30,128 @@ export class WaitlistController {
 
   @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-customer')
-  async joinCustomerWaitlist(
-    @Body() body: any,
-    @Res() res: Response,
-  ): Promise<any> {
+  async joinCustomerWaitlist(@Body() reqBody: any): Promise<any> {
     try {
       this.logger.debug(
-        'join customer waitlist endpoint called with body: ' + body,
+        'join customer waitlist endpoint called with body: ' + reqBody,
       );
 
-      // decrypt body
-      const decryptedBody = await decryptKms(body.payload);
-      this.logger.debug('decrypted body: ' + decryptedBody);
+      const body = reqBody.payload;
 
-      // validate input
-      customerValidation(decryptedBody);
+      if (!body) throw new BadRequestException('payload is required');
+
+      customerValidation(body);
 
       const waitlistCustomer = new WaitlistCustomerDto();
-      Object.assign(waitlistCustomer, decryptedBody);
+      Object.assign(waitlistCustomer, body);
 
       await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
-
-      const resp = res
-        .status(HttpStatus.CREATED)
-        .json(createResponse('customer added'));
-
-      this.logger.debug(
-        'join customer waitlist endpoint called with response: ' + resp,
-      );
-
-      return resp;
+      return createResponse('customer added');
     } catch (error: any) {
       this.logger.error(
         'Error in joinCustomerWaitlistMethod, with error ' + error,
       );
 
-      let errResp;
-
       if (error instanceof ConflictException) {
-        errResp = res
-          .status(HttpStatus.CONFLICT)
-          .json(createResponse('customer already exists', null, false));
-
         this.logger.error(
           'Error in joinCustomerWaitlistMethod, with error ' + error,
         );
+
+        throw new ConflictException('customer already exists');
       } else if (error.message.includes('required')) {
-        errResp = res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createResponse(error.message, null, false));
-
         this.logger.error(
-          'Error in joinCustomerWaitlistMethod, with error ' + errResp,
+          'Error in joinCustomerWaitlistMethod, with error ' + error,
         );
+
+        throw new BadRequestException(error.message);
       } else {
-        errResp = res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('Internal Server Error', null, false));
-
         this.logger.error(
-          'Error in joinCustomerWaitlistMethod, with error ' + errResp,
+          'Error in joinCustomerWaitlistMethod, with error ' + error,
         );
-      }
 
-      return errResp;
+        throw new InternalServerError(error.message || 'Internal Server Error');
+      }
     }
   }
 
   @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-shopper')
-  async joinShopperWaitlist(
-    @Body() body: any,
-    @Res() res: Response,
-  ): Promise<any> {
+  async joinShopperWaitlist(@Body() reqBody: any): Promise<any> {
     try {
-      this.logger.debug(
-        'join shopper waitlist endpoint called with body: ' + body,
-      );
+      const body = reqBody.payload;
 
-      const decryptedBody = await decryptKms(body.payload);
-      this.logger.debug('decrypted body: ' + decryptedBody);
+      if (!body) throw new BadRequestException('payload is required');
 
-      shopperValidation(decryptedBody);
+      shopperValidation(body);
 
       const waitlistShopper = new WaitlistShopperDto();
-      Object.assign(waitlistShopper, decryptedBody);
+      Object.assign(waitlistShopper, body);
 
-      await this.waitlistService.joinShopperWaitlist(waitlistShopper);
-
-      const resp = res
-        .status(HttpStatus.CREATED)
-        .json(createResponse('shopper added'));
+      const resp = await this.waitlistService.joinShopperWaitlist(
+        waitlistShopper,
+      );
 
       this.logger.debug(
         'join shopper waitlist endpoint called with response: ' + resp,
       );
 
-      return resp;
+      return createResponse('shopper added');
     } catch (error) {
       this.logger.error('Error in joinShopperWaitlist, with error ' + error);
 
       let errResp;
 
       if (error instanceof ConflictException) {
-        errResp = res
-          .status(HttpStatus.CONFLICT)
-          .json(createResponse('shopper already exists', null, false));
-
         this.logger.error('Error in joinShopperWaitlist, with error ' + error);
+
+        throw new ConflictException('shopper already exists');
       } else if (error.message.includes('required')) {
-        errResp = res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createResponse(error.message, null, false));
-
         this.logger.error(
           'Error in joinShopperWaitlist, with error ' + errResp,
         );
+
+        throw new BadRequestException(error.message);
       } else {
-        errResp = res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('Internal Server Error', null, false));
-
         this.logger.error(
           'Error in joinShopperWaitlist, with error ' + errResp,
         );
-      }
 
-      return errResp;
+        throw new InternalServerError(error.message || 'Internal Server Error');
+      }
     }
   }
 
   @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-business')
-  async joinBusinessWaitlist(
-    @Body() body: any,
-    @Res() res: Response,
-  ): Promise<any> {
+  async joinBusinessWaitlist(@Body() reqBody: any): Promise<any> {
     try {
-      this.logger.debug(
-        'join business waitlist endpoint called with body: ' + body,
-      );
+      const body = reqBody.payload;
 
-      const decryptedBody = await decryptKms(body.payload);
-      this.logger.debug('decrypted body: ' + decryptedBody);
+      if (!body) throw new BadRequestException('payload is required');
 
-      businessValidation(decryptedBody);
+      businessValidation(body);
 
       const waitlistBusiness = new WaitlistBusinessDto();
-      Object.assign(waitlistBusiness, decryptedBody);
+      Object.assign(waitlistBusiness, body);
 
       await this.waitlistService.joinBusinessWaitlist(waitlistBusiness);
 
-      return res
-        .status(HttpStatus.CREATED)
-        .json(createResponse('business added'));
+      return createResponse('business added');
     } catch (error) {
       this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
 
-      let errResp;
-
       if (error instanceof ConflictException) {
-        errResp = res
-          .status(HttpStatus.CONFLICT)
-          .json(createResponse('business already exists', null, false));
-
         this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
+        throw new ConflictException('business already exists');
       } else if (error.message.includes('required')) {
-        errResp = res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createResponse(error.message, null, false));
+        this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
 
-        this.logger.error(
-          'Error in joinBusinessWaitlist, with error ' + errResp,
-        );
-      } else {
-        errResp = res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createResponse('Internal Server Error', null, false));
-
-        this.logger.error(
-          'Error in joinBusinessWaitlist, with error ' + errResp,
-        );
+        throw new BadRequestException(error.message);
       }
 
-      return errResp;
+      this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
+
+      throw new InternalServerError(error.message || 'Internal Server Error');
     }
   }
 }

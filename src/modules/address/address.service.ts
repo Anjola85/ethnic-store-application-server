@@ -27,23 +27,14 @@ export class AddressService {
    */
   async addAddress(addressDto: AddressDto): Promise<Address> {
     try {
-      // set coordinates
       await this.geoCodingService.setCoordinates(addressDto);
-
-      // map dto to entity
-      const addressEntity = new Address();
-      Object.assign(addressEntity, addressDto);
-
-      // save to db
+      const addressEntity = Object.assign(new Address(), addressDto);
       const newAddress = await this.addressRepository
         .create(addressEntity)
         .save();
-
       return newAddress;
     } catch (error) {
-      this.logger.error(
-        `Error thrown in address.service.ts, addAddress method: ${error}`,
-      );
+      this.logger.debug('Error in addAddress method: ' + error);
       throw error;
     }
   }

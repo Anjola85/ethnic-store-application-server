@@ -2,7 +2,6 @@ import { Country } from 'src/modules/country/entities/country.entity';
 import {
   Column,
   Entity,
-  Index,
   JoinColumn,
   ManyToMany,
   ManyToOne,
@@ -16,6 +15,7 @@ import { Address } from 'src/modules/address/entities/address.entity';
 import { Mobile } from 'src/modules/mobile/mobile.entity';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { ScheduleDto } from '../dto/schedule.dto';
+import { MobileDto } from 'src/contract/version1/request/dto';
 
 export interface BusinessParam {
   name?: string;
@@ -28,10 +28,10 @@ export class Business extends CommonEntity {
   @Column({ nullable: false, unique: true })
   name: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', default: '' })
   description: string;
 
-  @Column({ type: 'varchar', nullable: true, unique: true })
+  @Column({ type: 'varchar', default: '', unique: true })
   email: string;
 
   @Column({ type: 'jsonb', nullable: true })

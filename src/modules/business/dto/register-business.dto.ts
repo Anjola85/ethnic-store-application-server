@@ -3,25 +3,26 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
-  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { MobileDto, MobileGroupDto } from 'src/common/dto/mobile.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 import { ScheduleDto } from 'src/modules/business/dto/schedule.dto';
 import { GeoLocationDto } from './geolocation.dto';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
+import { S3BusinessImagesResponse } from './image.dto';
+import { BaseDto } from 'src/common/dto/base.dto';
 
-export class BusinessRequestDto {
+export class BusinessDto extends BaseDto {
+  @IsOptional()
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsObject()
+  owner?: User;
 
   @ApiProperty()
   @IsObject()
@@ -29,12 +30,15 @@ export class BusinessRequestDto {
 
   @ApiProperty()
   @IsArray()
-  @IsNotEmpty()
   otherCountries: Country[];
 
-  // @ApiProperty()
-  // @IsArray()
-  // categories: Category[];
+  @ApiProperty()
+  @IsArray()
+  categories: Category[];
+
+  @ApiProperty()
+  @IsString()
+  name: string; // name has to be unique
 
   @ApiProperty()
   @IsString()
@@ -44,7 +48,6 @@ export class BusinessRequestDto {
   @IsObject()
   @ValidateNested()
   @Type(() => AddressDto)
-  @IsNotEmpty()
   address: AddressDto;
 
   @ApiProperty()
@@ -54,7 +57,7 @@ export class BusinessRequestDto {
   @ApiProperty()
   @IsObject()
   @ValidateNested()
-  @Type(() => MobileGroupDto)
+  @Type(() => MobileDto)
   mobile: MobileDto;
 
   @ApiProperty()
@@ -83,6 +86,17 @@ export class BusinessRequestDto {
   @ApiProperty({ type: 'string', format: 'binary' })
   @IsOptional()
   profileImage: Express.Multer.File;
+
+  @IsOptional()
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
+  images: S3BusinessImagesResponse;
+
+  @ApiProperty({ description: 'test-description', example: 'test-value' })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GeoLocationDto)
+  geolocation: GeoLocationDto;
 
   @ApiProperty({ description: 'test-description', example: 'test-value' })
   @IsString()

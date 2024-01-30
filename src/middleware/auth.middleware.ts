@@ -2,7 +2,6 @@
  * This middleware validates and extract ids from the token attached to the header request
  *
  */
-
 import {
   Injectable,
   NestMiddleware,

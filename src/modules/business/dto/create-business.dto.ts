@@ -8,7 +8,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { MobileDto, MobileGroupDto } from 'src/common/dto/mobile.dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 import { ScheduleDto } from 'src/modules/business/dto/schedule.dto';
 import { GeoLocationDto } from './geolocation.dto';
 import { User } from 'src/modules/user/entities/user.entity';
@@ -16,8 +16,9 @@ import { Country } from 'src/modules/country/entities/country.entity';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 import { S3BusinessImagesResponse } from './image.dto';
+import { BaseDto } from 'src/common/dto/base.dto';
 
-export class BusinessDto {
+export class CreateBusinessDto extends BaseDto {
   @IsOptional()
   @ApiProperty()
   @IsObject()
@@ -56,7 +57,7 @@ export class BusinessDto {
   @ApiProperty()
   @IsObject()
   @ValidateNested()
-  @Type(() => MobileGroupDto)
+  @Type(() => MobileDto)
   mobile: MobileDto;
 
   @ApiProperty()
@@ -74,14 +75,17 @@ export class BusinessDto {
   @IsString()
   rating: string;
 
-  @ApiProperty({ type: 'string', format: 'string' })
-  featuredImage: string;
+  @ApiProperty({ type: 'string', format: 'binary' })
+  @IsOptional()
+  featuredImage: Express.Multer.File;
 
   @ApiProperty({ type: 'string', format: 'binary' })
-  backgroundImage: string;
+  @IsOptional()
+  backgroundImage: Express.Multer.File;
 
   @ApiProperty({ type: 'string', format: 'binary' })
-  logoImage: string;
+  @IsOptional()
+  profileImage: Express.Multer.File;
 
   @IsOptional()
   @ApiProperty({ description: 'test-description', example: 'test-value' })

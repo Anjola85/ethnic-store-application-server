@@ -11,46 +11,35 @@ export class BusinessRepository extends Repository<Business> {
     super(Business, dataSource.createEntityManager());
   }
 
-  // method to create business
-  async addBusiness(business: Business) {
-    try {
-      const newBusiness = await this.createQueryBuilder('business')
-        .insert()
-        .into(Business)
-        .values(business)
-        .execute();
-
-      return newBusiness;
-    } catch (error) {
-      this.logger.error(
-        `Error thrown in business.repository.ts, addBusiness method: ${error.message}`,
-      );
-      throw new HttpException(
-        'Unable to add business to the database',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async findByUniq(params: BusinessParam): Promise<Business> {
+  async findByUniq(params: BusinessParam): Promise<any> {
     const { name, email, businessId } = params;
 
     try {
-      console.log(
-        `looking for record with params: name:${name}, email:${email}`,
-      );
+      let businessExist: Business;
+      let type: string;
 
-      const business = await this.createQueryBuilder('business')
-        .setFindOptions({
-          where: { name, email, id: businessId },
-        })
-        .getOne();
+      if (name) {
+        type = 'name';
+        businessExist = await this.createQueryBuilder('business')
+          .where('business.name = :name', { name })
+          .getOne();
+      }
+      if (email && !type) {
+        type = 'email';
+        businessExist = await this.createQueryBuilder('business')
+          .where('business.email = :email', { email })
+          .getOne();
+      }
+      if (businessId && !type) {
+        type = 'businessId';
+        businessExist = await this.createQueryBuilder('business')
+          .where('business.id = :id', { id: businessId })
+          .getOne();
+      }
 
-      console.log('business is: ', business);
+      if (typeof businessExist === undefined) return null;
 
-      if (typeof business === undefined) return null;
-
-      return business;
+      return { businessExist, type };
     } catch (error) {
       this.logger.error(
         `Error thrown in business.repository.ts, findByName method: ${error.message}`,
