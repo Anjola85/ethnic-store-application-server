@@ -223,7 +223,7 @@ export class AuthController {
   async encrypt(@Body() requestBody: any): Promise<any> {
     try {
       const data = requestBody.payload;
-      console.log('data to encrypt: ' + JSON.stringify(data, null, 2));
+      // console.log('data to encrypt: ' + JSON.stringify(data, null, 2));
       const encryptedData = await encryptPayload(data);
       const resp = createResponse('encryption successful', encryptedData);
       return resp;

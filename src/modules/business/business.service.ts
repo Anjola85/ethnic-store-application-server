@@ -10,6 +10,7 @@ import { AddressService } from '../address/address.service';
 import { Business } from './entities/business.entity';
 import { BusinessFilesService } from '../files/business-files.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { AwsS3Service } from '../files/aws-s3.service';
 
 @Injectable()
 export class BusinessService {
@@ -20,6 +21,7 @@ export class BusinessService {
     private businessFileService: BusinessFilesService,
     private addressService: AddressService,
     private mobileService: MobileService,
+    private awsS3Service: AwsS3Service,
   ) {}
 
   /**
@@ -54,11 +56,11 @@ export class BusinessService {
 
       // S3 integratino should run below regardless of whether the user has uploaded images or not
       if (
-        businessDto.images &&
-        (businessDto.images.backgroundImage ||
-          businessDto.images.featuredImage ||
-          businessDto.images.profileImage)
+        businessDto.backgroundImage ||
+        businessDto.featuredImage ||
+        businessDto.profileImage
       ) {
+        // upload business images to AWS S3
         const { profileImage, backgroundImage }: S3BusinessImagesResponse =
           await this.processBusinessImages(reqBody);
 
@@ -66,13 +68,26 @@ export class BusinessService {
           profileImage: profileImage,
           backgroundImage: backgroundImage,
         };
+      } else {
+        const defaultStoreImage: string = await this.awsS3Service.getImageUrl(
+          'defaultStore.png',
+        );
+        // console.log('defaultStoreImage', defaultStoreImage);
+        if (!defaultStoreImage) {
+          this.logger.error('Default store image not found');
+        }
+        businessDto.images = {
+          profileImage: defaultStoreImage || '',
+          backgroundImage: defaultStoreImage || '',
+        };
       }
 
       // map business dto data to business entity
-      const businessEntity: Business = Object.assign(
-        new Business(),
-        businessDto,
-      );
+      const businessEntity: Business = Object.assign(new Business(), {
+        ...businessDto,
+        backgroundImage: businessDto.images.backgroundImage,
+        profileImage: businessDto.images.profileImage,
+      });
 
       // save the business to the database
       const createdBusiness = await this.businessRepository
