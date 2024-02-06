@@ -8,12 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WaitlistBusinessDto } from './dto/waitlist_business.dto';
 import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
-import axios, { HttpStatusCode } from 'axios';
+import axios from 'axios';
 import { AddressDto } from '../address/dto/address.dto';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
+import { EnvConfigService } from '../config/env-config.service';
 @Injectable()
 export class WaitlistService {
   private readonly logger = new Logger(WaitlistService.name);
+  private readonly configService: EnvConfigService;
   constructor(
     @InjectRepository(WaitlistCustomer)
     private customerRespository: Repository<WaitlistCustomer>,
@@ -178,7 +180,7 @@ export class WaitlistService {
     console.log('EXTRACTING DATA FOR bUSiNEss');
     // const addrStr = this.stringifyAddress(payload.address);
     data = {
-      waitlist_id: Number(process.env.WAITLIST_ID),
+      waitlist_id: Number(this.configService.get('WAITLIST_ID')),
       phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}` || '',
       email: payload.email || '',
       answers: [
@@ -214,7 +216,7 @@ export class WaitlistService {
 
   private extractShopperData(data: any, payload: any) {
     data = {
-      waitlist_id: Number(process.env.WAITLIST_ID),
+      waitlist_id: Number(this.configService.get('WAITLIST_ID')),
       phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
       first_name: payload.firstName,
       last_name: payload.lastName,
@@ -247,7 +249,7 @@ export class WaitlistService {
 
   private extractCustomerData(data: any, payload: any) {
     data = {
-      waitlist_id: Number(process.env.WAITLIST_ID),
+      waitlist_id: Number(this.configService.get('WAITLIST_ID')),
       phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
       first_name: payload.firstName,
       last_name: payload.lastName,

@@ -1,5 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  OnModuleInit,
+} from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
@@ -37,10 +42,16 @@ import { CryptoInterceptor } from './interceptors/crypto.interceptor';
 import { DecryptionMiddleware } from './middleware/decryption.middleware';
 import { Mobile } from './modules/mobile/mobile.entity';
 import { MobileModule } from './modules/mobile/mobile.module';
+import {
+  EnvConfigService,
+  isProduction,
+} from './modules/config/env-config.service';
+import { EnvConfigModule } from './modules/config/env-config.module';
+import { BootstrapService } from './modules/bootstrap/bootstrap.service';
 
-@ApiExtraModels(UserDto)
 @Module({
   imports: [
+    EnvConfigModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
@@ -62,31 +73,36 @@ import { MobileModule } from './modules/mobile/mobile.module';
       isGlobal: true,
       envFilePath: ['config/.env'],
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.PG_HOST,
-      port: Number(process.env.PG_PORT),
-      username: process.env.PG_USER,
-      password: process.env.PG_PASSWORD,
-      database: process.env.PG_DATABASE,
-      entities: [
-        User,
-        Business,
-        Country,
-        Continent,
-        Category,
-        Address,
-        Auth,
-        Favourite,
-        WaitlistCustomer,
-        WaitlistBusiness,
-        WaitlistShopper,
-        Mobile,
-      ],
-      synchronize: true, // comment this out in production
-      // ssl: {
-      //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-      // },
+    TypeOrmModule.forRootAsync({
+      imports: [EnvConfigModule],
+      useFactory: async (configService: EnvConfigService) => ({
+        type: 'postgres',
+        host: configService.get('DB_HOST'),
+        port: Number(configService.get('DB_PORT')),
+        username: configService.get('DB_USER'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
+        entities: [
+          User,
+          Business,
+          Country,
+          Continent,
+          Category,
+          Address,
+          Auth,
+          Favourite,
+          WaitlistCustomer,
+          WaitlistBusiness,
+          WaitlistShopper,
+          Mobile,
+        ],
+        synchronize: true, // comment this out in production
+        ssl: isProduction() ? { rejectUnauthorized: false } : undefined,
+        // ssl: {
+        //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
+        // },
+      }),
+      inject: [EnvConfigService],
     }),
     BullModule.forRoot({
       redis: {
@@ -95,12 +111,12 @@ import { MobileModule } from './modules/mobile/mobile.module';
       },
     }),
     TwilioModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        accountSid: configService.get<string>('TWILIO_ACCOUNT_SID'),
-        authToken: configService.get<string>('TWILIO_AUTH_TOKEN'),
+      imports: [EnvConfigModule],
+      useFactory: (configService: EnvConfigService) => ({
+        accountSid: configService.get('TWILIO_ACCOUNT_SID'),
+        authToken: configService.get('TWILIO_AUTH_TOKEN'),
       }),
-      inject: [ConfigService],
+      inject: [EnvConfigService],
     }),
     UserModule,
     SendgridModule,
@@ -119,6 +135,8 @@ import { MobileModule } from './modules/mobile/mobile.module';
   controllers: [AppController],
   providers: [
     AppService,
+    BootstrapService,
+    EnvConfigService,
     JwtService,
     {
       provide: 'APP_GUARD',
@@ -129,6 +147,7 @@ import { MobileModule } from './modules/mobile/mobile.module';
       useClass: CryptoInterceptor,
     },
   ],
+  exports: [EnvConfigService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
