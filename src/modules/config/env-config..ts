@@ -6,20 +6,20 @@
  * Improvement: default loading of variables to local .env file if not on AWS SSM
  *
  */
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Global, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
 
-@Injectable()
-export class EnvConfigService implements OnModuleInit {
-  async onModuleInit(): Promise<void> {
-    this.logger.log('Initializing EnvConfigService...');
-    await this.loadConfig();
-  }
-
+export class EnvConfigService {
   private readonly logger = new Logger(EnvConfigService.name);
-  private readonly appConfig: Record<string, string> = {};
+  private static appConfig: Record<string, string> = {};
+  private static configLoaded = false;
   private readonly ssmCLient: AWS.SSM;
   private currentEnv: string;
+
+  // async onModuleInit() {
+  //   this.logger.log('onModuleInit - Loading environment variables from SSM');
+  //   await this.loadConfig();
+  // }
 
   constructor() {
     const isProd = isProduction();
@@ -35,27 +35,31 @@ export class EnvConfigService implements OnModuleInit {
       });
     }
 
-    this.currentEnv = isProd ? '/prod' : '/dev';
+    // this.currentEnv = isProd ? 'prod' : 'dev';
+    this.currentEnv = 'prod'; // TODO: comment when staging has been added
   }
 
   /**
    * Loads the environment variables from SSM
    */
   public async loadConfig(): Promise<void> {
-    console.log('Loading config from SSM');
+    if (EnvConfigService.configLoaded) return;
+
+    this.logger.debug('Loading environment variables from SSM');
+
     const parametersToLoad = [
+      { name: 'DB_PORT', isSecure: false },
+      { name: 'DB_NAME', isSecure: true },
+      { name: 'DB_HOST', isSecure: true },
+      { name: 'DB_USER', isSecure: true },
+      { name: 'DB_PASSWORD', isSecure: true },
       { name: 'AWS_ACCESS_KEY', isSecure: true },
       { name: 'AWS_SECRET_ACCESS_KEY', isSecure: true },
       { name: 'SECRET_KEY', isSecure: true },
       { name: 'AWS_REGION', isSecure: false },
       { name: 'AWS_BUCKET_NAME', isSecure: false },
       { name: 'AWS_BUCKET_REGION', isSecure: false },
-      { name: 'DB_PORT', isSecure: false },
       { name: 'AWS_KMS_KEY_ID', isSecure: true },
-      { name: 'DB_NAME', isSecure: true },
-      { name: 'DB_HOST', isSecure: true },
-      { name: 'DB_USER', isSecure: true },
-      { name: 'DB_PASSWORD', isSecure: true },
       { name: 'GCP_GEOCODING_API_KEY', isSecure: true },
       { name: 'TWILIO_ACCOUNT_SID', isSecure: true },
       { name: 'TWILIO_AUTH_TOKEN', isSecure: true },
@@ -64,45 +68,47 @@ export class EnvConfigService implements OnModuleInit {
       { name: 'WAITLIST_ID', isSecure: true },
     ];
 
-    this.logger.debug('Loading environment variables from SSM');
-    // console.log('Entering for loop...');
     for (const params of parametersToLoad) {
-      // console.log('talking to aws');
-      // TODO: change to use currentEnv
-      const resp = await this.ssmCLient
+      if (!isProduction() && process.env[params.name]) {
+        this.logger.debug(`Loading ${params.name} from local .env file`);
+        EnvConfigService.appConfig[params.name] = process.env[params.name];
+        continue;
+      }
+
+      await this.ssmCLient
         .getParameter({
-          Name: `/prod/q1/config/${params.name}`,
+          Name: `/${this.currentEnv}/q1/config/${params.name}`,
           WithDecryption: params.isSecure,
         })
         .promise()
         .then((resp) => {
-          this.logger.debug(`Loaded ${params.name} from SSM successfully`);
+          this.logger.debug(
+            `Loaded ${params.name} from SSM successfully with value: ${resp.Parameter.Value}`,
+          );
           const Parameter = resp.Parameter;
-          this.appConfig[params.name] = Parameter.Value;
+          EnvConfigService.appConfig[params.name] = Parameter.Value;
         })
         .catch((err) => {
           this.logger.error(
             `Error loading variable ${params.name} from SSM, with error: ${err}`,
           );
+          throw new Error(`Error loading variable ${params.name} from SSM`);
         });
     }
 
     // TODO: keep retying failed variables that didnt load in the background
   }
 
-  get(key: string): string {
-    const value = this.appConfig[key];
+  static get(key: string): string {
+    return this.appConfig[key];
+  }
 
-    // TODO: copy all SSM variables to env, make it accessible also from env
-    // if (!value) {
-    //   this.logger.debug(
-    //     `Config not found for key: ${key} in SSM, using env variable instead`,
-    //   );
-    //   return process.env[key];
-    // }
+  public setAppConfig(appConfig: Record<string, string>): void {
+    EnvConfigService.appConfig = appConfig;
+  }
 
-    console.log('value: ', value);
-    return value;
+  public getAppConfig(): Record<string, string> {
+    return EnvConfigService.appConfig;
   }
 
   public validateConfig() {
@@ -129,7 +135,7 @@ export class EnvConfigService implements OnModuleInit {
       'WAITLIST_ID',
     ];
     const missingConfig = requiredConfig.filter(
-      (config) => !this.appConfig[config],
+      (config) => !EnvConfigService.appConfig[config],
     );
 
     if (missingConfig.length) {
@@ -148,10 +154,6 @@ export class EnvConfigService implements OnModuleInit {
 }
 
 export const isProduction = (): boolean => {
-  console.log(
-    'Checking if prod environment...\nNODE_ENV: ',
-    process.env.NODE_ENV,
-  );
   if (process.env.NODE_ENV === 'dev') return false;
   return true;
 };

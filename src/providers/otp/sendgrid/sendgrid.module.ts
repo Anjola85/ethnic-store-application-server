@@ -15,7 +15,7 @@ import { UserRepository } from 'src/modules/user/user.repository';
 import { AddressRepository } from 'src/modules/address/address.respository';
 import { GeocodingService } from 'src/modules/geocoding/geocoding.service';
 import { MobileRepository } from 'src/modules/mobile/mobile.repository';
-import { EnvConfigService } from 'src/modules/config/env-config.service';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 
 @Global()
 @Module({

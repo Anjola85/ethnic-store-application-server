@@ -1,4 +1,4 @@
-import { EnvConfigService } from 'src/modules/config/env-config.service';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 import { Injectable, Logger } from '@nestjs/common';
 import { AddressDto } from '../address/dto/address.dto';
 import axios from 'axios';
@@ -11,7 +11,7 @@ export class GeocodingService {
   async setCoordinates(addressDto: AddressDto): Promise<AddressDto> {
     this.logger.debug('Setting coordinates');
     const addressString = `${addressDto.street}, ${addressDto.city}, ${addressDto.province}, ${addressDto.postalCode}, ${addressDto.country}`;
-    const apiKey = this.configService.get('GCP_GEOCODING_API_KEY');
+    const apiKey = EnvConfigService.get('GCP_GEOCODING_API_KEY');
 
     try {
       const response = await axios.get(

@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { Twilio } from 'twilio';
 import { generateOtpCode } from 'src/providers/util/otp-code-util';
-import { EnvConfigService } from 'src/modules/config/env-config.service';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 
 @Injectable()
 export default class TwilioService {
@@ -11,8 +11,8 @@ export default class TwilioService {
 
   constructor(private readonly configService: EnvConfigService) {
     // const twilioAccountSid =
-    //   this.configService.get<string>('TWILIO_ACCOUNT_SID');
-    // const twilioAuthToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+    //   this.EnvConfigService.get<string>('TWILIO_ACCOUNT_SID');
+    // const twilioAuthToken = this.EnvConfigService.get<string>('TWILIO_AUTH_TOKEN');
     const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
     const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
     this.client = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
@@ -20,8 +20,8 @@ export default class TwilioService {
 
   private getClient(): Twilio {
     if (!this.client) {
-      const TWILIO_ACCOUNT_SID = this.configService.get('TWILIO_ACCOUNT_SID');
-      const TWILIO_AUTH_TOKEN = this.configService.get('TWILIO_AUTH_TOKEN');
+      const TWILIO_ACCOUNT_SID = EnvConfigService.get('TWILIO_ACCOUNT_SID');
+      const TWILIO_AUTH_TOKEN = EnvConfigService.get('TWILIO_AUTH_TOKEN');
       this.client = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     }
     return this.client;
@@ -37,7 +37,7 @@ export default class TwilioService {
       this.client = this.getClient();
 
       this.logger.debug('phone-number to send sms to is: ' + phoneNumber);
-      const senderPhoneNumber = this.configService.get('TWILIO_PHONE_NUMBER');
+      const senderPhoneNumber = EnvConfigService.get('TWILIO_PHONE_NUMBER');
 
       // generate otp code
       const { code, expiryTime } = generateOtpCode(

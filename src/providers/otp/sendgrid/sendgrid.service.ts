@@ -3,7 +3,7 @@ import * as SendGrid from '@sendgrid/mail';
 import { generateOtpCode } from 'src/providers/util/otp-code-util';
 import { FaFacebookSquare, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
-import { EnvConfigService } from 'src/modules/config/env-config.service';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 
 @Injectable()
 export class SendgridService {
@@ -27,12 +27,12 @@ export class SendgridService {
   private apiKey: string;
 
   constructor(private readonly configService: EnvConfigService) {
-    // SendGrid.setApiKey(this.configService.get<string>('SENDGRID_API_KEY'));
+    // SendGrid.setApiKey(this.EnvConfigService.get<string>('SENDGRID_API_KEY'));
   }
 
   private setApiKey() {
     if (!this.apiKey)
-      SendGrid.setApiKey(this.configService.get('SENDGRID_API_KEY'));
+      SendGrid.setApiKey(EnvConfigService.get('SENDGRID_API_KEY'));
   }
 
   async customerWelcomeEmail(receiverEmail: string, name: string) {

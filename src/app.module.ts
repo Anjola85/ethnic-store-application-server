@@ -1,4 +1,5 @@
 import {
+  Logger,
   MiddlewareConsumer,
   Module,
   NestModule,
@@ -20,7 +21,7 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { BullModule } from '@nestjs/bull';
 import { TwilioModule } from 'nestjs-twilio';
 import { FavouriteModule } from './modules/favourite/favourite.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { User } from './modules/user/entities/user.entity';
 import { Business } from './modules/business/entities/business.entity';
 import { Country } from './modules/country/entities/country.entity';
@@ -42,16 +43,10 @@ import { CryptoInterceptor } from './interceptors/crypto.interceptor';
 import { DecryptionMiddleware } from './middleware/decryption.middleware';
 import { Mobile } from './modules/mobile/mobile.entity';
 import { MobileModule } from './modules/mobile/mobile.module';
-import {
-  EnvConfigService,
-  isProduction,
-} from './modules/config/env-config.service';
-import { EnvConfigModule } from './modules/config/env-config.module';
-import { BootstrapService } from './modules/bootstrap/bootstrap.service';
+import { EnvConfigService, isProduction } from './modules/config/env-config.';
 
 @Module({
   imports: [
-    EnvConfigModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
@@ -74,36 +69,43 @@ import { BootstrapService } from './modules/bootstrap/bootstrap.service';
       envFilePath: ['config/.env'],
     }),
     TypeOrmModule.forRootAsync({
-      imports: [EnvConfigModule],
-      useFactory: async (configService: EnvConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: Number(configService.get('DB_PORT')),
-        username: configService.get('DB_USER'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_NAME'),
-        entities: [
-          User,
-          Business,
-          Country,
-          Continent,
-          Category,
-          Address,
-          Auth,
-          Favourite,
-          WaitlistCustomer,
-          WaitlistBusiness,
-          WaitlistShopper,
-          Mobile,
-        ],
-        synchronize: true, // comment this out in production
-        ssl: isProduction() ? { rejectUnauthorized: false } : undefined,
-        // ssl: {
-        //   rejectUnauthorized: false, // Allows self-signed certificates (use with caution in production)
-        // },
-      }),
-      inject: [EnvConfigService],
+      imports: [],
+      useFactory: (): TypeOrmModuleOptions => {
+        let typeOrmConfig: TypeOrmModuleOptions = {
+          type: 'postgres',
+          host: EnvConfigService.get('DB_HOST'),
+          port: Number(EnvConfigService.get('DB_PORT')),
+          username: EnvConfigService.get('DB_USER'),
+          password: EnvConfigService.get('DB_PASSWORD'),
+          database: EnvConfigService.get('DB_NAME'),
+          entities: [
+            User,
+            Business,
+            Country,
+            Continent,
+            Category,
+            Address,
+            Auth,
+            Favourite,
+            WaitlistCustomer,
+            WaitlistBusiness,
+            WaitlistShopper,
+            Mobile,
+          ],
+          synchronize: isProduction() ? false : true,
+        };
+
+        if (isProduction()) {
+          typeOrmConfig = {
+            ...typeOrmConfig,
+            ssl: { rejectUnauthorized: false },
+          };
+        }
+
+        return typeOrmConfig;
+      },
     }),
+
     BullModule.forRoot({
       redis: {
         host: 'localhost',
@@ -111,12 +113,11 @@ import { BootstrapService } from './modules/bootstrap/bootstrap.service';
       },
     }),
     TwilioModule.forRootAsync({
-      imports: [EnvConfigModule],
-      useFactory: (configService: EnvConfigService) => ({
-        accountSid: configService.get('TWILIO_ACCOUNT_SID'),
-        authToken: configService.get('TWILIO_AUTH_TOKEN'),
+      imports: [],
+      useFactory: () => ({
+        accountSid: EnvConfigService.get('TWILIO_ACCOUNT_SID'),
+        authToken: EnvConfigService.get('TWILIO_AUTH_TOKEN'),
       }),
-      inject: [EnvConfigService],
     }),
     UserModule,
     SendgridModule,
@@ -135,7 +136,6 @@ import { BootstrapService } from './modules/bootstrap/bootstrap.service';
   controllers: [AppController],
   providers: [
     AppService,
-    BootstrapService,
     EnvConfigService,
     JwtService,
     {

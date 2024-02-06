@@ -5,16 +5,16 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { UserDto } from './modules/user/dto/user.dto';
-import { EnvConfigService } from './modules/config/env-config.service';
-import { BootstrapService } from './modules/bootstrap/bootstrap.service';
+import * as AWS from 'aws-sdk';
+import { EnvConfigService } from './modules/config/env-config.';
 
 dotenv.config(); // Load environment variables from .env file
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const envConfigService = new EnvConfigService();
+  await envConfigService.loadConfig();
 
-  const configService = app.get(EnvConfigService);
-  configService.validateConfig();
+  const app = await NestFactory.create(AppModule);
 
   // validation pipe
   app.useGlobalPipes(
