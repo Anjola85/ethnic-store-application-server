@@ -10,9 +10,6 @@ export default class TwilioService {
   client: Twilio;
 
   constructor(private readonly configService: EnvConfigService) {
-    // const twilioAccountSid =
-    //   this.EnvConfigService.get<string>('TWILIO_ACCOUNT_SID');
-    // const twilioAuthToken = this.EnvConfigService.get<string>('TWILIO_AUTH_TOKEN');
     const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
     const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
     this.client = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);

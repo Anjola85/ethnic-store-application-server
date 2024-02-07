@@ -112,7 +112,7 @@ export class EnvConfigService {
   }
 
   public validateConfig() {
-    console.log('Validating config environment variables');
+    // console.log('Validating config environment variables');
     this.logger.debug('Validating config environment variables');
     const requiredConfig = [
       'AWS_ACCESS_KEY',

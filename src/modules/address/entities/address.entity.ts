@@ -24,7 +24,7 @@ export class Address extends CommonEntity {
   @Column({ default: true, nullable: false, type: 'boolean' })
   isPrimary: boolean;
 
-  @Column()
+  @Column({ nullable: true, type: 'varchar' })
   unit: string;
 
   @Column()

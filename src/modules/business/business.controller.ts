@@ -53,7 +53,10 @@ export class BusinessController {
         business: createdBusiness,
       });
     } catch (error) {
-      this.logger.debug('From register in business.controller.ts ', error);
+      this.logger.debug(
+        'From register in business.controller.ts with error:',
+        error,
+      );
 
       if (error instanceof HttpException) throw error;
 

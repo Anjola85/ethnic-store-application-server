@@ -51,10 +51,12 @@ export class CreateBusinessDto extends BaseDto {
   address: AddressDto;
 
   @ApiProperty()
+  @IsOptional()
   @IsEmail()
   email: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => MobileDto)

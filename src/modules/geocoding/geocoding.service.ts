@@ -20,7 +20,7 @@ export class GeocodingService {
         )}&key=${apiKey}`,
       );
 
-      this.logger.debug('Geocoding response: ', response.data);
+      // this.logger.debug('Geocoding response: ', response.data);
 
       const { results } = response.data;
 
