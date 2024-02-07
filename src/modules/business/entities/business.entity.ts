@@ -31,7 +31,7 @@ export class Business extends CommonEntity {
   @Column({ type: 'text', default: '' })
   description: string;
 
-  @Column({ type: 'varchar', default: '', unique: true })
+  @Column({ type: 'varchar', default: '', unique: true, nullable: true })
   email: string;
 
   @Column({ type: 'jsonb', nullable: true })

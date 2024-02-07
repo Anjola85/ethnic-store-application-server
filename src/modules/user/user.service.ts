@@ -42,27 +42,27 @@ export class UserService {
       const { email, mobile } = body;
 
       if (mobile) {
-        console.log('checking if mobile exists');
+        // console.log('checking if mobile exists');
         const registeredMobile = await this.mobileService.getMobile(mobile);
 
         if (registeredMobile)
           throw new ConflictException('phone number already exists');
 
-        console.log('mobile does not exist');
+        // console.log('mobile does not exist');
       } else if (email) {
         const auth = await this.authService.findByEmail(body.email);
 
         if (auth) throw new ConflictException('email already exists');
       }
 
-      console.log('sending otp');
+      // console.log('sending otp');
 
       const auth: OtpResponse = await this.authService.sendOtp(
         body.email,
         body.mobile,
       );
 
-      console.log(auth);
+      // console.log(auth);
 
       if (null == auth)
         throw new Error('From signupOtpRequest: sendOTP returned null');

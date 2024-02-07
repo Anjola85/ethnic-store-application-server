@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
-import { ConfigService } from '@nestjs/config';
 import TwilioService from './twilio.service';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 
 @Module({
   imports: [
@@ -12,6 +12,6 @@ import TwilioService from './twilio.service';
       },
     }),
   ],
-  providers: [ConfigService, TwilioService],
+  providers: [EnvConfigService, TwilioService],
 })
 export class TwilioModule {}

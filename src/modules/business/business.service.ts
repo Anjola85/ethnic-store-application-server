@@ -10,6 +10,7 @@ import { AddressService } from '../address/address.service';
 import { Business } from './entities/business.entity';
 import { BusinessFilesService } from '../files/business-files.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { AwsS3Service } from '../files/aws-s3.service';
 
 @Injectable()
 export class BusinessService {
@@ -20,6 +21,7 @@ export class BusinessService {
     private businessFileService: BusinessFilesService,
     private addressService: AddressService,
     private mobileService: MobileService,
+    private awsS3Service: AwsS3Service,
   ) {}
 
   /**
@@ -28,67 +30,76 @@ export class BusinessService {
    * @returns
    */
   async register(reqBody: CreateBusinessDto): Promise<any> {
-    try {
-      const { businessExist, type } = await this.businessRepository.findByUniq({
-        name: reqBody.name,
-        email: reqBody.email,
-      });
-
-      if (businessExist) {
-        this.logger.debug(`Business with ${type} already exists`);
-        throw new HttpException(
-          `Business with ${type} already exists`,
-          HttpStatus.CONFLICT,
-        );
-      }
-
-      // map request object of DTO
-      const businessDto: CreateBusinessDto = Object.assign(
-        new CreateBusinessDto(),
+    this.logger.debug(
+      `Received business registration request with body: ${JSON.stringify(
         reqBody,
+        null,
+        2,
+      )}`,
+    );
+
+    const { businessExist, type } = await this.businessRepository.findByUniq({
+      name: reqBody.name,
+      email: reqBody.email,
+    });
+
+    if (businessExist)
+      throw new HttpException(
+        `Business with ${type} already exists}`,
+        HttpStatus.CONFLICT,
       );
 
-      const mobile = await this.mobileService.addMobile(reqBody.mobile, false);
+    // map request object of DTO
+    const businessDto: CreateBusinessDto = Object.assign(
+      new CreateBusinessDto(),
+      reqBody,
+    );
 
-      const address = await this.addressService.addAddress(reqBody.address);
+    const mobile = await this.mobileService.addMobile(reqBody.mobile, false);
 
-      // S3 integratino should run below regardless of whether the user has uploaded images or not
-      if (
-        businessDto.images &&
-        (businessDto.images.backgroundImage ||
-          businessDto.images.featuredImage ||
-          businessDto.images.profileImage)
-      ) {
-        const { profileImage, backgroundImage }: S3BusinessImagesResponse =
-          await this.processBusinessImages(reqBody);
+    const address = await this.addressService.addAddress(reqBody.address);
 
-        businessDto.images = {
-          profileImage: profileImage,
-          backgroundImage: backgroundImage,
-        };
+    // S3 integratino should run below regardless of whether the user has uploaded images or not
+    if (
+      businessDto.backgroundImage ||
+      businessDto.featuredImage ||
+      businessDto.profileImage
+    ) {
+      // upload business images to AWS S3
+      const { profileImage, backgroundImage }: S3BusinessImagesResponse =
+        await this.processBusinessImages(reqBody);
+
+      businessDto.images = {
+        profileImage: profileImage,
+        backgroundImage: backgroundImage,
+      };
+    } else {
+      const defaultStoreImage: string = await this.awsS3Service.getImageUrl(
+        'defaultStore.png',
+      );
+      // console.log('defaultStoreImage', defaultStoreImage);
+      if (!defaultStoreImage) {
+        this.logger.error('Default store image not found');
       }
-
-      // map business dto data to business entity
-      const businessEntity: Business = Object.assign(
-        new Business(),
-        businessDto,
-      );
-
-      // save the business to the database
-      const createdBusiness = await this.businessRepository
-        .create(businessEntity)
-        .save();
-
-      return createdBusiness;
-    } catch (error) {
-      this.logger.debug(
-        `Error thrown in business.service.ts, register method: ${error.message}`,
-      );
-      throw new Error(
-        `Error from register method in business.service.ts.
-    \nWith error message: ${error.message}`,
-      );
+      businessDto.images = {
+        profileImage: defaultStoreImage || '',
+        backgroundImage: defaultStoreImage || '',
+      };
     }
+
+    // map business dto data to business entity
+    const businessEntity: Business = Object.assign(new Business(), {
+      ...businessDto,
+      backgroundImage: businessDto.images.backgroundImage,
+      profileImage: businessDto.images.profileImage,
+    });
+
+    // save the business to the database
+    const createdBusiness = await this.businessRepository
+      .create(businessEntity)
+      .save();
+
+    return createdBusiness;
   }
 
   /**

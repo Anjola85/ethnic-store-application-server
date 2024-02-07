@@ -1,3 +1,4 @@
+import { EnvConfigService } from 'src/modules/config/env-config.';
 import * as crypto from 'crypto';
 import * as aws from 'aws-sdk';
 // import * as aws from 'aws-sdk-js-codemod';
@@ -5,19 +6,20 @@ import { AwsSecretKey } from './secret';
 
 const iv = Buffer.from('EjRWeJ_aZpQ0TEhKT0dKSg==', 'base64');
 const algorithm = 'AES-256-CBC';
+const configService = new EnvConfigService();
 
 export const encryptKms = async (buffer: Buffer) => {
   const kmsClient = new aws.KMS({
-    region: process.env.AWS_REGION,
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: EnvConfigService.get('AWS_REGION'),
+    accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
+    secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
   });
 
   const params = {
-    KeyId: process.env.AWS_KMS_KEY_ID,
+    KeyId: EnvConfigService.get('AWS_KMS_KEY_ID'),
     Plaintext: buffer,
     EncryptionContext: {
-      key: process.env.SECRET_KEY,
+      key: EnvConfigService.get('SECRET_KEY'),
     },
   };
 
@@ -38,16 +40,16 @@ export const decryptPayload = async (data: string) => {
     const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'base64');
 
     const kmsClient = new aws.KMS({
-      region: process.env.AWS_REGION,
-      accessKeyId: process.env.AWS_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: EnvConfigService.get('AWS_REGION'),
+      accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
+      secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
     });
 
     const params = {
-      KeyId: process.env.AWS_KMS_KEY_ID,
+      KeyId: EnvConfigService.get('AWS_KMS_KEY_ID'),
       CiphertextBlob: buffer,
       EncryptionContext: {
-        key: process.env.SECRET_KEY,
+        key: EnvConfigService.get('SECRET_KEY'),
       },
     };
 
