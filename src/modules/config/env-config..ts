@@ -31,7 +31,7 @@ export class EnvConfigService {
       });
     } else {
       this.ssmCLient = new AWS.SSM({
-        region: process.env.AWS_REGION,
+        region: 'ca-central-1',
       });
     }
 
@@ -92,7 +92,9 @@ export class EnvConfigService {
           this.logger.error(
             `Error loading variable ${params.name} from SSM, with error: ${err}`,
           );
-          throw new Error(`Error loading variable ${params.name} from SSM`);
+          throw new Error(
+            `Error loading variable ${params.name} from SSM with error: ${err}`,
+          );
         });
     }
 
