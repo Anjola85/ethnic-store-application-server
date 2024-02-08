@@ -117,7 +117,7 @@ NOTE: make sure docker desktop is running
 
 1. Retrieve an authentication token and authenticate your Docker client to your registry.
    Use the AWS CLI:
-   `aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 932400219699.dkr.ecr.ca-central-1.amazonaws.com`
+   `aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 376620901748.dkr.ecr.ca-central-1.amazonaws.com`
 
 2. Build your Docker image using the following command.
    For information on building a Docker file from scratch see the instructions here . You can skip this step if your image is already built:
