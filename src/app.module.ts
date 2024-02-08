@@ -92,7 +92,8 @@ import { EnvConfigService, isProduction } from './modules/config/env-config.';
             WaitlistShopper,
             Mobile,
           ],
-          synchronize: isProduction() ? false : true,
+          // synchronize: isProduction() ? false : true,
+          synchronize: true,
         };
 
         if (isProduction()) {
