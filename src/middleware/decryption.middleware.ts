@@ -14,7 +14,6 @@ export class DecryptionMiddleware implements NestMiddleware {
     if ((req.headers.cryptoReq || req.body.payload) && req.body) {
       this.logger.debug('Decryption middleware recieved: ' + req.body);
       try {
-        console.log('Decrypting payload: ' + JSON.stringify(req.body));
         req.body = await decryptPayload(req.body.payload);
         this.logger.debug('Decrypted payload: ' + JSON.stringify(req.body));
       } catch (error) {

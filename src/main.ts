@@ -25,13 +25,14 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS for local testing - NGINX will handle CORS in production
-  const cors: CorsOptions = {
-    origin: '*', // Allow requests from all origins
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  };
-  app.enableCors(cors);
+  if (process.env.NODE_ENV === 'dev') {
+    const cors: CorsOptions = {
+      origin: '*', // Allow requests from all origins
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      credentials: true,
+    };
+    app.enableCors(cors);
+  }
 
   // swagger setup
   const config = new DocumentBuilder()
