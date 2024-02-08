@@ -153,6 +153,12 @@ NOTE: Remember to login to aws on EC2, if no configuration for docker command co
 6. Run this to see the logs, add -f (to see the love feed)
    `docker logs {container id} -f`
 
+## Clearing Docker storage
+
+- docker system prune -a
+
+- docker volume prune
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
