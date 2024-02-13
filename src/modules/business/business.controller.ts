@@ -45,16 +45,11 @@ export class BusinessController {
     businessBody.profileImage = files?.profileImage[0] || null;
 
     try {
-      this.logger.debug(
-        'From register in business.controller.ts with body: ',
-        JSON.stringify(businessBody, null, 2),
-      );
       const createdBusiness = await this.businessService.register(businessBody);
 
       return createResponse('Business registered successfully', {
         business: createdBusiness,
       });
-      return null;
     } catch (error) {
       this.logger.debug(
         'From register in business.controller.ts with error:',
