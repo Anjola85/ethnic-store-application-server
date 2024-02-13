@@ -45,7 +45,7 @@ export class EnvConfigService {
   public async loadConfig(): Promise<void> {
     if (EnvConfigService.configLoaded) return;
 
-    this.logger.debug('Loading environment variables from SSM');
+    this.logger.debug('Loading environment variables');
 
     const parametersToLoad = [
       { name: 'DB_PORT', isSecure: false },
@@ -69,12 +69,14 @@ export class EnvConfigService {
     ];
 
     for (const params of parametersToLoad) {
+      // if not in production and the variable is set in local .env file, load it from there
       if (!isProduction() && process.env[params.name]) {
         this.logger.debug(`Loading ${params.name} from local .env file`);
         EnvConfigService.appConfig[params.name] = process.env[params.name];
         continue;
       }
 
+      this.logger.debug(`Loading ${params.name} from SSM`);
       await this.ssmCLient
         .getParameter({
           Name: `/${this.currentEnv}/q1/config/${params.name}`,

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class MobileDto {
+export class MobileRespDto {
   @ApiProperty({ example: '6473334839' })
   @IsNotEmpty()
   @IsString()

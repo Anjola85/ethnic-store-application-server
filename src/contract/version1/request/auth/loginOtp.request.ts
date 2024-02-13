@@ -1,7 +1,7 @@
 import { IsOptional, IsString, ValidateNested } from 'class-validator';
-import { MobileDto } from '../dto';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export class LoginOtpRequest {
   @IsOptional()

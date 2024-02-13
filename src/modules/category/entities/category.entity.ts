@@ -11,6 +11,7 @@ export type CategoryDocument = Category & Document;
 export interface CategoryParams {
   id: string;
   name: string;
+  value: string;
 }
 
 @Entity('categories')

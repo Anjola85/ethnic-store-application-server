@@ -3,8 +3,8 @@ import { WaitlistService } from './waitlist.service';
 import { WaitlistController } from './waitlist.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WaitlistCustomer } from './entities/waitlist_customer.entity';
-import { WaitlistBusiness } from './entities/waitlist_business';
-import { WaitlistShopper } from './entities/waitlist_shopper';
+import { WaitlistBusiness } from './entities/waitlist_business.entity';
+import { WaitlistShopper } from './entities/waitlist_shopper.entity';
 
 @Module({
   imports: [

@@ -18,7 +18,7 @@ import { Auth, AuthParams } from '../auth/entities/auth.entity';
 import { MobileService } from '../mobile/mobile.service';
 import { Mobile } from '../mobile/mobile.entity';
 import { Address } from '../address/entities/address.entity';
-import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
+import { OtpPayloadResp } from 'src/contract/version1/response/otp-response.dto';
 
 @Injectable()
 export class UserService {
@@ -37,7 +37,7 @@ export class UserService {
    * If user does not exist, sendOTP
    * @param body
    */
-  async signupOtpRequest(body: SignupOtpRequest): Promise<OtpResponse> {
+  async signupOtpRequest(body: SignupOtpRequest): Promise<OtpPayloadResp> {
     try {
       const { email, mobile } = body;
 
@@ -57,7 +57,7 @@ export class UserService {
 
       // console.log('sending otp');
 
-      const auth: OtpResponse = await this.authService.sendOtp(
+      const auth: OtpPayloadResp = await this.authService.sendOtp(
         body.email,
         body.mobile,
       );
@@ -172,7 +172,7 @@ export class UserService {
     }
   }
 
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: number): Promise<User> {
     const user = await this.userRepository.getUserById(id);
     return user;
   }
@@ -193,7 +193,7 @@ export class UserService {
    * @param userDto
    * @returns {token, user}
    */
-  async updateUserInfo(userDto: UpdateUserDto, authId: string): Promise<void> {
+  async updateUserInfo(userDto: UpdateUserDto, authId: number): Promise<void> {
     const user = await this.getUserById(userDto.id);
 
     if (!user) throw new Error('User not found');

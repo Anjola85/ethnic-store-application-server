@@ -7,7 +7,7 @@ import {
   ValidateNested,
   isString,
 } from 'class-validator';
-import { MobileDto } from '../dto';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export class SignupOtpRequest {
   @IsOptional()

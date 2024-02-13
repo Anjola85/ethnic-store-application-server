@@ -13,10 +13,11 @@ import { ScheduleDto } from 'src/modules/business/dto/schedule.dto';
 import { GeoLocationDto } from './geolocation.dto';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
-import { Category } from 'src/modules/category/entities/category.entity';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 import { S3BusinessImagesResponse } from './image.dto';
 import { BaseDto } from 'src/common/dto/base.dto';
+import { Region } from 'src/modules/region/entities/region.entity';
+import { BusinessReqDto } from 'src/contract/version1/request/business/business-request.dto';
 
 export class CreateBusinessDto extends BaseDto {
   @IsOptional()
@@ -30,15 +31,15 @@ export class CreateBusinessDto extends BaseDto {
 
   @ApiProperty()
   @IsArray()
-  otherCountries: Country[];
+  countries: Country[];
 
   @ApiProperty()
   @IsArray()
-  categories: Category[];
+  regions: Region[];
 
   @ApiProperty()
   @IsString()
-  name: string; // name has to be unique
+  name: string;
 
   @ApiProperty()
   @IsString()
@@ -79,10 +80,6 @@ export class CreateBusinessDto extends BaseDto {
 
   @ApiProperty({ type: 'string', format: 'binary' })
   @IsOptional()
-  featuredImage: Express.Multer.File;
-
-  @ApiProperty({ type: 'string', format: 'binary' })
-  @IsOptional()
   backgroundImage: Express.Multer.File;
 
   @ApiProperty({ type: 'string', format: 'binary' })
@@ -100,7 +97,7 @@ export class CreateBusinessDto extends BaseDto {
   @Type(() => GeoLocationDto)
   geolocation: GeoLocationDto;
 
-  @ApiProperty({ description: 'test-description', example: 'test-value' })
+  @ApiProperty({ description: 'business type', example: 'grocery' })
   @IsString()
   businessType: string;
 }

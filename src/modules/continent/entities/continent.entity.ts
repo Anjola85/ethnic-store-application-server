@@ -1,5 +1,5 @@
 import { CommonEntity } from 'src/modules/common/base.entity';
-import { Column, Entity } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
 
 export type ContinentDocument = Continent & Document;
 
@@ -8,8 +8,14 @@ export interface ContinentParams {
   name: string;
 }
 
-@Entity('continents')
+@Entity('continent')
 export class Continent extends CommonEntity {
-  @Column()
+  @Column({ type: 'varchar', nullable: false, unique: true })
   name: string;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  lowercaseFields() {
+    this.name = this.name && this.name.toLowerCase();
+  }
 }

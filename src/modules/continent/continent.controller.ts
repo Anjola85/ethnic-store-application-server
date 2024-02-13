@@ -17,6 +17,7 @@ import { CreateContinentDto } from './dto/create-continent.dto';
 import { UpdateContinentDto } from './dto/update-continent.dto';
 import { Response } from 'express';
 import { createResponse } from 'src/common/util/response';
+import { ContinentListRespDto } from 'src/contract/version1/response/continent-response.dto';
 
 @Controller('continent')
 export class ContinentController {
@@ -27,13 +28,13 @@ export class ContinentController {
   async create(@Body() createContinentDto: CreateContinentDto): Promise<any> {
     try {
       const resp = await this.continentService.create(createContinentDto);
+
       return createResponse('Continent registered successfully', resp);
     } catch (err) {
       this.logger.debug(err);
 
-      if (err instanceof ConflictException) {
+      if (err instanceof ConflictException)
         throw new HttpException(err.message, HttpStatus.CONFLICT);
-      }
 
       throw new HttpException(
         "We're working on it",
@@ -45,13 +46,15 @@ export class ContinentController {
   @Get('all')
   async findAll(): Promise<any> {
     try {
-      const continent = await this.continentService.findAll();
-      return createResponse('List of continents', {
-        result: continent,
-        size: continent.length,
-      });
+      const continent: ContinentListRespDto =
+        await this.continentService.findAll();
+      return createResponse('List of continents', continent);
     } catch (error) {
       this.logger.debug(error);
+
+      if (error instanceof ConflictException)
+        throw new HttpException(error.message, HttpStatus.CONFLICT);
+
       throw new HttpException(
         "We're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,

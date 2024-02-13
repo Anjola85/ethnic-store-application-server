@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, isString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, isString } from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export class VerifyOtpDto {
@@ -6,6 +6,6 @@ export class VerifyOtpDto {
   @IsNotEmpty()
   code: string;
 
-  @IsString()
-  authId: string;
+  @IsNumber()
+  authId: number;
 }

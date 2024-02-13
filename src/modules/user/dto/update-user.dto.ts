@@ -2,14 +2,20 @@ import { PartialType } from '@nestjs/mapped-types';
 import { UserDto } from './user.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsEmail, ValidateNested, IsString } from 'class-validator';
+import {
+  IsOptional,
+  IsEmail,
+  ValidateNested,
+  IsString,
+  IsNumber,
+} from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 
 export class UpdateUserDto {
   @IsOptional()
-  @IsString()
-  id = '';
+  @IsNumber()
+  id: number;
 
   @IsOptional()
   @IsString()

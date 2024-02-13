@@ -32,8 +32,8 @@ import { Favourite } from './modules/favourite/entities/favourite.entity';
 import { AddressModule } from './modules/address/address.module';
 import { Address } from './modules/address/entities/address.entity';
 import { WaitlistCustomer } from './modules/waitlist/entities/waitlist_customer.entity';
-import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business';
-import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper';
+import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business.entity';
+import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper.entity';
 import { WaitlistModule } from './modules/waitlist/waitlist.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApiExtraModels } from '@nestjs/swagger';
@@ -44,25 +44,27 @@ import { DecryptionMiddleware } from './middleware/decryption.middleware';
 import { Mobile } from './modules/mobile/mobile.entity';
 import { MobileModule } from './modules/mobile/mobile.module';
 import { EnvConfigService, isProduction } from './modules/config/env-config.';
+import { RegionModule } from './modules/region/region.module';
+import { Region } from './modules/region/entities/region.entity';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 10,
-        limit: 5,
-      },
-      {
-        name: 'medium',
-        ttl: 60,
-        limit: 20,
-      },
-      {
-        name: 'long',
-        ttl: 60,
-        limit: 10,
-      },
+      // {
+      //   name: 'short',
+      //   ttl: 10,
+      //   limit: 5,
+      // },
+      // {
+      //   name: 'medium',
+      //   ttl: 60,
+      //   limit: 20,
+      // },
+      // {
+      //   name: 'long',
+      //   ttl: 60,
+      //   limit: 10,
+      // },
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -78,20 +80,7 @@ import { EnvConfigService, isProduction } from './modules/config/env-config.';
           username: EnvConfigService.get('DB_USER'),
           password: EnvConfigService.get('DB_PASSWORD'),
           database: EnvConfigService.get('DB_NAME'),
-          entities: [
-            User,
-            Business,
-            Country,
-            Continent,
-            Category,
-            Address,
-            Auth,
-            Favourite,
-            WaitlistCustomer,
-            WaitlistBusiness,
-            WaitlistShopper,
-            Mobile,
-          ],
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // synchronize: isProduction() ? false : true,
           synchronize: true,
         };
@@ -133,6 +122,7 @@ import { EnvConfigService, isProduction } from './modules/config/env-config.';
     AddressModule,
     WaitlistModule,
     MobileModule,
+    RegionModule,
   ],
   controllers: [AppController],
   providers: [

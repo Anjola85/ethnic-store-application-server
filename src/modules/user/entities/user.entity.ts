@@ -4,7 +4,15 @@
  * This should then serve as the parent class
  */
 import { CommonEntity } from 'src/modules/common/base.entity';
-import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { UserProfile } from '../user.enums';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { Address } from 'src/modules/address/entities/address.entity';
@@ -55,4 +63,13 @@ export class User extends CommonEntity {
   @OneToOne(() => Country, (country) => country.name, { nullable: true })
   @JoinColumn()
   country: Country;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  lowercaseFields() {
+    this.firstName = this.firstName.toLowerCase();
+    this.lastName = this.lastName.toLowerCase();
+    this.userProfile = this.userProfile.toLowerCase();
+    this.dob = this.dob.toLowerCase();
+  }
 }

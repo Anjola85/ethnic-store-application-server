@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
+import { getCurrentEpochTime } from 'src/common/util/functions';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -23,7 +24,7 @@ export class UserRepository extends Repository<User> {
     }
   }
 
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: number): Promise<User> {
     try {
       const user = await this.createQueryBuilder('user')
         .leftJoinAndSelect('user.addresses', 'address')
@@ -76,12 +77,12 @@ export class UserRepository extends Repository<User> {
     }
   }
 
-  async updateUserImageUrl(id: string, imageUrl: string) {
+  async updateUserImageUrl(id: number, imageUrl: string) {
     try {
       const updatedUser = await this.createQueryBuilder('user')
         .update(User)
         .set({ profileImage: imageUrl })
-        .set({ updatedAt: new Date() })
+        .set({ updatedAt: getCurrentEpochTime() })
         .where('id = :id', { id })
         .execute();
       return updatedUser;

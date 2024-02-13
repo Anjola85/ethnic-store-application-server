@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { WaitlistCustomer } from './entities/waitlist_customer.entity';
-import { WaitlistShopper } from './entities/waitlist_shopper';
-import { WaitlistBusiness } from './entities/waitlist_business';
+import { WaitlistShopper } from './entities/waitlist_shopper.entity';
+import { WaitlistBusiness } from './entities/waitlist_business.entity';
 import { AddressService } from '../address/address.service';
 import { WaitlistCustomerDto } from './dto/waitlist_customer.dto';
 import { InjectRepository } from '@nestjs/typeorm';

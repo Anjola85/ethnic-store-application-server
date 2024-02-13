@@ -4,7 +4,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 export interface AuthParams {
-  authId?: string;
+  authId?: number;
   email?: string;
 }
 
