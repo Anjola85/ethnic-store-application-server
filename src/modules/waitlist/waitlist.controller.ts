@@ -33,17 +33,14 @@ export class WaitlistController {
   async joinCustomerWaitlist(@Body() reqBody: any): Promise<any> {
     try {
       this.logger.debug(
-        'join customer waitlist endpoint called with body: ' + reqBody,
+        'join customer waitlist endpoint called with body: ' +
+          JSON.stringify(reqBody, null, 2),
       );
 
-      const body = reqBody.payload;
-
-      if (!body) throw new BadRequestException('payload is required');
-
-      customerValidation(body);
+      customerValidation(reqBody);
 
       const waitlistCustomer = new WaitlistCustomerDto();
-      Object.assign(waitlistCustomer, body);
+      Object.assign(waitlistCustomer, reqBody);
 
       await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
       return createResponse('customer added');
@@ -78,14 +75,15 @@ export class WaitlistController {
   @Post('join-shopper')
   async joinShopperWaitlist(@Body() reqBody: any): Promise<any> {
     try {
-      const body = reqBody.payload;
+      this.logger.debug(
+        'join shopper waitlist endpoint called with body: ' +
+          JSON.stringify(reqBody, null, 2),
+      );
 
-      if (!body) throw new BadRequestException('payload is required');
-
-      shopperValidation(body);
+      shopperValidation(reqBody);
 
       const waitlistShopper = new WaitlistShopperDto();
-      Object.assign(waitlistShopper, body);
+      Object.assign(waitlistShopper, reqBody);
 
       const resp = await this.waitlistService.joinShopperWaitlist(
         waitlistShopper,
@@ -125,14 +123,15 @@ export class WaitlistController {
   @Post('join-business')
   async joinBusinessWaitlist(@Body() reqBody: any): Promise<any> {
     try {
-      const body = reqBody.payload;
+      this.logger.debug(
+        'join business waitlist endpoint called with body: ' +
+          JSON.stringify(reqBody, null, 2),
+      );
 
-      if (!body) throw new BadRequestException('payload is required');
-
-      businessValidation(body);
+      businessValidation(reqBody);
 
       const waitlistBusiness = new WaitlistBusinessDto();
-      Object.assign(waitlistBusiness, body);
+      Object.assign(waitlistBusiness, reqBody);
 
       await this.waitlistService.joinBusinessWaitlist(waitlistBusiness);
 
