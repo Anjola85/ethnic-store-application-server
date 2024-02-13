@@ -1,4 +1,4 @@
-import { WaitlistShopper } from './entities/waitlist_shopper';
+import { WaitlistShopper } from './entities/waitlist_shopper.entity';
 import {
   Controller,
   Post,

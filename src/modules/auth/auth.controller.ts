@@ -36,7 +36,7 @@ import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
 import { NotFoundError } from 'rxjs';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
-import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
+import { OtpPayloadResp } from 'src/contract/version1/response/otp-response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -139,7 +139,7 @@ export class AuthController {
           JSON.stringify(body, null, 2),
       );
 
-      const resp: OtpResponse = await this.authService.loginOtpRequest(body);
+      const resp: OtpPayloadResp = await this.authService.loginOtpRequest(body);
 
       const payload = createResponse(resp.message, resp.token);
 

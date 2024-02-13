@@ -12,6 +12,17 @@ export interface MobileParams {
 
 @Entity('mobile')
 export class Mobile extends CommonEntity {
+  @ManyToOne(() => Auth, (auth) => auth.mobile, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  auth: Auth;
+
+  @OneToOne(() => Business, (business) => business.mobile)
+  business: Business;
+
   @Column({ name: 'phone_number', type: 'varchar' })
   phoneNumber: string;
 
@@ -23,15 +34,4 @@ export class Mobile extends CommonEntity {
 
   @Column({ name: 'is_primary', type: 'boolean', default: false })
   isPrimary: boolean;
-
-  @ManyToOne(() => Auth, (auth) => auth.mobile, {
-    nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
-  auth: Auth;
-
-  @ManyToOne(() => Business, (business) => business.id, { nullable: true })
-  business: Business;
 }

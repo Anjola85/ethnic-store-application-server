@@ -12,6 +12,10 @@ export class BusinessRepository extends Repository<Business> {
   }
 
   async findByUniq(params: BusinessParam): Promise<any> {
+    this.logger.debug(
+      `findByUniq called with params: ${JSON.stringify(params)}`,
+    );
+
     const { name, email, businessId } = params;
 
     try {
@@ -81,8 +85,82 @@ export class BusinessRepository extends Repository<Business> {
       this.logger.error(
         `Error thrown in business.repository.ts, findNearbyBusinesses method: ${error.message}`,
       );
+
       throw new HttpException(
         `Error fetching nearby businesses`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Retrieve all businesses belonging to a country
+   * @param country - country name
+   * @returns businesses - an array of businesses
+   */
+  async findByCountry(country: string): Promise<any> {
+    try {
+      this.logger.debug(`findByCountry called with country: ${country}`);
+
+      const businesses = await this.createQueryBuilder('business')
+        .innerJoinAndSelect('business.countries', 'country')
+        .where('country.name = :countryId', { country })
+        .getMany();
+
+      return businesses;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in business.repository.ts, findByCountry method: ${error.message}`,
+      );
+
+      // TODO: test if error means country not found
+      // check if error means country not found
+      if (error.message.includes('relation "country" does not exist')) {
+        throw new HttpException(
+          `Country ${country} not found`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      throw new HttpException(
+        `Error fetching businesses for country ${country}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Retrieve all businesses belonging to a region
+   * @parama region - region name
+   * @Returns businesses - an array of businesses
+   */
+  async findByRegion(region: string): Promise<any> {
+    try {
+      this.logger.debug(`findByRegion called with region: ${region}`);
+
+      // const businesses = await this.createQueryBuilder('business')
+      //   .innerJoinAndSelect('business.regions', 'region')
+      //   .where('region.name = :regionId', { region })
+      //   .getMany();
+      const businesses = null;
+
+      return businesses;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in business.repository.ts, findByRegion method: ${error.message}`,
+      );
+
+      // TODO: check if error means region not found
+      // check if error means region not found
+      if (error.message.includes('relation "region" does not exist')) {
+        throw new HttpException(
+          `Region ${region} not found`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      throw new HttpException(
+        `Error fetching businesses for region ${region}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

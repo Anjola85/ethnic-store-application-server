@@ -22,10 +22,10 @@ import { Mobile } from '../mobile/mobile.entity';
 import { MobileService } from '../mobile/mobile.service';
 import { SecureLoginDto } from './dto/secure-login.dto';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
-import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
 import { MobileRepository } from '../mobile/mobile.repository';
 import { UserRepository } from '../user/user.repository';
 import { AddressRepository } from '../address/address.respository';
+import { OtpPayloadResp } from 'src/contract/version1/response/otp-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -47,7 +47,7 @@ export class AuthService {
    * @param mobile
    * @returns
    */
-  async sendOtp(email?: string, mobile?: MobileDto): Promise<OtpResponse> {
+  async sendOtp(email?: string, mobile?: MobileDto): Promise<OtpPayloadResp> {
     try {
       let response: { message; code; expiryTime };
 
@@ -127,9 +127,9 @@ export class AuthService {
       const token = this.generateJwt(authModel);
 
       // return response with token
-      const otpResponse: OtpResponse = { ...response, token };
+      const otpPayload: OtpPayloadResp = { ...response, token };
 
-      return otpResponse;
+      return otpPayload;
     } catch (error) {
       // catch database errors and throw a new error for the controller to handle
       this.logger.error(`From AuthService.sendOtp: ${error.message}`);
@@ -139,7 +139,7 @@ export class AuthService {
   }
 
   async verifyOtp(
-    authId: string,
+    authId: number,
     otp: string,
   ): Promise<{ message: string; status: boolean }> {
     this.logger.debug(`Verifying OTP for authId: ${authId}`);
@@ -203,7 +203,7 @@ export class AuthService {
 
   // method to update auth account email or mobile
   async updateAuthEmailOrMobile(
-    authId: string,
+    authId: number,
     authDto: CreateAuthDto,
   ): Promise<any> {
     if (!authId) throw new Error('authId is required');
@@ -230,7 +230,7 @@ export class AuthService {
       if (!loginDto.email && !loginDto.mobile)
         throw new Error('email or mobile is required');
 
-      let authId: string;
+      let authId: number;
 
       if (loginDto.mobile) {
         const mobileEntity: Mobile = await this.mobileService.getMobile(
@@ -281,7 +281,7 @@ export class AuthService {
     }
   }
 
-  async loginOtpRequest(body: LoginOtpRequest): Promise<OtpResponse> {
+  async loginOtpRequest(body: LoginOtpRequest): Promise<OtpPayloadResp> {
     try {
       const { email, mobile } = body;
 

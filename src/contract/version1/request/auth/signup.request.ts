@@ -2,14 +2,14 @@
  * @see
  * This defines the request body for the signup endpoint
  */
-import { AddressDto, MobileDto } from '../dto';
+import { AddressDto, MobileRespDto } from '../dto';
 
 export interface SignupRequest {
   firstName: string;
   lastName: string;
   address: AddressDto;
   userProfile: string;
-  mobile: MobileDto;
+  mobile: MobileRespDto;
   ethnicity: string;
   reason: string;
 }

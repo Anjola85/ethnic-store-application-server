@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { MobileRepository } from './mobile.repository';
 import { Mobile, MobileParams } from './mobile.entity';
 import { Auth } from '../auth/entities/auth.entity';
@@ -6,6 +6,7 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class MobileService {
+  private readonly logger = new Logger(MobileService.name);
   constructor(private readonly mobileRepository: MobileRepository) {}
 
   /**
@@ -15,17 +16,29 @@ export class MobileService {
    * @returns
    */
   async addMobile(mobileDto: MobileDto, isUser: boolean): Promise<Mobile> {
-    const mobile: Mobile = Object.assign(new Mobile(), mobileDto);
+    try {
+      const mobile: Mobile = Object.assign(new Mobile(), mobileDto);
+      if (isUser) mobile.isPrimary = true;
+      const newMobile = await this.mobileRepository.create(mobile).save();
+      return newMobile;
+    } catch (error) {
+      this.logger.debug('error in MobileService: ' + error);
 
-    if (isUser) mobile.isPrimary = true;
+      if (
+        error.name === 'QueryFailedError' &&
+        error.message.includes('duplicate key value violates unique constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a mobile with a duplicate number: ${mobileDto}`,
+        );
 
-    const mobileExists = await this.mobileRepository.getMobile(mobile);
+        throw new ConflictException(
+          `Mobile with number ${mobileDto} already exists`,
+        );
+      }
 
-    if (mobileExists) throw new ConflictException('Mobile already exists');
-
-    const newMobile = await this.mobileRepository.create(mobile).save();
-
-    return newMobile;
+      throw error;
+    }
   }
 
   /**

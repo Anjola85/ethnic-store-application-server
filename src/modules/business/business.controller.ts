@@ -13,9 +13,10 @@ import {
 import { BusinessService } from './business.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { GeoLocationDto } from './dto/geolocation.dto';
-import { createError, createResponse } from 'src/common/util/response';
+import { createResponse } from 'src/common/util/response';
 import { Response } from 'express';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { BusinessListRespDto } from './dto/business-response.dto';
 
 @Controller('business')
 export class BusinessController {
@@ -41,8 +42,6 @@ export class BusinessController {
     @Body() businessBody: CreateBusinessDto,
     @UploadedFiles() files: any,
   ) {
-    // replace the images with the placeholder images from s3
-    businessBody.featuredImage = files?.featuredImage[0] || null;
     businessBody.backgroundImage = files?.backgroundImage[0] || null;
     businessBody.profileImage = files?.profileImage[0] || null;
 
@@ -101,12 +100,53 @@ export class BusinessController {
   @Get('all')
   async findAll(): Promise<any> {
     try {
-      const business = await this.businessService.findAll();
-      const length: number = Object.keys(business).length;
+      const businessResp: BusinessListRespDto =
+        await this.businessService.findAll();
       return createResponse('businesses fetched successfully', {
-        business,
-        length,
+        businessResp,
       });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get businesses by country
+   * @param country
+   * @returns
+   */
+  @Get('country/:country')
+  async getBusinessByCountry(@Res() res: Response, country: string) {
+    try {
+      const businesses = await this.businessService.getBusinessByCountry(
+        country,
+      );
+      return createResponse('Businesses fetched successfully', { businesses });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get businesses by region
+   * @param region
+   * @returns
+   */
+  @Get('region/:region')
+  async getBusinessesByRegion(@Res() res: Response, region: string) {
+    try {
+      const businesses = await this.businessService.getBusinessesByRegion(
+        region,
+      );
+      return createResponse('Businesses fetched successfully', { businesses });
     } catch (error) {
       this.logger.debug(error);
       throw new HttpException(

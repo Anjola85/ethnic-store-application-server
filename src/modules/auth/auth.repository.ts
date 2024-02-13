@@ -53,7 +53,7 @@ export class AuthRepository extends Repository<Auth> {
     }
   }
 
-  async updateAuth(authId: string, authDto: CreateAuthDto): Promise<any> {
+  async updateAuth(authId: number, authDto: CreateAuthDto): Promise<any> {
     try {
       const auth = await this.createQueryBuilder('auth')
         .update(Auth)

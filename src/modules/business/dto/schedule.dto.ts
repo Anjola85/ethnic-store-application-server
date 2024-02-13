@@ -7,14 +7,24 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class DayScheduleDto {
-  @IsString()
+export class Timing {
   @IsNotEmpty()
-  open: string;
+  hour: number;
 
-  @IsString()
   @IsNotEmpty()
-  close: string;
+  minute: number;
+}
+
+export class DayScheduleDto {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => Timing)
+  open: Timing;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => Timing)
+  close: Timing;
 }
 
 export class ScheduleDto {

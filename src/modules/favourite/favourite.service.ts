@@ -16,13 +16,13 @@ export class FavouriteService {
     return await this.favouriteRepository.addToFavourites(user, business);
   }
 
-  async getFavouriteByUserId(id: string) {
+  async getFavouriteByUserId(id: number) {
     return await this.favouriteRepository.getFavouriteByUserId(id);
   }
 
   async removeFromFavourites(
     favouriteId: string,
-    userId: string,
+    userId: number,
     businessId: string,
   ) {
     return await this.favouriteRepository.removeFromFavourites(
