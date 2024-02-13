@@ -6,6 +6,7 @@ import {
 } from 'src/contract/version1/response/country-response.dto';
 import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
 import { RegionListRespDto } from 'src/contract/version1/response/region-response.dto';
+import { MobileRespDto } from 'src/contract/version1/response/mobile-response.dto';
 
 export interface BusinessRespDto {
   id: number;
@@ -13,7 +14,7 @@ export interface BusinessRespDto {
   description: string;
   address: AddressRespDto;
   email?: string;
-  mobile?: MobileResponseDto;
+  mobile?: MobileRespDto;
   schedule: ScheduleRespDto;
   website: string;
   primaryCountry: CountryRespDto;

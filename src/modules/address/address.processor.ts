@@ -3,6 +3,7 @@ import { Address } from './entities/address.entity';
 
 export class AddressProcessor {
   public static mapEntityToResp(address: Address): AddressRespDto {
+    const location = address.location as unknown as Location;
     const resp: AddressRespDto = {
       id: address.id,
       isPrimary: address.isPrimary,
@@ -12,10 +13,18 @@ export class AddressProcessor {
       province: address.province,
       postalCode: address.postalCode,
       country: address.country,
-      //TOOD: fix below
-      latitude: 222,
-      longitude: 222,
+      latitude: location.x,
+      longitude: location.y,
     };
     return resp;
   }
+
+  public static mapEntityListToResp(addresses: Address[]): AddressRespDto[] {
+    return addresses.map((address) => this.mapEntityToResp(address));
+  }
+}
+
+export interface Location {
+  x: number;
+  y: number;
 }

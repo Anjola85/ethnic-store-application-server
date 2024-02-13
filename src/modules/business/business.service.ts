@@ -15,6 +15,7 @@ import { AwsS3Service } from '../files/aws-s3.service';
 import { AddressProcessor } from '../address/address.processor';
 import { Country } from '../country/entities/country.entity';
 import { Region } from '../region/entities/region.entity';
+import { BusinessProcessor } from './business.process';
 
 @Injectable()
 export class BusinessService {
@@ -153,7 +154,10 @@ export class BusinessService {
         .leftJoinAndSelect('business.countries', 'countries')
         .leftJoinAndSelect('business.regions', 'regions')
         .getMany();
-      return businesses;
+
+      const businessList = BusinessProcessor.mapEntityListToResp(businesses);
+
+      return businessList;
     } catch (error) {
       throw new Error(
         `Error retrieving all businesses from DB

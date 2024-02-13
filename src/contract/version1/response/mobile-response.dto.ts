@@ -1,6 +1,6 @@
 export interface MobileRespDto {
   id: number;
-  primary: boolean;
+  isPrimary: boolean;
   countryCode: string;
   number: string;
 }

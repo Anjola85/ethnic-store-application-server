@@ -16,6 +16,7 @@ import { GeoLocationDto } from './dto/geolocation.dto';
 import { createResponse } from 'src/common/util/response';
 import { Response } from 'express';
 import { CreateBusinessDto } from './dto/create-business.dto';
+import { BusinessListRespDto } from './dto/business-response.dto';
 
 @Controller('business')
 export class BusinessController {
@@ -99,11 +100,10 @@ export class BusinessController {
   @Get('all')
   async findAll(): Promise<any> {
     try {
-      const business = await this.businessService.findAll();
-      const length: number = Object.keys(business).length;
+      const businessResp: BusinessListRespDto =
+        await this.businessService.findAll();
       return createResponse('businesses fetched successfully', {
-        business,
-        length,
+        businessResp,
       });
     } catch (error) {
       this.logger.debug(error);
