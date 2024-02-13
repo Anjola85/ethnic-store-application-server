@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { MobileRepository } from './mobile.repository';
 import { Mobile, MobileParams } from './mobile.entity';
 import { Auth } from '../auth/entities/auth.entity';
@@ -6,65 +6,39 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class MobileService {
+  private readonly logger = new Logger(MobileService.name);
   constructor(private readonly mobileRepository: MobileRepository) {}
 
   /**
-   * TODO: rename to addBusinessMobile
-   * Adds mobile for customer or business
+   * Adds mobile for business or customer
    * @param mobile
    * @param params - auth, business or mobileDto
    * @returns
    */
-  async addMobile(mobile: Mobile, isUser?: boolean): Promise<Mobile> {
-    if (isUser) {
-      mobile.isPrimary = true;
+  async addMobile(mobileDto: MobileDto, isUser: boolean): Promise<Mobile> {
+    try {
+      const mobile: Mobile = Object.assign(new Mobile(), mobileDto);
+      if (isUser) mobile.isPrimary = true;
+      const newMobile = await this.mobileRepository.create(mobile).save();
+      return newMobile;
+    } catch (error) {
+      this.logger.debug('error in MobileService: ' + error);
+
+      if (
+        error.name === 'QueryFailedError' &&
+        error.message.includes('duplicate key value violates unique constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a mobile with a duplicate number: ${mobileDto}`,
+        );
+
+        throw new ConflictException(
+          `Mobile with number ${mobileDto} already exists`,
+        );
+      }
+
+      throw error;
     }
-
-    const params: MobileParams = {
-      mobile,
-    };
-    const mobileExists = await this.mobileRepository.getMobile(mobile);
-
-    if (mobileExists) {
-      throw new ConflictException('Mobile already exists');
-    }
-    const newMobile = await this.mobileRepository.create(mobile);
-    return newMobile[0];
-  }
-
-  /**
-   * Adds mobile for customer and sets the mobile as primary
-   * @param mobile
-   * @param auth
-   * @returns
-   */
-  async addUserMobile(mobile: Mobile, auth: Auth): Promise<Mobile> {
-    mobile.isPrimary = true;
-    const mobileDto: MobileDto = {
-      phoneNumber: mobile.phoneNumber,
-      countryCode: mobile.countryCode,
-      isoType: mobile.isoType,
-    };
-
-    // const params: MobileParams = {
-    //   mobile: mobileDto,
-    //   auth,
-    // };
-
-    const mobileExists = await this.mobileRepository.getMobile(mobile);
-
-    if (mobileExists) throw new ConflictException('Mobile already exists');
-
-    // add new mobile
-
-    // mobile.auth = auth;
-
-    const newMobile = await this.mobileRepository.create(mobile).save();
-
-    // // set auth
-    // newMobile[0].auth = auth;
-
-    return newMobile;
   }
 
   /**

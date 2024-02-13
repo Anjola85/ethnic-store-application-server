@@ -1,3 +1,4 @@
+import { EnvConfigService } from 'src/modules/config/env-config.';
 import * as crypto from 'crypto';
 import * as aws from 'aws-sdk';
 // import * as aws from 'aws-sdk-js-codemod';
@@ -5,19 +6,20 @@ import { AwsSecretKey } from './secret';
 
 const iv = Buffer.from('EjRWeJ_aZpQ0TEhKT0dKSg==', 'base64');
 const algorithm = 'AES-256-CBC';
+const configService = new EnvConfigService();
 
 export const encryptKms = async (buffer: Buffer) => {
   const kmsClient = new aws.KMS({
-    region: 'us-east-1',
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: EnvConfigService.get('AWS_REGION'),
+    accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
+    secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
   });
 
   const params = {
-    KeyId: process.env.AWS_KMS_KEY_ID,
+    KeyId: EnvConfigService.get('AWS_KMS_KEY_ID'),
     Plaintext: buffer,
     EncryptionContext: {
-      key: process.env.SECRET_KEY,
+      key: EnvConfigService.get('SECRET_KEY'),
     },
   };
 
@@ -30,51 +32,40 @@ export const encryptKms = async (buffer: Buffer) => {
 
 /**
  *
- * @param buffer - CipherTextBlob
- * @returns
+ * @param data - encrypted payload
+ * @returns decrypted payload
  */
-export const decryptKms = async (data: string) => {
+export const decryptPayload = async (data: string) => {
   try {
     const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'base64');
-    // console.log('buffer: ', buffer);
 
     const kmsClient = new aws.KMS({
-      region: 'us-east-1',
-      accessKeyId: process.env.AWS_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: EnvConfigService.get('AWS_REGION'),
+      accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
+      secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
     });
-    // console.log('kmsClient: ', kmsClient);
 
     const params = {
-      KeyId: process.env.AWS_KMS_KEY_ID,
+      KeyId: EnvConfigService.get('AWS_KMS_KEY_ID'),
       CiphertextBlob: buffer,
       EncryptionContext: {
-        key: process.env.SECRET_KEY,
+        key: EnvConfigService.get('SECRET_KEY'),
       },
     };
-    // console.log('params: ', params);
 
-    //TODO: error below
     const decryptedBuffer = await kmsClient.decrypt(params).promise();
-
-    // console.log('decryptedBuffer: ', decryptedBuffer);
 
     const clearText = decryptedBuffer.Plaintext!.toString();
 
-    // console.log('clearText: ', clearText);
-
     let decryptedData;
 
-    // check if clearText is a JSON object
-    if (clearText[0] === '{') {
-      decryptedData = JSON.parse(clearText);
-    } else {
-      decryptedData = clearText;
-    }
+    if (clearText[0] === '{') decryptedData = JSON.parse(clearText);
+    else decryptedData = clearText;
 
     return decryptedData;
   } catch (error) {
-    console.log(`Error thrown in crypto.ts, decryptKms method: ${error}`);
+    console.log(`Error thrown in crypto.ts, decryptPayload method: ${error}`);
+    throw new Error(error);
   }
 };
 

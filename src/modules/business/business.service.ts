@@ -1,6 +1,7 @@
+import { CountryService } from './../country/country.service';
+import { MobileService } from './../mobile/mobile.service';
 import { BusinessRepository } from './business.repository';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { BusinessDto } from './dto/business.dto';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   S3BusinessImagesRequest,
   S3BusinessImagesResponse,
@@ -8,86 +9,130 @@ import {
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { AddressService } from '../address/address.service';
 import { Business } from './entities/business.entity';
-import { BusinessRequestDto } from './dto/business.request';
 import { BusinessFilesService } from '../files/business-files.service';
+import { CreateBusinessDto } from './dto/create-business.dto';
+import { AwsS3Service } from '../files/aws-s3.service';
+import { AddressProcessor } from '../address/address.processor';
+import { Country } from '../country/entities/country.entity';
+import { Region } from '../region/entities/region.entity';
+import { BusinessProcessor } from './business.process';
 
 @Injectable()
 export class BusinessService {
+  private readonly logger = new Logger(BusinessService.name);
+
   constructor(
     private businessRepository: BusinessRepository,
     private businessFileService: BusinessFilesService,
     private addressService: AddressService,
+    private mobileService: MobileService,
+    private awsS3Service: AwsS3Service,
+    private countryService: CountryService,
   ) {}
 
-  async register(reqBody: BusinessRequestDto): Promise<any> {
-    console.log('req body is: ', reqBody);
-    const businessExist = await this.businessRepository.findByUniq({
+  /**
+   * Register a business
+   * @param reqBody
+   * @returns
+   */
+  async register(reqBody: CreateBusinessDto): Promise<any> {
+    try {
+      await this.businessExist(reqBody);
+
+      // map request object of DTO
+      const businessDto: CreateBusinessDto = Object.assign(
+        new CreateBusinessDto(),
+        reqBody,
+      );
+
+      // save to mobile table
+      const mobileEntity = await this.mobileService.addMobile(
+        reqBody.mobile,
+        false,
+      );
+
+      // save to address table
+      const addressEntity = await this.addressService.addAddress(
+        reqBody.address,
+      );
+
+      // map business dto data to business entity
+      const businessEntity: Business = Object.assign(new Business(), {
+        ...businessDto,
+        // backgroundImage: businessDto.images.backgroundImage,
+        // profileImage: businessDto.images.profileImage,
+        primaryCountry: reqBody.primaryCountry.id,
+        mobile: mobileEntity,
+        address: addressEntity,
+        countries: reqBody.countries.map((id) => ({ id })),
+        regions: reqBody.regions.map((id) => ({ id })),
+      });
+
+      // save the business to the database
+      const createdBusiness = await this.businessRepository
+        .create(businessEntity)
+        .save();
+
+      return createdBusiness;
+    } catch (error) {
+      this.logger.debug(
+        'From register in business.service.ts with error:',
+        error,
+      );
+
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async setBusinessImage(
+    businessDto: CreateBusinessDto,
+    reqBody: CreateBusinessDto,
+  ) {
+    if (businessDto.backgroundImage || businessDto.profileImage) {
+      // upload business images to AWS S3
+      const { profileImage, backgroundImage }: S3BusinessImagesResponse =
+        await this.processBusinessImages(reqBody);
+
+      businessDto.images = {
+        profileImage: profileImage,
+        backgroundImage: backgroundImage,
+      };
+    } else {
+      // get default image from S3
+      const defaultStoreImage: string = await this.awsS3Service.getImageUrl(
+        'defaultStore.png',
+      );
+      if (!defaultStoreImage) {
+        this.logger.error('Default store image not found');
+      }
+      businessDto.images = {
+        profileImage: defaultStoreImage || '',
+        backgroundImage: defaultStoreImage || '',
+      };
+    }
+  }
+
+  /**
+   * uses email or name to check if business exits
+   * @param reqBody
+   * @throws HttpException if business exists
+   */
+  private async businessExist(reqBody: CreateBusinessDto) {
+    const { businessExist, type } = await this.businessRepository.findByUniq({
       name: reqBody.name,
       email: reqBody.email,
     });
 
     if (businessExist)
       throw new HttpException(
-        `Business with name ${businessExist.name} already exists`,
+        `Business with ${type} already exists}`,
         HttpStatus.CONFLICT,
       );
-
-    const businessDto: BusinessDto = Object.assign(new BusinessDto(), reqBody);
-
-    businessDto.address.id = await this.addressService.addAddress(
-      reqBody.address,
-    );
-
-    const {
-      profileImage,
-      featuredImage,
-      backgroundImage,
-    }: S3BusinessImagesResponse = await this.processBusinessImages(reqBody);
-
-    // map the returned images to the businessDto
-    businessDto.images = {
-      profileImage: profileImage,
-      featuredImage: featuredImage,
-      backgroundImage: backgroundImage,
-    };
-
-    // map business dto data to business entity
-    const businessEntity: Business = Object.assign(new Business(), businessDto);
-
-    // save the business to the database
-    const createdBusiness = await this.businessRepository.addBusiness(
-      businessEntity,
-    );
-
-    return createdBusiness;
-  }
-
-  /**
-   * Does necessary mapping and uploads business images to AWS S3
-   * @param businessDto
-   * @returns
-   */
-  private async processBusinessImages(
-    businessDto: BusinessRequestDto,
-  ): Promise<S3BusinessImagesResponse> {
-    const { featuredImage, backgroundImage, profileImage } = businessDto;
-
-    // set the businessId to be name in AWS S3 since name is always unique
-    let businessName = businessDto.name;
-
-    // replace the space in the business name with underscore
-    businessName = businessName.replace(/\s/g, '_');
-    const businessImages: S3BusinessImagesRequest = {
-      business_id: businessName,
-      background_image_blob: backgroundImage,
-      profile_image_blob: profileImage,
-      featured_image_blob: featuredImage,
-    };
-
-    const imagesUrl: S3BusinessImagesResponse =
-      await this.businessFileService.uploadBusinessImagesToS3(businessImages);
-
-    return imagesUrl;
   }
 
   async findStoresNearby(geolocation: GeoLocationDto): Promise<any> {
@@ -100,183 +145,63 @@ export class BusinessService {
 
   async findAll() {
     try {
-      const businesses = await this.businessRepository.find();
-      return businesses;
+      // const businesses = await this.businessRepository.find();
+      const businesses = await this.businessRepository
+        .createQueryBuilder('business')
+        .leftJoinAndSelect('business.mobile', 'mobile')
+        .leftJoinAndSelect('business.address', 'address')
+        .leftJoinAndSelect('business.primaryCountry', 'primaryCountry')
+        .leftJoinAndSelect('business.countries', 'countries')
+        .leftJoinAndSelect('business.regions', 'regions')
+        .getMany();
+
+      const businessList = BusinessProcessor.mapEntityListToResp(businesses);
+
+      return businessList;
     } catch (error) {
       throw new Error(
-        `Error retrieving all businesses from mongo
+        `Error retrieving all businesses from DB
         \nfrom findAll method in business.service.ts.
         \nWith error message: ${error.message}`,
       );
     }
   }
 
-  // async findOne(id: string): Promise<any> {
-  //   try {
-  //     const business = await this.businessModel.findById(id).exec();
-  //     // throw error if business does not exist
-  //     if (!business) {
-  //       throw new Error(`business with id ${id} not found`);
-  //     }
+  async getBusinessByCountry(country: string): Promise<any> {
+    const businesses = await this.businessRepository.findByCountry(country);
+    return businesses;
+  }
 
-  //     if (business.deleted) {
-  //       throw new Error(`business with id ${id} has been deleted`);
-  //     }
+  async getBusinessesByRegion(region: string): Promise<any> {
+    const businesses = await this.businessRepository.findByRegion(region);
+    return businesses;
+  }
 
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error getting business information for business with id ${id},
-  //       \nfrom findOne method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+  /**
+   * Helper method
+   * Does necessary mapping and uploads business images to AWS S3
+   * @param businessDto
+   * @returns
+   */
+  private async processBusinessImages(
+    businessDto: CreateBusinessDto,
+  ): Promise<S3BusinessImagesResponse> {
+    const { backgroundImage, profileImage } = businessDto;
 
-  // async update(
-  //   id: string,
-  //   updateBusinessDto: UpdateBusinessDto,
-  // ): Promise<void> {
-  //   try {
-  //     await this.businessModel.updateOne({
-  //       _id: id,
-  //       ...updateBusinessDto,
-  //     });
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error update business information for business with id ${id},
-  //       \nfrom update method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+    // set the businessId to be name in AWS S3 since name is always unique
+    let businessName = businessDto.name;
 
-  // async remove(id: string): Promise<any> {
-  //   try {
-  //     const business = await this.businessModel
-  //       .findById(id, { deleted: 'true' })
-  //       .exec();
+    // replace the space in the business name with underscore
+    businessName = businessName.replace(/\s/g, '_');
+    const businessImages: S3BusinessImagesRequest = {
+      business_id: businessName,
+      background_image_blob: backgroundImage,
+      profile_image_blob: profileImage,
+    };
 
-  //     if (!business) {
-  //       throw new Error(
-  //         `Mongoose error with deleting business with business id ${id}
-  //         In remove method business.service.ts with dev error message: business with id:${id} not found`,
-  //       );
-  //     }
+    const imagesUrl: S3BusinessImagesResponse =
+      await this.businessFileService.uploadBusinessImagesToS3(businessImages);
 
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from remove method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
-
-  // /**
-  //  * Find business by name
-  //  * @param name
-  //  * @returns
-  //  */
-  // async findBusinessByName(name: string): Promise<any> {
-  //   try {
-  //     const business = await this.businessModel.find({ name }).exec();
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from findBusinessByName method in business.service.ts.
-  //         \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
-
-  // /**
-  //  * Find all businesses with this category name
-  //  * @returns {*} - businesses belonging to this category
-  //  */
-  // async findByCategory(categoryName: string): Promise<any> {
-  //   try {
-  //     // get businesses with this category name
-  //     const business = await this.businessModel
-  //       .find({ 'category.name': categoryName })
-  //       .exec();
-
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from findByCategory method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
-
-  // /**
-  //  * Find all businesses with this country name
-  //  * @param countryName
-  //  * @returns {*} - businesses belonging to this country
-  //  */
-  // async findByCountry(countryName: string): Promise<any> {
-  //   try {
-  //     // get businesses with this country name
-  //     const business = await this.businessModel
-  //       .find({ 'country.name': countryName })
-  //       .exec();
-
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(`Error from findByCountry method in business.service.ts.
-  //     \nWith error message: ${error.message}`);
-  //   }
-  // }
-
-  // /**
-  //  * Find all businesses with this continent name
-  //  * @param continentName
-  //  * @returns {*} - businesses belonging to this continent
-  //  */
-  // async findByContinent(continentName: string): Promise<any> {
-  //   try {
-  //     // get businesses with this continent name
-  //     const business = await this.businessModel
-  //       .find({ 'continent.name': continentName })
-  //       .exec();
-
-  //     return business;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from findByCategory method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
-
-  // async findStoresNearby(
-  //   latitude: number,
-  //   longitude: number,
-  //   radius: number,
-  // ): Promise<Business[]> {
-  //   try {
-  //     const coordinates = [latitude, longitude];
-  //     const businesses = await this.businessModel
-  //       .find({
-  //         geolocation: {
-  //           $near: {
-  //             $geometry: {
-  //               type: 'Point',
-  //               coordinates,
-  //             },
-  //             $maxDistance: radius,
-  //           },
-  //         },
-  //       })
-  //       .exec();
-
-  //     return businesses;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error from findStoresNearby method in business.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+    return imagesUrl;
+  }
 }

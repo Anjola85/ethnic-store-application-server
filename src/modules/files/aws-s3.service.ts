@@ -7,7 +7,7 @@ import * as AWS from 'aws-sdk';
 export class AwsS3Service {
   private readonly AWS_S3: AWS.S3;
   private readonly BUCKET_NAME =
-    process.env.AWS_BUCKET_NAME || 'home-closer-assets-db';
+    process.env.AWS_BUCKET_NAME || 'quiikmart-version1-app';
 
   constructor() {
     this.AWS_S3 = new AWS.S3({

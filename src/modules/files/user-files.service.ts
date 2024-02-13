@@ -46,7 +46,7 @@ export class UserFileService {
 
   // endpoint to upload profile picture
   async uploadProfileImage(
-    userId: string,
+    userId: number,
     imageBlob: Express.Multer.File,
   ): Promise<string> {
     const folderPath = `${this.rootFolder}/${userId}/${this.profileFolder}`;

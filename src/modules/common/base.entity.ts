@@ -1,30 +1,39 @@
+import { getCurrentEpochTime } from 'src/common/util/functions';
 import {
   BaseEntity,
+  BeforeInsert,
+  BeforeUpdate,
   Column,
-  CreateDateColumn,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
 export class CommonEntity extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ type: 'boolean', default: false })
   deleted: boolean;
 
-  @CreateDateColumn({
+  @Column({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'bigint',
   })
-  createdAt: Date;
+  createdAt: number;
 
-  @UpdateDateColumn({
+  @Column({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'bigint',
   })
-  updatedAt: Date;
+  updatedAt: number;
+
+  @BeforeInsert()
+  setCreationDate() {
+    this.createdAt = getCurrentEpochTime();
+    this.updatedAt = getCurrentEpochTime();
+  }
+
+  @BeforeUpdate()
+  setUpdateDate() {
+    this.updatedAt = getCurrentEpochTime();
+  }
 }

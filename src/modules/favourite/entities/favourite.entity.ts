@@ -3,7 +3,7 @@ import { CommonEntity } from 'src/modules/common/base.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
-@Entity('favourites')
+@Entity('favourite')
 export class Favourite extends CommonEntity {
   @ManyToOne(() => Business, (business) => business.favourites)
   @JoinColumn({ name: 'business_id' })

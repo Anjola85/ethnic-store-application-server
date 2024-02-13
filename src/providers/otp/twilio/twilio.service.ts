@@ -1,24 +1,27 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { Twilio } from 'twilio';
 import { generateOtpCode } from 'src/providers/util/otp-code-util';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 
 @Injectable()
 export default class TwilioService {
   private readonly logger = new Logger(TwilioService.name);
   client: Twilio;
 
-  constructor(private readonly configService: ConfigService) {
-    const twilioAccountSid =
-      this.configService.get<string>('TWILIO_ACCOUNT_SID');
-    const twilioAuthToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+  constructor(private readonly configService: EnvConfigService) {
+    const TWILIO_ACCOUNT_SID = EnvConfigService.get('TWILIO_ACCOUNT_SID');
+    const TWILIO_AUTH_TOKEN = EnvConfigService.get('TWILIO_AUTH_TOKEN');
+    this.client = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  }
 
-    if (!twilioAccountSid || !twilioAuthToken) {
-      throw new Error('Twilio account SID/auth token not found in config file');
+  private getClient(): Twilio {
+    if (!this.client) {
+      const TWILIO_ACCOUNT_SID = EnvConfigService.get('TWILIO_ACCOUNT_SID');
+      const TWILIO_AUTH_TOKEN = EnvConfigService.get('TWILIO_AUTH_TOKEN');
+      this.client = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     }
-
-    this.client = new Twilio(twilioAccountSid, twilioAuthToken);
+    return this.client;
   }
 
   public async sendSms(
@@ -27,9 +30,11 @@ export default class TwilioService {
     expirationMinutes = 6,
   ) {
     try {
-      this.logger.debug('phone-number to send sms to is: ' + phoneNumber);
+      // initialize twilio client
+      this.client = this.getClient();
 
-      const senderPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+      this.logger.debug('phone-number to send sms to is: ' + phoneNumber);
+      const senderPhoneNumber = EnvConfigService.get('TWILIO_PHONE_NUMBER');
 
       // generate otp code
       const { code, expiryTime } = generateOtpCode(

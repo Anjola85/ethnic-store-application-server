@@ -10,7 +10,6 @@ COPY . .
 
 # COPY config/.env /quickmart/src/app
 
-
 RUN npm run build
 
 EXPOSE 7080

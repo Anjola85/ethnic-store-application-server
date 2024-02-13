@@ -12,8 +12,8 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 import { UserProfile } from '../user.enums';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
-import { BusinessDto } from 'src/modules/business/dto/business.dto';
 import { CreateAuthDto } from 'src/modules/auth/dto/create-auth.dto';
+import { CreateBusinessDto } from 'src/modules/business/dto/create-business.dto';
 
 /**
  * Generic DTO
@@ -83,7 +83,7 @@ export class UserDto {
 
   @IsOptional()
   @ApiProperty({ description: 'test-description', example: 'test-value' })
-  favourites: BusinessDto[];
+  favourites: CreateBusinessDto[];
 
   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary' })

@@ -1,21 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-
-export class EntityMobileDto {
-  @ApiProperty({ example: '+6473334839' })
-  phone_number: string;
-
-  @ApiProperty({ example: '+1' })
-  country_code: string;
-
-  @ApiProperty({ example: 'CA' })
-  iso_type: string;
-}
+import { BaseDto } from './base.dto';
+import { Auth } from 'src/modules/auth/entities/auth.entity';
+import { Business } from 'src/modules/business/entities/business.entity';
 
 /**
  * Defining the structure for the mobile field
  */
-export class MobileDto {
+export class MobileDto extends BaseDto {
   @ApiProperty({ example: '6473334839' })
   @IsNotEmpty()
   @IsString()
@@ -30,28 +22,16 @@ export class MobileDto {
   @IsNotEmpty()
   @IsString()
   isoType: string;
-}
 
-export class MobileGroupDto {
-  @ApiProperty({
-    example: {
-      phoneNumber: '+6473334839',
-      countryCode: '+1',
-      isoType: 'CA',
-    },
-  })
-  @IsObject()
-  @IsNotEmpty()
-  primary: MobileDto;
-
-  @ApiProperty({
-    example: {
-      phone_number: '+6473334839',
-      country_code: '+1',
-      isoType: 'CA',
-    },
-  })
-  @IsObject()
+  @ApiProperty({ example: false })
   @IsOptional()
-  secondary: MobileDto;
+  isPrimary?: boolean;
+
+  @ApiProperty({ example: 'auth' })
+  @IsOptional()
+  auth: Auth;
+
+  @ApiProperty({ example: 'business' })
+  @IsOptional()
+  business: Business;
 }

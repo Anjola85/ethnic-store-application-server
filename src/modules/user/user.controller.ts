@@ -23,7 +23,7 @@ import {
   createEncryptedResponse,
 } from '../../common/util/response';
 import {
-  decryptKms,
+  decryptPayload,
   encryptKms,
   encryptPayload,
   toBuffer,
@@ -40,10 +40,10 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
-import { SignupResponseDtoEncrypted } from 'src/common/responseDTO/signupResponse.dto';
+import { SignupResponseDtoEncrypted } from 'src/contract/version1/response/signupResponse.dto';
 import { User } from './entities/user.entity';
 import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
-import { OtpResponse } from 'src/contract/version1/response/auth/otp.response';
+import { OtpPayloadResp } from 'src/contract/version1/response/otp-response.dto';
 
 @Controller('user')
 export class UserController {
@@ -127,7 +127,9 @@ export class UserController {
         'request-signup endpoint called with body: ' + JSON.stringify(body),
       );
 
-      const resp: OtpResponse = await this.userService.signupOtpRequest(body);
+      const resp: OtpPayloadResp = await this.userService.signupOtpRequest(
+        body,
+      );
 
       const payload = createResponse(resp.message, resp.token);
 
@@ -213,7 +215,7 @@ export class UserController {
   ): Promise<any> {
     try {
       const crypto = res.locals.crypto;
-      const decryptedBody = await decryptKms(requestBody.payload);
+      const decryptedBody = await decryptPayload(requestBody.payload);
 
       // map decrypted body to userDto
       const userDto = new UpdateUserDto();
@@ -223,7 +225,7 @@ export class UserController {
       userDto.profileImage = files?.profileImage[0] || null;
 
       // get auth record with the userId
-      const userId = res.locals.id;
+      const userId: number = res.locals.id;
 
       if (!userId)
         return res

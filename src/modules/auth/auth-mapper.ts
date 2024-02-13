@@ -1,7 +1,3 @@
-import {
-  entityToMobile,
-  mobileToEntity,
-} from 'src/common/mapper/mobile-mapper';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { Auth } from './entities/auth.entity';
 import { Mobile } from '../mobile/mobile.entity';

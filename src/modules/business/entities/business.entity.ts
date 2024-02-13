@@ -1,9 +1,11 @@
 import { Country } from 'src/modules/country/entities/country.entity';
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   Entity,
-  Index,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -16,6 +18,7 @@ import { Address } from 'src/modules/address/entities/address.entity';
 import { Mobile } from 'src/modules/mobile/mobile.entity';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { ScheduleDto } from '../dto/schedule.dto';
+import { Region } from 'src/modules/region/entities/region.entity';
 
 export interface BusinessParam {
   name?: string;
@@ -28,14 +31,11 @@ export class Business extends CommonEntity {
   @Column({ nullable: false, unique: true })
   name: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', default: '' })
   description: string;
 
-  @Column({ type: 'varchar', nullable: true, unique: true })
+  @Column({ type: 'varchar', default: '', unique: true, nullable: true })
   email: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  schedule: ScheduleDto;
 
   @Column({ type: 'varchar', default: '' })
   website: string;
@@ -43,37 +43,63 @@ export class Business extends CommonEntity {
   @Column({ type: 'text', default: '3.0' })
   rating: string;
 
-  @OneToOne(() => Address, (address) => address.id)
+  @OneToOne(() => Address, (address) => address.business, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    eager: true,
+  })
+  @JoinColumn()
   address: Address;
 
-  @OneToMany(() => Mobile, (mobile) => mobile.business)
-  mobiles: Mobile[];
+  @OneToOne(() => Mobile, (mobile) => mobile.business, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    eager: true,
+  })
+  @JoinColumn()
+  mobile: Mobile;
 
-  @Column({ name: 'business_type', type: 'varchar', default: 'grocery' })
-  businessType: string;
-
-  @OneToMany(() => Favourite, (favourite) => favourite.business)
+  @OneToMany(() => Favourite, (favourite) => favourite.business, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    eager: true,
+  })
   favourites: Favourite[];
 
   @ManyToOne(() => User, (user) => user.business)
   @JoinColumn()
   owner: User;
 
+  @Column({ name: 'business_type', type: 'varchar', default: 'grocery' })
+  businessType: string;
+
   @ManyToOne(() => Country, (country) => country.name)
   @JoinColumn({ name: 'primary_country' })
   primaryCountry: Country;
 
-  @ManyToMany(() => Country, (country) => country.name)
-  @JoinColumn({ name: 'other_countries' })
-  otherCountries: Country[];
+  @ManyToMany(() => Country, (country) => country.businesses)
+  countries: Country[];
 
-  //TODO: change nullable to false, replace with dummy store image from AWS S3
-  // @Column({ name: 'featured_image', type: 'varchar', nullable: true })
-  // featuredImage: string;
+  @ManyToMany(() => Region, (region) => region.businesses)
+  regions: Region[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  schedule: ScheduleDto;
 
   @Column({ name: 'background_image', type: 'varchar', nullable: true })
   backgroundImage: string;
 
   @Column({ name: 'profile_image', type: 'varchar', nullable: true })
   profileImage: string;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  lowercaseFields() {
+    this.name = this.name && this.name.toLowerCase();
+    this.description = this.description && this.description.toLowerCase();
+    this.email = this.email && this.email.toLowerCase();
+    this.website = this.website && this.website.toLowerCase();
+    this.rating = this.rating && this.rating.toLowerCase();
+    this.businessType = this.businessType && this.businessType.toLowerCase();
+  }
 }

@@ -7,7 +7,7 @@
 //     MongooseModule.forRootAsync({
 //       inject: [ConfigService],
 //       useFactory: async (configService: ConfigService) => ({
-//         uri: configService.get<string>('DATABASE_URI'),
+//         uri: EnvConfigService.get<string>('DATABASE_URI'),
 //         useNewUrlParser: true,
 //         useUnifiedTopology: true,
 //       }),

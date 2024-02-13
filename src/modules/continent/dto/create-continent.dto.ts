@@ -3,8 +3,7 @@ import { IsLowercase, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateContinentDto {
   @IsNotEmpty()
-  @IsLowercase()
   @IsString()
-  @ApiProperty({ description: 'grocery' })
+  @ApiProperty({ description: 'africa' })
   name: string;
 }

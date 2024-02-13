@@ -12,7 +12,7 @@ export class FavouriteRepository extends Repository<Favourite> {
     super(Favourite, dataSource.createEntityManager());
   }
 
-  async getFavouriteByUserId(id: string): Promise<Favourite[]> {
+  async getFavouriteByUserId(id: number): Promise<Favourite[]> {
     try {
       const favourites = await this.createQueryBuilder('favourite')
         .leftJoinAndSelect('favourite.business', 'business')
@@ -53,7 +53,7 @@ export class FavouriteRepository extends Repository<Favourite> {
 
   async removeFromFavourites(
     favouriteId: string,
-    userId: string,
+    userId: number,
     businessId: string,
   ): Promise<Favourite[]> {
     let favourite;
