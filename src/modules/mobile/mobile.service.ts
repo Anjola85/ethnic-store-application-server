@@ -15,7 +15,7 @@ export class MobileService {
    * @param params - auth, business or mobileDto
    * @returns
    */
-  async addMobile(mobileDto: MobileDto, isUser: boolean): Promise<Mobile> {
+  async registerMobile(mobileDto: MobileDto, isUser: boolean): Promise<Mobile> {
     try {
       const mobile: Mobile = Object.assign(new Mobile(), mobileDto);
       if (isUser) mobile.isPrimary = true;
@@ -51,6 +51,7 @@ export class MobileService {
   }
 
   async getMobile(mobileParam: Mobile | MobileDto): Promise<Mobile> {
+    this.logger.debug('mobileParam: ' + JSON.stringify(mobileParam));
     let mobile: Mobile;
     if (mobileParam instanceof MobileDto) {
       mobile = new Mobile();
@@ -59,6 +60,7 @@ export class MobileService {
       mobile = mobileParam;
     }
     const mobileResp = await this.mobileRepository.getMobile(mobile);
+    this.logger.debug('mobileResp: ' + JSON.stringify(mobileResp));
     return mobileResp;
   }
 

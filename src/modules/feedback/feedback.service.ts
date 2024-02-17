@@ -1,3 +1,7 @@
+/**
+ * Business logic to handle feedback related operations
+ * Feedback is a user's opinion about a product or service
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { UpdateFeedbackDto } from './dto/update-feedback.dto';
@@ -14,6 +18,11 @@ export class FeedbackService {
     private feedbackRepository: Repository<Feedback>,
   ) {}
 
+  /**
+   * Pre-requisite: User must be logged in to create feedback(have active session)
+   * @param createFeedbackDto
+   * @returns
+   */
   async create(createFeedbackDto: CreateFeedbackDto) {
     try {
       const feedbackEntity = Object.assign(new Feedback(), createFeedbackDto);

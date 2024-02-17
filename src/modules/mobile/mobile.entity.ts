@@ -23,7 +23,7 @@ export class Mobile extends CommonEntity {
   @OneToOne(() => Business, (business) => business.mobile)
   business: Business;
 
-  @Column({ name: 'phone_number', type: 'varchar' })
+  @Column({ name: 'phone_number', type: 'varchar', unique: true })
   phoneNumber: string;
 
   @Column({ name: 'country_code', type: 'varchar' })

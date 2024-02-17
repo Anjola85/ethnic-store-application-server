@@ -27,6 +27,7 @@ import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.r
 import { UserService } from '../user/user.service';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { AddressService } from '../address/address.service';
+import { SignupOtpRespDto } from 'src/contract/version1/response/signup-otp-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -42,26 +43,18 @@ export class AuthService {
   ) {}
 
   /**
-   * Sends otp to provided email or mobile and update auth record with otp code
+   * This handles the request for OTP and returns the OTP payload
    * @param email
    * @param mobile
    * @returns
    */
-  async sendOtp(email?: string, mobile?: MobileDto): Promise<OtpPayloadResp> {
+  async processOtpRequest(
+    email?: string,
+    mobile?: MobileDto,
+  ): Promise<OtpPayloadResp> {
     try {
-      let response: { message; code; expiryTime };
-
       // TODO: replace this with a call to the microservice to handle call to sendgrid and twilio through Kafka or RabbitMQ
-      if (mobile && mobile?.phoneNumber)
-        response = await this.twilioService.sendSms(mobile.phoneNumber);
-      else if (email) response = await this.sendgridService.sendOTPEmail(email);
-
-      // TODO: below is for debugging purposes only, remove when done
-      // response = {
-      //   code: '123456',
-      //   expiryTime: new Date(Date.now() + 60000),
-      //   message: 'OTP sent successfully',
-      // };
+      const response = await this.sendOtpCode(mobile, email);
 
       const authModel: Auth = new Auth();
 
@@ -73,16 +66,12 @@ export class AuthService {
 
       if (mobile && mobile.phoneNumber) {
         this.logger.debug(`mobile provided: ${JSON.stringify(mobile)}`);
-
         const mobileExist: Mobile = await this.mobileService.getMobile(mobile);
-
         let auth: Auth;
-
-        if (mobileExist && mobileExist.auth) {
+        if (mobileExist && mobileExist?.auth) {
           this.logger.debug(
             `mobile exists, updating the auth's otp code for ${mobile.phoneNumber}`,
           );
-
           auth = mobileExist.auth;
           await this.authRepository.update(auth.id, {
             ...authModel,
@@ -91,8 +80,7 @@ export class AuthService {
           this.logger.debug(
             `mobile doesnt exist, creating a new auth and mobile record for ${mobile.phoneNumber}`,
           );
-
-          auth = await this.addAuth(authModel);
+          auth = await this.registerAuthAccount(authModel);
 
           let newMobile = new Mobile();
           Object.assign(newMobile, {
@@ -101,7 +89,7 @@ export class AuthService {
           });
 
           // TODO: bad code, move this to controller
-          newMobile = await this.mobileService.addMobile(newMobile, true);
+          newMobile = await this.mobileService.registerMobile(newMobile, true);
         }
 
         authModel.id = auth.id;
@@ -117,7 +105,7 @@ export class AuthService {
           });
         } else {
           this.logger.debug('auth account does not exist, creating one');
-          authAcct = await this.addAuth(authModel);
+          authAcct = await this.registerAuthAccount(authModel);
         }
 
         authModel.id = authAcct.id;
@@ -136,6 +124,14 @@ export class AuthService {
 
       throw new Error(`From AuthService.sendOtp: ${error.message}`);
     }
+  }
+
+  private async sendOtpCode(mobile: MobileDto, email: string) {
+    let response: { message: any; code: any; expiryTime: any };
+    if (mobile && mobile?.phoneNumber)
+      response = await this.twilioService.sendSms(mobile.phoneNumber);
+    else if (email) response = await this.sendgridService.sendOTPEmail(email);
+    return response;
   }
 
   /**
@@ -232,42 +228,61 @@ export class AuthService {
   }
 
   /**
+   * This method sends OTP to the user's email or mobile and returns the OTP payload[]
    * If user exists, throw error
    * If user does not exist, sendOTP
    * @param body
    */
-  async signupOtpRequest(body: SignupOtpRequest): Promise<OtpPayloadResp> {
+  async signupOtpRequest(body: SignupOtpRequest): Promise<SignupOtpRespDto> {
     try {
       const { email, mobile } = body;
 
+      let authAccount;
+
       if (mobile) {
-        // console.log('checking if mobile exists');
         const registeredMobile = await this.mobileService.getMobile(mobile);
 
-        if (registeredMobile)
-          throw new ConflictException('phone number already exists');
-
-        // console.log('mobile does not exist');
+        if (registeredMobile?.auth) {
+          authAccount = await this.authRepository.findOneBy({
+            id: registeredMobile.auth.id,
+          });
+        }
       } else if (email) {
-        const auth = await this.findByEmail(body.email);
-
-        if (auth) throw new ConflictException('email already exists');
+        authAccount = await this.findByEmail(body.email);
       }
 
-      // console.log('sending otp');
+      // if user has been registered and verified
+      if (authAccount && authAccount.accountVerified && authAccount.user)
+        return { userExists: true } as SignupOtpRespDto;
 
-      const auth: OtpPayloadResp = await this.sendOtp(body.email, body.mobile);
+      const otpResp: OtpPayloadResp = await this.processOtpRequest(
+        body.email,
+        body.mobile,
+      );
 
-      // console.log(auth);
+      const signupOtpResp = {
+        ...otpResp,
+        userExists: false,
+      } as SignupOtpRespDto;
 
-      if (null == auth)
-        throw new Error('From signupOtpRequest: sendOTP returned null');
-
-      return auth;
+      return signupOtpResp;
     } catch (error) {
       this.logger.debug(
-        'Error thrown in user.service.ts, requestSignup method: ' + error,
+        'Error thrown in auth.service.ts, signupOtpRequest method: ' + error,
       );
+
+      if (
+        error.name === 'QueryFailedError' &&
+        error.message.includes('duplicate key value violates unique constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a user with a duplicate email or mobile: ${body.email} ${body.mobile}`,
+        );
+
+        throw new ConflictException(
+          `User with email ${body.email} or mobile ${body.mobile} already exists`,
+        );
+      }
 
       throw error;
     }
@@ -325,7 +340,7 @@ export class AuthService {
       }
     } catch (error) {
       this.logger.debug(
-        'Error thrown in user.service.ts, register method: ' + error,
+        'Error thrown in auth.service.ts, registerUser method: ' + error,
       );
     }
   }
@@ -421,7 +436,7 @@ export class AuthService {
         if (!authExist) throw new NotFoundException('Email is not registered');
       }
 
-      const response = await this.sendOtp(email, mobile);
+      const response = await this.processOtpRequest(email, mobile);
 
       return response;
     } catch (e) {
@@ -447,26 +462,27 @@ export class AuthService {
    * @param auth
    * @returns
    */
-  async addAuth(auth: Auth): Promise<Auth> {
+  async registerAuthAccount(auth: Auth): Promise<Auth> {
     try {
-      if (!auth) throw new Error('auth is required');
-
-      const params = {
-        authId: auth.id,
-        email: auth.email,
-      };
-
-      const authExist = await this.authRepository.findByUniq(params);
-
-      if (authExist) throw new Error('Auth account already exists');
-
       const newAuth = await this.authRepository.create(auth).save();
-
       return newAuth;
-    } catch (e) {
+    } catch (error) {
+      if (
+        error.name === 'QueryFailedError' &&
+        error.message.includes('duplicate key value violates unique constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a auth with a duplicate email: ${auth.email}`,
+        );
+
+        throw new ConflictException(
+          `Auth with email ${auth.email} already exists`,
+        );
+      }
+
       throw new Error(
         `Error from addAuth method in auth.service.ts.
-        with error message: ${e.message}`,
+        with error message: ${error.message}`,
       );
     }
   }

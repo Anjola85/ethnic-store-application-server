@@ -121,16 +121,23 @@ import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Authenticate users for these routes except for the ones mentioned in exclude
     consumer
       .apply(AuthMiddleware)
-      .forRoutes(
-        'user/info',
-        'auth/verifyOtp',
-        'user/signup',
-        'auth/login',
-        'auth/resendOtp',
-      );
+      .exclude('auth/request-login', 'auth/request-signup', 'test/*');
 
+    //TODO: remove below
+    // consumer
+    //   .apply(AuthMiddleware)
+    //   .forRoutes(
+    //     'user/info',
+    //     'auth/verifyOtp',
+    //     'user/signup',
+    //     'auth/login',
+    //     'auth/resendOtp',
+    //   );
+
+    // Decrypt every payload request made to routes except for the ones mentioned in exclude
     consumer
       .apply(DecryptionMiddleware)
       .exclude(

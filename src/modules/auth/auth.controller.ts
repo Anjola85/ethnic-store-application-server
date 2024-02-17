@@ -43,64 +43,68 @@ import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 export class AuthController {
   private readonly logger = new Logger(AuthService.name);
 
+  @Post('request-login')
+  async loginOtpRequest(@Body() body: LoginOtpRequest) {
+    try {
+      this.logger.debug(
+        'LoginOTPRequest endpoint called with request body: ' +
+          JSON.stringify(body, null, 2),
+      );
+
+      const resp: OtpPayloadResp = await this.authService.loginOtpRequest(body);
+
+      const payload = createResponse(resp.message, resp.token);
+
+      return payload;
+    } catch (error) {
+      this.logger.debug('Auth Controller with error: ' + error);
+
+      if (error instanceof NotFoundError) {
+        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      }
+
+      throw new HttpException(
+        "Something went wrong, we're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('request-signup')
+  async SignupOtpRequest(@Body() body: SignupOtpRequest) {
+    try {
+      this.logger.debug(
+        'request-signup endpoint called with body: ' + JSON.stringify(body),
+      );
+
+      const resp: OtpPayloadResp = await this.authService.signupOtpRequest(
+        body,
+      );
+
+      const payload = createResponse(resp.message, resp.token);
+
+      return payload;
+    } catch (error) {
+      this.logger.error(
+        "Error occurred in 'requestSignup' method of UserController with error: " +
+          error,
+      );
+      // Handle any error that occurs during the registration process
+      if (error instanceof ConflictException)
+        throw new ConflictException(error.message);
+
+      throw new HttpException(
+        "Something went wrong, we're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   constructor(
     private readonly authService: AuthService,
     private readonly awsSecretKey: AwsSecretKey,
     private readonly geocodingService: GeocodingService,
   ) {}
-
-  /**
-   * DEPRACATED
-   * This method sends an OTP to the user
-   * @param reqBody
-   * @returns
-   */
-  @Post('sendOtp')
-  @ApiOperation({
-    summary: 'Send OTP to user',
-    description: 'Send OTP to user',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        payload: {
-          example:
-            'AQICAHjLuDRTnKVsgRzvUy74xztM2frynZUHkg/Nv5ZSxXo+PgEfnog+SPjBWqGB',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'OTP sent successfully' })
-  @ApiResponse({ status: 400, description: 'Failed to send OTP' })
-  async sendOtp(@Body() reqBody: TempUserAccountDto) {
-    try {
-      // const authResponse = await this.authService.sendOtp(
-      //   reqBody.email,
-      //   reqBody.mobile,
-      // );
-
-      // const payload = createResponse(authResponse.message, authResponse.token);
-
-      // return payload;
-      return createResponse(
-        'API discontinued, Use request-login or request-signup',
-      );
-    } catch (error) {
-      this.logger.error(
-        'Auth Controller with error message: ' + error.message,
-        ' with error: ' + error,
-      );
-
-      if (error instanceof ConflictException)
-        throw new HttpException(error.message, HttpStatus.CONFLICT);
-
-      throw new HttpException(
-        'send otp failed',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 
   /**
    * Registers a user to the DB
@@ -196,63 +200,6 @@ export class AuthController {
 
       throw new HttpException(
         'verify otp failed',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post('request-login')
-  async loginOtpRequest(@Body() body: LoginOtpRequest) {
-    try {
-      this.logger.debug(
-        'LoginOTPRequest endpoint called with request body: ' +
-          JSON.stringify(body, null, 2),
-      );
-
-      const resp: OtpPayloadResp = await this.authService.loginOtpRequest(body);
-
-      const payload = createResponse(resp.message, resp.token);
-
-      return payload;
-    } catch (error) {
-      this.logger.debug('Auth Controller with error: ' + error);
-
-      if (error instanceof NotFoundError) {
-        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-      }
-
-      throw new HttpException(
-        "Something went wrong, we're working on it",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post('request-signup')
-  async SignupOtpRequest(@Body() body: SignupOtpRequest) {
-    try {
-      this.logger.debug(
-        'request-signup endpoint called with body: ' + JSON.stringify(body),
-      );
-
-      const resp: OtpPayloadResp = await this.authService.signupOtpRequest(
-        body,
-      );
-
-      const payload = createResponse(resp.message, resp.token);
-
-      return payload;
-    } catch (error) {
-      this.logger.error(
-        "Error occurred in 'requestSignup' method of UserController with error: " +
-          error,
-      );
-      // Handle any error that occurs during the registration process
-      if (error instanceof ConflictException)
-        throw new ConflictException(error.message);
-
-      throw new HttpException(
-        "Something went wrong, we're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -7,6 +7,9 @@ export class Feedback extends CommonEntity {
   @Column('varchar', { length: 1000 })
   content: string;
 
+  @Column('double precision', { default: 0 })
+  rating: number;
+
   @ManyToMany(() => User)
   @JoinTable()
   users: User[];
