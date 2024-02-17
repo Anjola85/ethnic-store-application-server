@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
+import { UpdateAuthDto } from 'src/modules/auth/dto/update-auth.dto';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -67,4 +68,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   profileImageUrl: string;
+
+  @IsOptional()
+  auth: UpdateAuthDto;
 }

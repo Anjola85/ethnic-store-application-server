@@ -53,11 +53,17 @@ export class AuthRepository extends Repository<Auth> {
     }
   }
 
-  async updateAuth(authId: number, authDto: CreateAuthDto): Promise<any> {
+  /**
+   * This method updates the email of an auth account
+   * @param authId
+   * @param authDto
+   * @returns
+   */
+  async updateEmail(authId: number, email: string): Promise<any> {
     try {
       const auth = await this.createQueryBuilder('auth')
         .update(Auth)
-        .set({ email: authDto.email })
+        .set({ email: email })
         .where('id = :id', { id: authId })
         .execute();
 

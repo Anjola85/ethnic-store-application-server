@@ -16,8 +16,8 @@ import { createResponse } from 'src/common/util/response';
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
-  @Post()
-  create(@Body() createFeedbackDto: CreateFeedbackDto) {
+  @Post('register')
+  register(@Body() createFeedbackDto: CreateFeedbackDto) {
     try {
       const feedback = this.feedbackService.create(createFeedbackDto);
       return createResponse('Feedback created successfully', feedback);
@@ -26,7 +26,7 @@ export class FeedbackController {
     }
   }
 
-  @Get()
+  @Get('all')
   findAll() {
     return this.feedbackService.findAll();
   }

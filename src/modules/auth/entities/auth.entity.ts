@@ -13,6 +13,9 @@ export class Auth extends CommonEntity {
   @Column({ unique: true, nullable: true })
   email: string;
 
+  @OneToMany(() => Mobile, (mobile) => mobile.auth)
+  mobile: Mobile;
+
   @Column({ name: 'account_verified', type: 'boolean', default: false })
   accountVerified: boolean;
 
@@ -24,7 +27,4 @@ export class Auth extends CommonEntity {
 
   @OneToOne(() => User, (user) => user.auth)
   user: User;
-
-  @OneToMany(() => Mobile, (mobile) => mobile.auth)
-  mobile: Mobile;
 }

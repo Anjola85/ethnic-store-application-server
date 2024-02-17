@@ -6,8 +6,8 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export interface MobileParams {
   mobile?: MobileDto;
-  auth?: string | Auth;
-  business?: string | Business;
+  auth?: number | Auth;
+  business?: number | Business;
 }
 
 @Entity('mobile')

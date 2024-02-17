@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Mobile, MobileParams } from './mobile.entity';
 import { Auth } from '../auth/entities/auth.entity';
 import { Business } from '../business/entities/business.entity';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class MobileRepository extends Repository<Mobile> {
@@ -16,9 +17,9 @@ export class MobileRepository extends Repository<Mobile> {
    * Adds mobile for customer
    */
   async addMobile(mobile: Mobile, params: MobileParams) {
-    if (params.business && typeof params.business != 'string')
+    if (params.business && typeof params.business != 'number')
       mobile.business = params.business;
-    else if (params.auth && typeof params.auth != 'string') {
+    else if (params.auth && typeof params.auth != 'number') {
       // set mobile as primary
       mobile.isPrimary = true;
       // initialize auth
@@ -119,11 +120,11 @@ export class MobileRepository extends Repository<Mobile> {
 
   /**
    * Changes the primary mobile for an existing user
-   * @param mobile
-   * @param params
+   * @param mobile - mobile to update
+   * @param params - auth, business or mobileDto
    * @returns
    */
-  async updateMobile(mobile: Mobile, params: MobileParams) {
+  async updateMobile(mobile: MobileDto, params: MobileParams) {
     try {
       // find the mobile to update
       if (
@@ -142,8 +143,11 @@ export class MobileRepository extends Repository<Mobile> {
         // update mobile
         existingMobile.save();
 
+        const mobileEntity = new Mobile();
+        Object.assign(mobileEntity, mobile);
+
         // add new mobile
-        const newMobile = await this.addMobile(mobile, params);
+        const newMobile = await this.addMobile(mobileEntity, params);
 
         return newMobile;
       }

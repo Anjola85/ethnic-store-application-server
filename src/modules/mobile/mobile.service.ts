@@ -64,11 +64,11 @@ export class MobileService {
 
   /**
    * Updates mobile for customer or business
-   * @param mobile
-   * @param params
+   * @param MobileDto - mobile to update
+   * @param params - contains ids for mobile, auth or business
    * @returns
    */
-  async updateMobile(mobile: Mobile, params: MobileParams) {
+  async updateMobile(mobile: MobileDto, params: MobileParams) {
     return this.mobileRepository.updateMobile(mobile, params);
   }
 

@@ -1,17 +1,11 @@
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToMany,
-  JoinTable,
-} from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity()
 export class Feedback extends CommonEntity {
-  @Column()
-  message: string;
+  @Column('varchar', { length: 1000 })
+  content: string;
 
   @ManyToMany(() => User)
   @JoinTable()

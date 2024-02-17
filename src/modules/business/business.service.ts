@@ -64,8 +64,8 @@ export class BusinessService {
         primaryCountry: reqBody.primaryCountry.id,
         mobile: mobileEntity,
         address: addressEntity,
-        countries: reqBody.countries.map((id) => ({ id })),
-        regions: reqBody.regions.map((id) => ({ id })),
+        countries: reqBody.countries,
+        regions: reqBody.regions,
       });
 
       // save the business to the database
