@@ -48,9 +48,9 @@ export class MobileRepository extends Repository<Mobile> {
   }
 
   /**
-   *
+   * Gets mobile using the phone number
    * @param params business id, auth id or mobile
-   * @returns - Mobile[]
+   * @returns - Mobile object with auth
    */
   async getMobile(mobile: Mobile): Promise<Mobile> {
     try {
@@ -64,7 +64,7 @@ export class MobileRepository extends Repository<Mobile> {
         .andWhere('mobile.iso_type = :isoType', {
           isoType: mobile.isoType,
         })
-        .leftJoinAndSelect('mobile.auth', 'auth') // Join and select the auth relation
+        .leftJoinAndSelect('mobile.auth', 'auth')
         .getOne();
 
       return mobileEntity;
@@ -119,38 +119,22 @@ export class MobileRepository extends Repository<Mobile> {
   }
 
   /**
-   * Changes the primary mobile for an existing user
-   * @param mobile - mobile to update
+   * Updates existing mobile with mobile id
+   * @param mobile - new mobile data to update to
    * @param params - auth, business or mobileDto
    * @returns
    */
-  async updateMobile(mobile: MobileDto, params: MobileParams) {
+  async updateMobile(mobile: MobileDto) {
     try {
-      // find the mobile to update
-      if (
-        (params.auth && typeof params.auth == 'string') ||
-        (params.business && typeof params.business == 'string') ||
-        (params.mobile && typeof params.mobile == 'string')
-      ) {
-        // grab mobile using either business or authId or mobileId
-        const existingMobile = await this.createQueryBuilder('mobile')
-          .where('mobile.id = :id', { id: params.mobile })
-          .orWhere('mobile.auth.id = :id', { id: params.auth })
-          .orWhere('mobile.business.id = :id', { id: params.business })
-          .getOne();
-        existingMobile.isPrimary = false;
+      const mobileEntity = new Mobile();
+      Object.assign(mobileEntity, mobile);
+      const updatedMobile = await this.createQueryBuilder('mobile')
+        .update(Mobile)
+        .set(mobileEntity)
+        .where('mobile.id = :id', { id: mobileEntity.id })
+        .execute();
 
-        // update mobile
-        existingMobile.save();
-
-        const mobileEntity = new Mobile();
-        Object.assign(mobileEntity, mobile);
-
-        // add new mobile
-        const newMobile = await this.addMobile(mobileEntity, params);
-
-        return newMobile;
-      }
+      return updatedMobile;
     } catch (error) {
       this.logger.error(
         `Error thrown in mobile.repository.ts, updateMobile method: ${error.message}`,
@@ -182,5 +166,19 @@ export class MobileRepository extends Repository<Mobile> {
         return existingMobile.remove();
       }
     } catch (error) {}
+  }
+
+  async getMobileByAuth(auth: Auth): Promise<Mobile> {
+    try {
+      const mobile = await this.createQueryBuilder('mobile')
+        .where('mobile.auth = :auth', { auth })
+        .getOne();
+      return mobile;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in mobile.repository.ts, getMobileByAuth method: ${error.message}`,
+      );
+      throw new Error('Unable to retrieve mobile from the database');
+    }
   }
 }

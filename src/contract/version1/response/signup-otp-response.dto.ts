@@ -1,5 +1,5 @@
-import { OtpPayloadResp } from './otp-response.dto';
+import { AuthOtppRespDto, OtpRespDto } from './otp-response.dto';
 
-export interface SignupOtpRespDto extends OtpPayloadResp {
+export interface SignupOtpRespDto extends AuthOtppRespDto {
   userExists: boolean;
 }

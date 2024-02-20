@@ -30,11 +30,9 @@ export class AuthMiddleware implements NestMiddleware {
     try {
       const { authId, userId } = await this.validateToken(res, token);
 
-      if (req.body.authId || req.body.authId === '')
-        req.body.authId = authId || '';
-
-      if (req.body.userId || req.body.userId === '')
-        req.body.userId = userId || '';
+      // attach authId and userId to the request object
+      res.locals.authId = authId;
+      res.locals.userId = userId;
 
       next();
     } catch (error) {
@@ -60,7 +58,7 @@ export class AuthMiddleware implements NestMiddleware {
   private async validateToken(
     res: Response,
     token: string,
-  ): Promise<{ authId: string; userId: string }> {
+  ): Promise<{ authId: number; userId: number }> {
     const privateKey = fs.readFileSync('./secrets/private_key.pem');
 
     const decoded: any = await jsonwebtoken.verify(
@@ -68,9 +66,22 @@ export class AuthMiddleware implements NestMiddleware {
       privateKey.toString(),
     );
 
+    const authId = decoded?.authId || null;
+    const userId = decoded?.userId || null;
+
+    if (!authId && !userId) {
+      this.logger.debug(
+        "Unable to retrieve Id's from token provided in auth.middleware.ts:",
+      );
+      throw new HttpException(
+        'Error occured while validating token, please try again later.',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const ids = {
-      authId: decoded?.authId || null,
-      userId: decoded?.userId || null,
+      authId: Number(authId),
+      userId: Number(userId),
     };
 
     return ids;

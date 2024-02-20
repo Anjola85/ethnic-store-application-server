@@ -20,7 +20,7 @@ import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { Business } from 'src/modules/business/entities/business.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
 
-@Entity('users')
+@Entity('user')
 export class User extends CommonEntity {
   @Column({ name: 'first_name', type: 'varchar', nullable: true })
   firstName: string;

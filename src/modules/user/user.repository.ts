@@ -93,4 +93,16 @@ export class UserRepository extends Repository<User> {
       );
     }
   }
+
+  /**
+   * This method returns a user object by its id
+   * @param userId
+   * @returns
+   */
+  async getUserWithRelations(userId: number): Promise<User> {
+    return this.findOne({
+      where: { id: userId },
+      relations: ['addresses', 'favourites', 'business', 'country'],
+    });
+  }
 }

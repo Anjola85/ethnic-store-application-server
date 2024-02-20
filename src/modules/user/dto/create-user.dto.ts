@@ -39,7 +39,7 @@ export class CreateUserDto {
       country: 'Country 1',
     },
   })
-  address: AddressDto[];
+  address: AddressDto;
 
   @IsNotEmpty()
   @IsString()
@@ -49,13 +49,13 @@ export class CreateUserDto {
   })
   userProfile: string | UserProfile;
 
-  @IsOptional()
-  @IsEmail()
-  @ApiProperty({
-    description: 'The email address of the person',
-    example: 'johndoe@quickie.com',
-  })
-  email: string;
+  // @IsOptional()
+  // @IsEmail()
+  // @ApiProperty({
+  //   description: 'The email address of the person',
+  //   example: 'johndoe@quickie.com',
+  // })
+  // email: string;
 
   @IsNotEmpty()
   @ValidateNested()
@@ -73,4 +73,8 @@ export class CreateUserDto {
   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary' })
   profileImage: Express.Multer.File;
+
+  @IsOptional()
+  @ApiProperty({ type: 'string', format: 'binary' })
+  country: string;
 }

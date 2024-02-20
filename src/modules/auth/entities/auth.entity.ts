@@ -1,7 +1,8 @@
+import { getCurrentEpochTime } from 'src/common/util/functions';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Mobile } from 'src/modules/mobile/mobile.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import { BeforeInsert, Column, Entity, OneToMany, OneToOne } from 'typeorm';
 
 export interface AuthParams {
   authId?: number;
@@ -22,8 +23,12 @@ export class Auth extends CommonEntity {
   @Column({ name: 'verification_code', default: null })
   otpCode: string;
 
-  @Column({ name: 'verification_code_expiration' })
-  otpExpiry: Date;
+  @Column({
+    name: 'verification_code_expiration',
+    type: 'bigint',
+    default: null,
+  })
+  otpExpiry: number;
 
   @OneToOne(() => User, (user) => user.auth)
   user: User;

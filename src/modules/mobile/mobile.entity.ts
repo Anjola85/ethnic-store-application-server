@@ -32,6 +32,6 @@ export class Mobile extends CommonEntity {
   @Column({ name: 'iso_type', type: 'varchar' })
   isoType: string;
 
-  @Column({ name: 'is_primary', type: 'boolean', default: false })
+  @Column({ name: 'is_primary', type: 'boolean', default: true })
   isPrimary: boolean;
 }

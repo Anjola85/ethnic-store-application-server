@@ -31,17 +31,26 @@ import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
 import { NotFoundError } from 'rxjs';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
-import { OtpPayloadResp } from 'src/contract/version1/response/otp-response.dto';
+import {
+  AuthOtppRespDto,
+  OtpRespDto,
+} from 'src/contract/version1/response/otp-response.dto';
 import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { SignupResponseDtoEncrypted } from 'src/contract/version1/response/signupResponse.dto';
 import { UserDto } from '../user/dto/user.dto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    private readonly authService: AuthService,
+    private readonly awsSecretKey: AwsSecretKey,
+    private readonly geocodingService: GeocodingService,
+  ) {}
 
   @Post('request-login')
   async loginOtpRequest(@Body() body: LoginOtpRequest) {
@@ -51,7 +60,9 @@ export class AuthController {
           JSON.stringify(body, null, 2),
       );
 
-      const resp: OtpPayloadResp = await this.authService.loginOtpRequest(body);
+      const resp: AuthOtppRespDto = await this.authService.loginOtpRequest(
+        body,
+      );
 
       const payload = createResponse(resp.message, resp.token);
 
@@ -77,13 +88,11 @@ export class AuthController {
         'request-signup endpoint called with body: ' + JSON.stringify(body),
       );
 
-      const resp: OtpPayloadResp = await this.authService.signupOtpRequest(
+      const resp: AuthOtppRespDto = await this.authService.signupOtpRequest(
         body,
       );
 
-      const payload = createResponse(resp.message, resp.token);
-
-      return payload;
+      return createResponse(resp.message, resp.token);
     } catch (error) {
       this.logger.error(
         "Error occurred in 'requestSignup' method of UserController with error: " +
@@ -100,12 +109,6 @@ export class AuthController {
     }
   }
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly awsSecretKey: AwsSecretKey,
-    private readonly geocodingService: GeocodingService,
-  ) {}
-
   /**
    * Registers a user to the DB
    * @param body - request passed by the user
@@ -115,48 +118,22 @@ export class AuthController {
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
   )
-  @ApiOperation({ summary: 'Sign up', description: 'Register a new user' })
-  @ApiBody({
-    schema: {
-      oneOf: [
-        { $ref: getSchemaPath(EncryptedDTO) },
-        { $ref: getSchemaPath(UserDto) },
-      ],
-    },
-  })
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'Authorization header with the Bearer token',
-    required: true,
-    schema: { type: 'string', default: 'Bearer ' },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'User registration successful.',
-    type: SignupResponseDtoEncrypted,
-  })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   async registerUser(
-    @Body() userDto: UserDto,
+    @Body() body: CreateUserDto,
     @UploadedFiles() files: any,
   ): Promise<any> {
     try {
       this.logger.debug(
-        'sign up endpoint called with body: ' + JSON.stringify(userDto),
+        'sign up endpoint called with body: ' + JSON.stringify(body),
       );
 
-      userDto.profileImage = files?.profileImage[0] || null;
-      userDto.profileImage = files?.backgroundImagee[0] || null;
+      body.profileImage = files?.profileImage[0] || null;
+      body.profileImage = files?.backgroundImagee[0] || null;
 
-      const response: {
-        token: string;
-        user: UserDto;
-        userExists: boolean;
-      } = await this.authService.registerUser(userDto);
+      const response = await this.authService.registerUser(body);
 
-      if (response.userExists)
-        return createResponse('user with credentials already exist', response);
-      else return createResponse('user successfully registered', response);
+      return createResponse('user successfully registered', response);
     } catch (error) {
       this.logger.error(
         "Error occurred in 'register' method of UserController with error: " +
@@ -177,13 +154,18 @@ export class AuthController {
    * @returns
    */
   @Post('verifyOtp')
-  async verifyOtp(@Body() body: VerifyOtpDto) {
+  async verifyOtp(@Body() body: VerifyOtpDto, @Res() res: Response) {
     try {
       this.logger.debug(
         'VerifyOTP endpoint called with request body: ' +
           JSON.stringify(body, null, 2),
       );
-      const { authId, code } = body;
+      const { code } = body;
+
+      const authId = res.locals.authId;
+
+      if (!authId)
+        throw new UnauthorizedException('authId not found in request');
 
       const isOtpVerified = await this.authService.verifyOtp(authId, code);
 
@@ -191,7 +173,8 @@ export class AuthController {
         throw new HttpException(isOtpVerified.message, HttpStatus.BAD_REQUEST);
 
       const payload = createResponse('otp verification successful');
-      return payload;
+
+      return res.status(HttpStatus.OK).json(payload);
     } catch (error) {
       this.logger.debug('Auth Controller with error: ' + error);
 

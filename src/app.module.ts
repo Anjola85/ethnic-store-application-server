@@ -124,18 +124,8 @@ export class AppModule implements NestModule {
     // Authenticate users for these routes except for the ones mentioned in exclude
     consumer
       .apply(AuthMiddleware)
-      .exclude('auth/request-login', 'auth/request-signup', 'test/*');
-
-    //TODO: remove below
-    // consumer
-    //   .apply(AuthMiddleware)
-    //   .forRoutes(
-    //     'user/info',
-    //     'auth/verifyOtp',
-    //     'user/signup',
-    //     'auth/login',
-    //     'auth/resendOtp',
-    //   );
+      .exclude('auth/request-login', 'auth/request-signup', 'test/*')
+      .forRoutes('*');
 
     // Decrypt every payload request made to routes except for the ones mentioned in exclude
     consumer

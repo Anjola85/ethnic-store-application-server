@@ -1,11 +1,12 @@
+import {
+  BusinessListRespDto,
+  BusinessRespDto,
+} from 'src/contract/version1/response/business-response.dto';
 import { AddressProcessor } from '../address/address.processor';
 import { CountryProcessor } from '../country/country.process';
 import { MobileProcessor } from '../mobile/mobile.processor';
 import { RegionProcessor } from '../region/region.process';
-import {
-  BusinessListRespDto,
-  BusinessRespDto,
-} from './dto/business-response.dto';
+
 import { Business } from './entities/business.entity';
 
 export class BusinessProcessor {
@@ -17,7 +18,7 @@ export class BusinessProcessor {
       address: AddressProcessor.mapEntityToResp(business.address),
       schedule: business.schedule,
       website: business.website,
-      primaryCountry: CountryProcessor.mapEntityToResp(business.primaryCountry),
+      // country: CountryProcessor.mapEntityToResp(business.primaryCountry),
       countries: CountryProcessor.mapEntityListToResp(business.countries),
       regions: RegionProcessor.mapEntityListToResp(business.regions),
       mobile: MobileProcessor.mapEntityToResp(business.mobile),

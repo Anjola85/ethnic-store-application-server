@@ -1,4 +1,7 @@
-import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
+import {
+  AddressListRespDto,
+  AddressRespDto,
+} from 'src/contract/version1/response/address-response.dto';
 import { Address } from './entities/address.entity';
 
 export class AddressProcessor {
@@ -19,8 +22,15 @@ export class AddressProcessor {
     return resp;
   }
 
-  public static mapEntityListToResp(addresses: Address[]): AddressRespDto[] {
-    return addresses.map((address) => this.mapEntityToResp(address));
+  public static mapEntityListToResp(addresses: Address[]): AddressListRespDto {
+    const addressList = addresses.map((address) =>
+      this.mapEntityToResp(address),
+    );
+    const payload: AddressListRespDto = {
+      addressList: addressList,
+      size: addressList.length,
+    };
+    return payload;
   }
 }
 

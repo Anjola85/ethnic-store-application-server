@@ -40,7 +40,6 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
-import { SignupResponseDtoEncrypted } from 'src/contract/version1/response/signupResponse.dto';
 import { User } from './entities/user.entity';
 
 @Controller('user')

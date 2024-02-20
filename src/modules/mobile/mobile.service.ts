@@ -15,10 +15,10 @@ export class MobileService {
    * @param params - auth, business or mobileDto
    * @returns
    */
-  async registerMobile(mobileDto: MobileDto, isUser: boolean): Promise<Mobile> {
+  async registerMobile(mobileDto: MobileDto): Promise<Mobile> {
     try {
       const mobile: Mobile = Object.assign(new Mobile(), mobileDto);
-      if (isUser) mobile.isPrimary = true;
+
       const newMobile = await this.mobileRepository.create(mobile).save();
       return newMobile;
     } catch (error) {
@@ -50,8 +50,14 @@ export class MobileService {
     return await this.mobileRepository.getMobileArr(params);
   }
 
-  async getMobile(mobileParam: Mobile | MobileDto): Promise<Mobile> {
-    this.logger.debug('mobileParam: ' + JSON.stringify(mobileParam));
+  /**
+   * This method gets mobile by phone number
+   * @param mobileParam
+   * @returns - Mobile object with auth
+   */
+  async getMobileByPhoneNumber(
+    mobileParam: Mobile | MobileDto,
+  ): Promise<Mobile> {
     let mobile: Mobile;
     if (mobileParam instanceof MobileDto) {
       mobile = new Mobile();
@@ -60,7 +66,6 @@ export class MobileService {
       mobile = mobileParam;
     }
     const mobileResp = await this.mobileRepository.getMobile(mobile);
-    this.logger.debug('mobileResp: ' + JSON.stringify(mobileResp));
     return mobileResp;
   }
 
@@ -70,8 +75,9 @@ export class MobileService {
    * @param params - contains ids for mobile, auth or business
    * @returns
    */
-  async updateMobile(mobile: MobileDto, params: MobileParams) {
-    return this.mobileRepository.updateMobile(mobile, params);
+  async updateMobile(mobile: MobileDto) {
+    console.log('Mobile: ', mobile);
+    return this.mobileRepository.updateMobile(mobile);
   }
 
   /**
@@ -81,5 +87,10 @@ export class MobileService {
    */
   async deleteMobile(params: any) {
     return this.mobileRepository.deleteMobile(params);
+  }
+
+  async getMobileByAuth(auth: Auth): Promise<Mobile> {
+    if (!auth) throw new Error('Auth is required');
+    return await this.mobileRepository.getMobileByAuth(auth);
   }
 }

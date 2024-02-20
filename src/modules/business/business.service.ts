@@ -48,7 +48,6 @@ export class BusinessService {
       // save to mobile table
       const mobileEntity = await this.mobileService.registerMobile(
         reqBody.mobile,
-        false,
       );
 
       // save to address table
