@@ -170,8 +170,9 @@ export class MobileRepository extends Repository<Mobile> {
 
   async getMobileByAuth(auth: Auth): Promise<Mobile> {
     try {
+      const authId = auth.id;
       const mobile = await this.createQueryBuilder('mobile')
-        .where('mobile.auth = :auth', { auth })
+        .where('mobile.authId = :authId', { authId })
         .getOne();
       return mobile;
     } catch (error) {

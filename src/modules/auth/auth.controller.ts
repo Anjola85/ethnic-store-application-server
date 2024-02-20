@@ -41,6 +41,7 @@ import { UserDto } from '../user/dto/user.dto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -189,18 +190,37 @@ export class AuthController {
   }
 
   @Post('login')
-  async loginUser(@Body() loginDto: SecureLoginDto) {
+  async loginUser(@Body() loginDto: SecureLoginDto, @Res() res: Response) {
     try {
       this.logger.debug(
         'Login endpoint called with request body: ' +
           JSON.stringify(loginDto, null, 2),
       );
 
-      const loginResponse = await this.authService.loginUser(loginDto);
+      // verify otp is correct
+      const authId = res.locals.authId;
 
-      const payload = createResponse('login successful', loginResponse, true);
+      if (!authId)
+        throw new UnauthorizedException('Unable to retrieve authId from token');
 
-      return payload;
+      const isOtpVerified = await this.authService.verifyOtp(
+        authId,
+        loginDto.code,
+      );
+
+      if (!isOtpVerified.status)
+        throw new HttpException(isOtpVerified.message, HttpStatus.BAD_REQUEST);
+
+      const loginResponse: LoginRespDto = await this.authService.loginUser(
+        loginDto,
+        authId,
+      );
+
+      console.log('loginResponse: ' + JSON.stringify(loginResponse, null, 2));
+
+      const payload = createResponse('login successful', loginResponse);
+
+      return res.status(HttpStatus.OK).json(payload);
     } catch (error) {
       if (error instanceof HttpException) {
         this.logger.debug('Auth Controller with error: ' + error);

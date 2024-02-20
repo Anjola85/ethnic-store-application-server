@@ -53,6 +53,26 @@ export class AuthRepository extends Repository<Auth> {
     }
   }
 
+  async getUserByAuthId(authId: number): Promise<Auth> {
+    try {
+      const auth = await this.createQueryBuilder('auth')
+        .where('auth.id = :id', { id: authId })
+        .leftJoinAndSelect('auth.user', 'user')
+        .getOne();
+
+      return auth || null;
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in auth.repository.ts, getUserByAuthId method, with error: ' +
+          error,
+      );
+      throw new HttpException(
+        'Error ocurred with retrieving user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   /**
    * This method updates the email of an auth account
    * @param authId
