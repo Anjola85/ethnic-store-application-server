@@ -1,4 +1,4 @@
-export interface AddressDto {
+export interface AddressReqDto {
   primary: boolean;
   unit: string;
   street: string;

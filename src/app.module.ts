@@ -26,6 +26,7 @@ import { UserModule } from './modules/user/user.module';
 import { WaitlistModule } from './modules/waitlist/waitlist.module';
 import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { StoreSuggestionModule } from './modules/store-suggestion/store-suggestion.module';
 
 @Module({
   imports: [
@@ -104,6 +105,7 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
     MobileModule,
     RegionModule,
     FeedbackModule,
+    StoreSuggestionModule,
   ],
   controllers: [AppController],
   providers: [

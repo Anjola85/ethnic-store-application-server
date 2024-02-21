@@ -9,6 +9,11 @@ import { Feedback } from './entities/feedback.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
+import {
+  FeedbackListRespDto,
+  FeedbackRespDto,
+} from 'src/contract/version1/response/feedback-response.dto';
+import { FeedbackProcessor } from './feedback.processor';
 
 @Injectable()
 export class FeedbackService {
@@ -20,30 +25,39 @@ export class FeedbackService {
   ) {}
 
   /**
-   * Pre-requisite: User must be logged in to create feedback(have active session)
+   * This function adds a new feedback to the database
    * @param createFeedbackDto
    * @returns
    */
-  async add(createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
+  async add(createFeedbackDto: CreateFeedbackDto): Promise<FeedbackRespDto> {
     try {
       const feedbackEntity = Object.assign(new Feedback(), createFeedbackDto);
       const feedback = await this.feedbackRepository
         .create(feedbackEntity)
         .save();
-      return feedback;
+      const resp = FeedbackProcessor.mapEntityToResp(feedback);
+      return resp;
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   }
 
-  async findAll(userId: number): Promise<Feedback[]> {
+  /**
+   * This function fetches all feedbacks for a specific USER
+   * @param userId
+   * @returns
+   */
+  async findAll(userId: number): Promise<FeedbackListRespDto> {
     try {
       const allFeedback = await this.feedbackRepository
         .createQueryBuilder('feedback')
         .where('feedback.user.id = :id', { id: userId })
         .getMany();
 
-      return allFeedback;
+      const resp: FeedbackListRespDto =
+        FeedbackProcessor.mapEntityListToResp(allFeedback);
+
+      return resp;
     } catch (error) {
       throw new Error(error);
     }
