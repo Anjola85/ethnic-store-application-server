@@ -134,6 +134,7 @@ export class AppModule implements NestModule {
         'test/*',
         'business/register', // TODO-MVP => REMOVE THIS because business owner must be logged in to register a business
         'business/all',
+        'business/nearby',
         'country/register',
         'country/all',
         'continent/register',

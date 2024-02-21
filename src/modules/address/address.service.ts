@@ -7,6 +7,8 @@ import { Address } from './entities/address.entity';
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
 import { AddressProcessor } from './address.processor';
+import { getCurrentEpochTime } from 'src/common/util/functions';
+import { GeoJSONPoint } from './dto/geo-json-point.dto';
 
 export interface AddressParams {
   id?: string;
@@ -27,13 +29,16 @@ export class AddressService {
    * @param addressDto
    * @returns the newly added address
    */
-  async addAddress(addressDto: AddressDto): Promise<Address> {
+  async addAddress(addressDto: AddressDto): Promise<any> {
     try {
       await this.geoCodingService.setCoordinates(addressDto);
-      const addressEntity = Object.assign(new Address(), addressDto);
-      const newAddress = await this.addressRepository
-        .create(addressEntity)
-        .save();
+      const addressEntity: Address = Object.assign(new Address(), addressDto);
+
+      const newAddress = await this.addressRepository.addAddress(
+        addressEntity,
+        addressDto,
+      );
+
       return newAddress;
     } catch (error) {
       this.logger.debug('Error in addAddress method: ' + error);

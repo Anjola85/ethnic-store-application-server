@@ -16,7 +16,10 @@ import { AddressProcessor } from '../address/address.processor';
 import { Country } from '../country/entities/country.entity';
 import { Region } from '../region/entities/region.entity';
 import { BusinessProcessor } from './business.process';
-import { BusinessRespDto } from 'src/contract/version1/response/business-response.dto';
+import {
+  BusinessListRespDto,
+  BusinessRespDto,
+} from 'src/contract/version1/response/business-response.dto';
 
 @Injectable()
 export class BusinessService {
@@ -38,6 +41,8 @@ export class BusinessService {
    */
   async register(reqBody: CreateBusinessDto): Promise<BusinessRespDto> {
     try {
+      console.log('register business api received: ', reqBody);
+
       await this.businessExist(reqBody);
 
       // map request object of DTO
@@ -141,12 +146,16 @@ export class BusinessService {
       );
   }
 
-  async findStoresNearby(geolocation: GeoLocationDto): Promise<any> {
+  async findStoresNearby(
+    geolocation: GeoLocationDto,
+  ): Promise<BusinessListRespDto> {
     const businesses = await this.businessRepository.findNearbyBusinesses(
       geolocation,
     );
 
-    return businesses;
+    const businessList = BusinessProcessor.mapEntityListToResp(businesses);
+
+    return businessList;
   }
 
   async findAll() {

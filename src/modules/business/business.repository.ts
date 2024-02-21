@@ -6,6 +6,7 @@ import { GeoLocationDto } from './dto/geolocation.dto';
 @Injectable()
 export class BusinessRepository extends Repository<Business> {
   private readonly logger = new Logger(BusinessRepository.name);
+  private readonly WGS84_SRID = 4326;
 
   constructor(private dataSource: DataSource) {
     super(Business, dataSource.createEntityManager());
@@ -63,28 +64,40 @@ export class BusinessRepository extends Repository<Business> {
           geolocationDto,
         )}`,
       );
-      // 1km radius
-      const radius = 1000;
-      const { coordinates } = geolocationDto;
+
+      const radius = 1000; // Define the search radius in meters
+      const { coordinates } = geolocationDto; // Assuming coordinates are [longitude, latitude]
+      const longitude = coordinates[0];
+      const latitude = coordinates[1];
+
+      // Convert coordinates to a GeoJSON Point object
+      const pointGeoJSON = {
+        type: 'Point',
+        coordinates: [longitude, latitude], // Ensure your DTO provides longitude and latitude
+      };
+
       const businesses = await this.createQueryBuilder('business')
+        .innerJoin('business.address', 'address')
         .where(
           `ST_DistanceSphere(
-            business.location,
-            ST_GeomFromGeoJSON(:coordinates)
-          ) < ${radius}`,
-          { coordinates: JSON.stringify({ type: 'Point', coordinates }) },
+              address.location,
+              ST_GeomFromGeoJSON(:pointGeoJSON)
+            ) < :radius`,
+          {
+            pointGeoJSON: JSON.stringify(pointGeoJSON), // Pass the GeoJSON object as a JSON string
+            radius: radius,
+          },
         )
         .getMany();
 
-      // log the response
       this.logger.debug(
-        `findNearbyBusinesses responded with: ${JSON.stringify(businesses)}`,
+        `findNearbyBusinesses responded with number of results: ${businesses.length}`,
       );
 
       return businesses;
     } catch (error) {
       this.logger.error(
-        `Error thrown in business.repository.ts, findNearbyBusinesses method: ${error.message}`,
+        `Error thrown in business.repository.ts, findNearbyBusinesses method with error: ${error}`,
       );
 
       throw new HttpException(
