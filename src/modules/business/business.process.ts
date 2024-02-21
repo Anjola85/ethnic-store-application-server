@@ -9,9 +9,13 @@ import { MobileProcessor } from '../mobile/mobile.processor';
 import { RegionProcessor } from '../region/region.process';
 
 import { Business } from './entities/business.entity';
+import { GeometryTransformer } from '../address/geometry-transformer';
+import { GeoJSONPoint } from '../address/dto/geo-json-point.dto';
 
 export class BusinessProcessor {
   public static mapEntityToResp(business: Business): BusinessRespDto {
+    // convert the address location to longitude and latitude
+
     const resp: BusinessRespDto = {
       id: business.id,
       name: business.name,

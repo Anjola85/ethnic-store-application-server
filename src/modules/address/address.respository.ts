@@ -45,8 +45,8 @@ export class AddressRepository extends Repository<Address> {
             `ST_SetSRID(ST_GeomFromGeoJSON('${JSON.stringify({
               type: 'Point',
               coordinates: [
-                addressDto.location.coordinates[0],
-                addressDto.location.coordinates[1],
+                addressDto.location.coordinates[0], // represents longitude
+                addressDto.location.coordinates[1], // represents latitude
               ],
             })}'), 4326)`,
         })

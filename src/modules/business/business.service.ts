@@ -160,16 +160,10 @@ export class BusinessService {
 
   async findAll() {
     try {
-      // const businesses = await this.businessRepository.find();
-      const businesses = await this.businessRepository
-        .createQueryBuilder('business')
-        .leftJoinAndSelect('business.mobile', 'mobile')
-        .leftJoinAndSelect('business.address', 'address')
-        .leftJoinAndSelect('business.countries', 'countries')
-        .leftJoinAndSelect('business.regions', 'regions')
-        .getMany();
+      const businesses = await this.businessRepository.getAllRelation();
 
-      const businessList = BusinessProcessor.mapEntityListToResp(businesses);
+      const businessList: BusinessListRespDto =
+        BusinessProcessor.mapEntityListToResp(businesses);
 
       return businessList;
     } catch (error) {
