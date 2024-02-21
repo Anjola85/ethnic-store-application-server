@@ -1,6 +1,6 @@
 /**
- *
- * This class intercepts the API response and encrypts the response payload body being sent to the client.
+ * @description - Hanldes response to encrypt the payload body being sent to the client.
+ * @see This class intercepts the API response and encrypts the response payload body being sent to the client.
  *
  */
 
@@ -38,6 +38,8 @@ export class CryptoInterceptor implements NestInterceptor {
           const encryptedResp = await encryptPayload(data);
           return createEncryptedResponse(encryptedResp);
         }
+
+        // clear data if crypto is false
         return data;
       }),
     );

@@ -10,3 +10,8 @@ export interface AddressRespDto {
   latitude: number;
   longitude: number;
 }
+
+export interface AddressListRespDto {
+  addressList: AddressRespDto[];
+  size: number;
+}

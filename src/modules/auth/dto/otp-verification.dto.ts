@@ -5,7 +5,4 @@ export class VerifyOtpDto {
   @IsString()
   @IsNotEmpty()
   code: string;
-
-  @IsNumber()
-  authId: number;
 }

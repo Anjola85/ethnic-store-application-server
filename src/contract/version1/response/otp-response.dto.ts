@@ -1,25 +1,10 @@
-// export class OtpResponse {
-//   message: string;
-//   token: string;
-//   code: string;
-//   expiryTime: string;
-
-//   constructor(
-//     message: string,
-//     token: string,
-//     code: string,
-//     expiryTime: string,
-//   ) {
-//     this.message = message;
-//     this.token = token;
-//     this.code = code;
-//     this.expiryTime = expiryTime;
-//   }
-// }
-
-export interface OtpPayloadResp {
+export interface OtpRespDto {
   message: string;
-  token: string;
+  // token: string;
   code: string;
-  expiryTime: string;
+  expiryTime: number;
+}
+
+export interface AuthOtppRespDto extends OtpRespDto {
+  token: string;
 }

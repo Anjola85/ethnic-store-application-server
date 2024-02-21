@@ -1,70 +1,50 @@
-import {
-  Logger,
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  OnModuleInit,
-} from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TwilioModule } from 'nestjs-twilio';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './modules/user/user.module';
-import { CategoryModule } from './modules/category/category.module';
-import { BusinessModule } from './modules/business/business.module';
-import { CountryModule } from './modules/country/country.module';
-import { ContinentModule } from './modules/continent/continent.module';
-import { ReviewsModule } from './modules/reviews/reviews.module';
-import { AuthMiddleware } from './middleware/auth.middleware';
-import { JwtService } from '@nestjs/jwt';
-import { AuthModule } from './modules/auth/auth.module';
-import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
-import { BullModule } from '@nestjs/bull';
-import { TwilioModule } from 'nestjs-twilio';
-import { FavouriteModule } from './modules/favourite/favourite.module';
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { User } from './modules/user/entities/user.entity';
-import { Business } from './modules/business/entities/business.entity';
-import { Country } from './modules/country/entities/country.entity';
-import { Continent } from './modules/continent/entities/continent.entity';
-import { Category } from './modules/category/entities/category.entity';
-import { Auth } from './modules/auth/entities/auth.entity';
-import { Favourite } from './modules/favourite/entities/favourite.entity';
-import { AddressModule } from './modules/address/address.module';
-import { Address } from './modules/address/entities/address.entity';
-import { WaitlistCustomer } from './modules/waitlist/entities/waitlist_customer.entity';
-import { WaitlistBusiness } from './modules/waitlist/entities/waitlist_business.entity';
-import { WaitlistShopper } from './modules/waitlist/entities/waitlist_shopper.entity';
-import { WaitlistModule } from './modules/waitlist/waitlist.module';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ApiExtraModels } from '@nestjs/swagger';
-import { UserDto } from './modules/user/dto/user.dto';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CryptoInterceptor } from './interceptors/crypto.interceptor';
+import { AuthMiddleware } from './middleware/auth.middleware';
 import { DecryptionMiddleware } from './middleware/decryption.middleware';
-import { Mobile } from './modules/mobile/mobile.entity';
-import { MobileModule } from './modules/mobile/mobile.module';
+import { AddressModule } from './modules/address/address.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { BusinessModule } from './modules/business/business.module';
+import { CategoryModule } from './modules/category/category.module';
 import { EnvConfigService, isProduction } from './modules/config/env-config.';
+import { ContinentModule } from './modules/continent/continent.module';
+import { CountryModule } from './modules/country/country.module';
+import { FavouriteModule } from './modules/favourite/favourite.module';
+import { MobileModule } from './modules/mobile/mobile.module';
 import { RegionModule } from './modules/region/region.module';
-import { Region } from './modules/region/entities/region.entity';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { UserModule } from './modules/user/user.module';
+import { WaitlistModule } from './modules/waitlist/waitlist.module';
+import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot([
-      // {
-      //   name: 'short',
-      //   ttl: 10,
-      //   limit: 5,
-      // },
-      // {
-      //   name: 'medium',
-      //   ttl: 60,
-      //   limit: 20,
-      // },
-      // {
-      //   name: 'long',
-      //   ttl: 60,
-      //   limit: 10,
-      // },
+      {
+        name: 'short',
+        ttl: 10,
+        limit: 5,
+      },
+      {
+        name: 'medium',
+        ttl: 60,
+        limit: 20,
+      },
+      {
+        name: 'long',
+        ttl: 60,
+        limit: 10,
+      },
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -123,6 +103,7 @@ import { Region } from './modules/region/entities/region.entity';
     WaitlistModule,
     MobileModule,
     RegionModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [
@@ -142,16 +123,13 @@ import { Region } from './modules/region/entities/region.entity';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Authenticate users for these routes except for the ones mentioned in exclude
     consumer
       .apply(AuthMiddleware)
-      .forRoutes(
-        'user/info',
-        'auth/verifyOtp',
-        'user/signup',
-        'auth/login',
-        'auth/resendOtp',
-      );
+      .exclude('auth/request-login', 'auth/request-signup', 'test/*')
+      .forRoutes('*');
 
+    // Decrypt every payload request made to routes except for the ones mentioned in exclude
     consumer
       .apply(DecryptionMiddleware)
       .exclude(

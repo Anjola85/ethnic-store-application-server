@@ -50,7 +50,21 @@ export class UserDto {
       country: 'Country 1',
     },
   })
-  address: AddressDto[];
+  address: AddressDto;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'The address of the person',
+    example: {
+      unit: '123',
+      street: 'Street 1',
+      city: 'City 1',
+      province: 'Province 1',
+      postalCode: '12345',
+      country: 'Country 1',
+    },
+  })
+  addressList: AddressDto[];
 
   @IsNotEmpty()
   @IsString()

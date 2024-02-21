@@ -46,9 +46,8 @@ export class BusinessService {
       );
 
       // save to mobile table
-      const mobileEntity = await this.mobileService.addMobile(
+      const mobileEntity = await this.mobileService.registerMobile(
         reqBody.mobile,
-        false,
       );
 
       // save to address table
@@ -64,8 +63,8 @@ export class BusinessService {
         primaryCountry: reqBody.primaryCountry.id,
         mobile: mobileEntity,
         address: addressEntity,
-        countries: reqBody.countries.map((id) => ({ id })),
-        regions: reqBody.regions.map((id) => ({ id })),
+        countries: reqBody.countries,
+        regions: reqBody.regions,
       });
 
       // save the business to the database

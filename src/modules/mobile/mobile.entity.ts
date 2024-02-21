@@ -6,8 +6,8 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 
 export interface MobileParams {
   mobile?: MobileDto;
-  auth?: string | Auth;
-  business?: string | Business;
+  auth?: number | Auth;
+  business?: number | Business;
 }
 
 @Entity('mobile')
@@ -23,7 +23,7 @@ export class Mobile extends CommonEntity {
   @OneToOne(() => Business, (business) => business.mobile)
   business: Business;
 
-  @Column({ name: 'phone_number', type: 'varchar' })
+  @Column({ name: 'phone_number', type: 'varchar', unique: true })
   phoneNumber: string;
 
   @Column({ name: 'country_code', type: 'varchar' })
@@ -32,6 +32,6 @@ export class Mobile extends CommonEntity {
   @Column({ name: 'iso_type', type: 'varchar' })
   isoType: string;
 
-  @Column({ name: 'is_primary', type: 'boolean', default: false })
+  @Column({ name: 'is_primary', type: 'boolean', default: true })
   isPrimary: boolean;
 }

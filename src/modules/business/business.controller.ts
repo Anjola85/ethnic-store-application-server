@@ -16,7 +16,7 @@ import { GeoLocationDto } from './dto/geolocation.dto';
 import { createResponse } from 'src/common/util/response';
 import { Response } from 'express';
 import { CreateBusinessDto } from './dto/create-business.dto';
-import { BusinessListRespDto } from './dto/business-response.dto';
+import { BusinessListRespDto } from 'src/contract/version1/response/business-response.dto';
 
 @Controller('business')
 export class BusinessController {

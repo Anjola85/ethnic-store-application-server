@@ -53,14 +53,38 @@ export class AuthRepository extends Repository<Auth> {
     }
   }
 
-  async updateAuth(authId: number, authDto: CreateAuthDto): Promise<any> {
+  async getUserByAuthId(authId: number): Promise<Auth> {
     try {
       const auth = await this.createQueryBuilder('auth')
-        .update(Auth)
-        .set({ email: authDto.email })
-        .where('id = :id', { id: authId })
-        .execute();
+        .where('auth.id = :id', { id: authId })
+        .leftJoinAndSelect('auth.user', 'user')
+        .getOne();
 
+      return auth || null;
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in auth.repository.ts, getUserByAuthId method, with error: ' +
+          error,
+      );
+      throw new HttpException(
+        'Error ocurred with retrieving user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * This method updates the email of an auth account
+   * @param authId
+   * @param authDto
+   * @returns
+   */
+  async updateEmail(authId: number, email: string): Promise<Auth> {
+    try {
+      const auth = await this.findOneBy({ id: authId });
+      if (!auth) throw new Error('Auth not found');
+      auth.email = email;
+      await this.save(auth);
       return auth;
     } catch (e) {
       this.logger.error(
@@ -68,6 +92,22 @@ export class AuthRepository extends Repository<Auth> {
           e,
       );
       throw new Error(`Unable to update account`);
+    }
+  }
+
+  async unverifyAccount(authId: number): Promise<Auth> {
+    try {
+      const auth = await this.findOneBy({ id: authId });
+      if (!auth) throw new Error('Auth not found');
+      auth.accountVerified = false;
+      await this.save(auth);
+      return auth;
+    } catch (e) {
+      this.logger.error(
+        'Error thrown in auth.repository.ts, unverifyAccount method, with error: ' +
+          e,
+      );
+      throw new Error(`Unable to unverify account`);
     }
   }
 }

@@ -19,8 +19,9 @@ import { Address } from 'src/modules/address/entities/address.entity';
 import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { Business } from 'src/modules/business/entities/business.entity';
 import { Country } from 'src/modules/country/entities/country.entity';
+import { Feedback } from 'src/modules/feedback/entities/feedback.entity';
 
-@Entity('users')
+@Entity('user')
 export class User extends CommonEntity {
   @Column({ name: 'first_name', type: 'varchar', nullable: true })
   firstName: string;
@@ -63,6 +64,9 @@ export class User extends CommonEntity {
   @OneToOne(() => Country, (country) => country.name, { nullable: true })
   @JoinColumn()
   country: Country;
+
+  @OneToMany(() => Feedback, (feedback) => feedback.user)
+  feedbacks: Feedback[];
 
   @BeforeInsert()
   @BeforeUpdate()
