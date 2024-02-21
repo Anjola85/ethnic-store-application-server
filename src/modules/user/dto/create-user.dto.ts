@@ -48,15 +48,6 @@ export class CreateUserDto {
     example: 'customer',
   })
   userProfile: string | UserProfile;
-
-  // @IsOptional()
-  // @IsEmail()
-  // @ApiProperty({
-  //   description: 'The email address of the person',
-  //   example: 'johndoe@quickie.com',
-  // })
-  // email: string;
-
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => MobileDto)

@@ -2,15 +2,19 @@
  * This class contains business logic related to the user database
  */
 import { AddressService } from './../address/address.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
-import { AuthService } from '../auth/auth.service';
 import { UserFileService } from '../files/user-files.service';
 import { UserRepository } from './user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateAuthDto } from '../auth/dto/create-auth.dto';
 import { Address } from '../address/entities/address.entity';
+import { UserRespDto } from 'src/contract/version1/response/user-response.dto';
+import { UserProcessor } from './user.processor';
+import { AuthService } from '../auth/auth.service';
+import { Auth } from 'aws-sdk/clients/docdbelastic';
+import { Mobile } from 'aws-sdk';
+import { AddressProcessor } from '../address/address.processor';
 
 @Injectable()
 export class UserService {
@@ -60,13 +64,56 @@ export class UserService {
   }
 
   /**
+   * This method returns all user relations by its id
+   *
+   * @param userId
+   * @returns - user object with all relations
+   */
+  async getUserRelationsById(userId: number): Promise<User> {
+    try {
+      const user: User = await this.userRepository.getUserWithRelations(userId);
+      return user;
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in user.service.ts, getUserRelationsById method: ' +
+          error,
+      );
+      throw new Error(
+        'Error ocurred from user repository with retrieving user relations',
+      );
+    }
+  }
+
+  /**
+   * This method reurns all user relations asides the FAVOURITES
+   *
+   * @param userId
+   * @returns
+   */
+  async getUserInfoById(userId: number): Promise<User> {
+    try {
+      const user: User = await this.userRepository.getUserInfoById(userId);
+      return user;
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in user.service.ts, getUserInfo method: ' + error,
+      );
+      throw new Error(
+        'Error ocurred from user repository with retrieving user information',
+      );
+    }
+  }
+
+  /**
    * Pre-condition: client has to be from authService and have a valid token, user has to exist
    * This updates an existing user's info
    * @param userDto
    * @returns {token, user}
    */
-  async updateUserInfo(userDto: UpdateUserDto): Promise<void> {
-    // check if profile image was provided and upload it
+  async updateUserInfo(
+    userDto: UpdateUserDto,
+    existingUser: User,
+  ): Promise<UserRespDto> {
     if (userDto.profileImage) {
       userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
         userDto.id,
@@ -79,20 +126,16 @@ export class UserService {
       );
     }
 
-    // update user account
-    if (userDto.firstName || userDto.lastName) {
-      if (userDto.firstName) userDto.firstName = userDto.firstName;
-      if (userDto.lastName) userDto.lastName = userDto.lastName;
+    const updatedUser: User = Object.assign(new User(), existingUser);
 
-      const user = new User();
-      Object.assign(user, userDto);
+    updatedUser.firstName = userDto.firstName || existingUser.firstName;
+    updatedUser.lastName = userDto.lastName || existingUser.lastName;
+    updatedUser.dob = userDto.dob || existingUser.dob;
+    updatedUser.country = userDto.country || existingUser.country;
 
-      this.userRepository.updateUser(user);
-    }
-  }
+    this.userRepository.save(updatedUser);
 
-  async getUserInfoById(userId: number): Promise<User> {
-    const user: User = await this.userRepository.getUserWithRelations(userId);
-    return user;
+    const resp: UserRespDto = UserProcessor.processUserInfo(updatedUser);
+    return resp;
   }
 }

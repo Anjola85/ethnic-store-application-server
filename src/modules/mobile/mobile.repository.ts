@@ -120,21 +120,33 @@ export class MobileRepository extends Repository<Mobile> {
 
   /**
    * Updates existing mobile with mobile id
+   *
+   * Precondition: mobileDto must have an id
+   *
    * @param mobile - new mobile data to update to
    * @param params - auth, business or mobileDto
    * @returns
    */
-  async updateMobile(mobile: MobileDto) {
+  async updateMobile(mobileDto: MobileDto): Promise<Mobile> {
     try {
-      const mobileEntity = new Mobile();
-      Object.assign(mobileEntity, mobile);
-      const updatedMobile = await this.createQueryBuilder('mobile')
-        .update(Mobile)
-        .set(mobileEntity)
-        .where('mobile.id = :id', { id: mobileEntity.id })
-        .execute();
+      if (!mobileDto && !mobileDto.id) {
+        throw new Error('Mobile id is required');
+      }
 
-      return updatedMobile;
+      const mobileToUpdate = await this.findOneBy({ id: mobileDto.id });
+
+      if (!mobileToUpdate) {
+        throw new Error('Mobile does not exist');
+      }
+
+      mobileToUpdate.phoneNumber = mobileDto.phoneNumber;
+      mobileToUpdate.countryCode = mobileDto.countryCode;
+      mobileToUpdate.isoType = mobileDto.isoType;
+      mobileToUpdate.isPrimary = mobileDto.isPrimary;
+
+      await mobileToUpdate.save();
+
+      return mobileToUpdate;
     } catch (error) {
       this.logger.error(
         `Error thrown in mobile.repository.ts, updateMobile method: ${error.message}`,

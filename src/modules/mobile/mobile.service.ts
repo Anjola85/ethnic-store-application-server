@@ -75,9 +75,11 @@ export class MobileService {
    * @param params - contains ids for mobile, auth or business
    * @returns
    */
-  async updateMobile(mobile: MobileDto) {
-    console.log('Mobile: ', mobile);
-    return this.mobileRepository.updateMobile(mobile);
+  async updateMobile(mobile: MobileDto): Promise<Mobile> {
+    const mobileEntity: Mobile = await this.mobileRepository.updateMobile(
+      mobile,
+    );
+    return mobileEntity;
   }
 
   /**

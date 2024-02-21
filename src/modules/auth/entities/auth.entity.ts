@@ -2,7 +2,14 @@ import { getCurrentEpochTime } from 'src/common/util/functions';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Mobile } from 'src/modules/mobile/mobile.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { BeforeInsert, Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
 export interface AuthParams {
   authId?: number;
@@ -14,7 +21,7 @@ export class Auth extends CommonEntity {
   @Column({ unique: true, nullable: true })
   email: string;
 
-  @OneToMany(() => Mobile, (mobile) => mobile.auth)
+  @OneToMany(() => Mobile, (mobile) => mobile.auth, { nullable: true })
   mobile: Mobile;
 
   @Column({ name: 'account_verified', type: 'boolean', default: false })

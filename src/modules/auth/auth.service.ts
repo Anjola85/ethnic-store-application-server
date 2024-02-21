@@ -36,8 +36,16 @@ import { LoginOtpRespDto } from 'src/contract/version1/response/login-otp-respon
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { UserProcessor } from '../user/user.processor';
 import { SignupRespDto } from 'src/contract/version1/response/signup-response.dto';
-import { UserInformationRespDto } from 'src/contract/version1/response/user-response.dto';
+import {
+  UserInformationRespDto,
+  UserRespDto,
+} from 'src/contract/version1/response/user-response.dto';
 import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
+import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
+import { Address } from '../address/entities/address.entity';
+import { AddressProcessor } from '../address/address.processor';
+import { MobileProcessor } from '../mobile/mobile.processor';
+import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -67,77 +75,6 @@ export class AuthService {
       expiryTime: getCurrentEpochTime() + 300000000000,
     };
 
-    return response;
-  }
-
-  /**
-   * Pre-condition: mobile or email must have been registered
-   * This method handles sending and updating the otp code in an auth account
-   * @param email
-   * @param mobile
-   * @returns
-   */
-  // async processOtpRequest(
-  //   authAccount: Auth,
-  //   email?: string,
-  //   mobile?: MobileDto,
-  // ): Promise<OtpRespDto> {
-  //   // TOOD: save to authAccount
-  //   try {
-  //     this.logger.debug(`Processing OTP request`);
-
-  //     const response: { message: string; code: string; expiryTime: number } = {
-  //       message: 'OTP sent',
-  //       code: '1234',
-  //       expiryTime: getCurrentEpochTime() + 300000,
-  //     };
-
-  //     // const response = await this.sendOtpCode(mobile, email);
-
-  //     authAccount.email = email;
-  //     authAccount.otpCode = response.code;
-  //     authAccount.otpExpiry = response.expiryTime;
-
-  //     if (!authAccount || !authAccount.id) {
-  //       this.logger.debug(
-  //         'auth account does not exists in file auth.service.ts, processOtpRequest method:',
-  //       );
-  //       throw new Error('unable to retrieve auth account');
-  //     } else if (authAccount && email) {
-  //       authAccount.email = email;
-  //     }
-
-  //     authAccount.otpCode = response.code;
-  //     authAccount.otpExpiry = response.expiryTime;
-
-  //     this.logger.debug('updating otp code');
-  //     await this.authRepository.update(authAccount.id, authAccount);
-
-  //     // generate token with user id
-  //     const token: string = this.generateJwt(authAccount);
-
-  //     // return response with token
-  //     const otpPayload: OtpRespDto = { ...response, token };
-
-  //     return otpPayload;
-  //   } catch (error) {
-  //     // catch database errors and throw a new error for the controller to handle
-  //     this.logger.error(`From AuthService.sendOtp: ${error.message}`);
-
-  //     throw new Error(`From AuthService.sendOtp: ${error.message}`);
-  //   }
-  // }
-
-  private async sendOtpCode(mobile: MobileDto, email: string) {
-    let response: { message: any; code: any; expiryTime: any };
-    if (mobile && mobile?.phoneNumber)
-      response = {
-        message: 'OTP sent to mobile',
-        code: '1234',
-        expiryTime: getCurrentEpochTime() + 300000,
-      };
-    // response = await this.twilioService.sendSms(mobile.phoneNumber);
-    else if (email) response = await this.sendgridService.sendOTPEmail(email);
     return response;
   }
 
@@ -215,21 +152,33 @@ export class AuthService {
     }
   }
 
-  // method to update auth account email or mobile
-  async updateAuthEmailOrMobile(authDto: CreateAuthDto): Promise<any> {
-    const authId = authDto.id;
-    if (!authId) throw new Error('authId is required');
-    if (!authDto) throw new Error('authDto is required');
-    if (!authDto.email && !authDto.mobile)
-      throw new Error('email or mobile is required');
+  /**
+   * This method updates the email or mobile of an auth account
+   * @param authDto
+   * @returns - updated auth account
+   */
+  async updateAuthEmailOrMobile(authDto: UpdateAuthDto): Promise<Auth> {
+    if (!authDto || !authDto.id) throw new Error('authId is required');
 
-    let auth = null;
-    if (authDto.email)
+    if (!authDto.email && !authDto.mobile)
+      throw new Error('email or mobile is required to update');
+
+    const authId = authDto.id;
+
+    let auth: Auth;
+
+    if (authDto.email) {
       auth = await this.authRepository.updateEmail(authId, authDto.email);
-    else if (authDto.mobile) {
-      authDto.mobile.auth = authId;
-      auth = await this.mobileService.updateMobile(authDto.mobile);
     }
+
+    if (authDto.mobile) {
+      authDto.mobile.auth = authId;
+      const mobileEntity: Mobile = await this.mobileService.updateMobile(
+        authDto.mobile,
+      );
+    }
+
+    auth = await this.authRepository.unverifyAccount(authId);
 
     return auth;
   }
@@ -360,7 +309,7 @@ export class AuthService {
 
       const response: SignupRespDto = {
         token,
-        userInfo: UserProcessor.processUserInfo(user, registeredMobile),
+        userInfo: UserProcessor.processUserRelationInfo(user, registeredMobile),
       };
 
       return response;
@@ -559,19 +508,22 @@ export class AuthService {
     return auth || null;
   }
 
+  /**
+   * This method retrieves a user's information by user id
+   * @param userId
+   * @returns User Information including FAVOURITES, ADDRESSES, MOBILE
+   */
   async getUserInfoByUser(userId: number): Promise<UserInformationRespDto> {
     try {
       if (!userId) throw new Error('userId is required to get info');
 
-      const user: User = await this.userSerivce.getUserInfoById(userId);
-
-      console.log('User: ', user);
+      const user: User = await this.userSerivce.getUserRelationsById(userId);
 
       const mobile: Mobile = await this.mobileService.getMobileByAuth(
         user.auth,
       );
       const userInfo: UserInformationRespDto =
-        await UserProcessor.processUserInfo(user, mobile);
+        await UserProcessor.processUserRelationInfo(user, mobile);
       return userInfo;
     } catch (error) {
       this.logger.error(
@@ -623,52 +575,63 @@ export class AuthService {
     return auth || null;
   }
 
-  // TODO: implement this method to delete whatever user that got created
-  // async deleteRegisteredUsers() {
-  //   // so for all accounts in the user and auth account, delete them
-  //   const last24Hours = new Date();
-  //   last24Hours.setHours(last24Hours.getHours() - 24);
-
-  //   const formattedLast24Hours = last24Hours
-  //     .toISOString()
-  //     .slice(0, 19)
-  //     .replace('T', ' ');
-
-  //   try {
-  //     // Delete all auth accounts created in the last 24 hours
-  //     const deleteAuthQuery = `DELETE FROM auth WHERE createdTime <= '${formattedLast24Hours}'`;
-  //     const deleteUserQuery = `DELETE FROM user WHERE createdTime <= '${formattedLast24Hours}'`;
-  //     const deleteAddQuery = `DELETE FROM address WHERE createdTime <= '${formattedLast24Hours}'`;
-
-  //     await this.authRepository.createQueryBuilder(deleteAuthQuery);
-  //     await this.userRepository.createQueryBuilder(deleteUserQuery);
-  //     await this.addressRepository.createQueryBuilder(deleteAddQuery);
-  //   } catch (error) {}
-  // }
-
   /**
    * This updates an existing user's info
    * @param userDto
    * @returns {token, user}
    */
-  async updateUserInfo(userDto: UpdateUserDto): Promise<void> {
-    // check if user exists
-    const user = await this.userSerivce.getUserById(userDto.id);
+  async updateUserInfo(userDto: UpdateUserDto): Promise<UserRespDto> {
+    const user: User = await this.userSerivce.getUserInfoById(userDto.id);
 
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      this.logger.error('User account not found');
+      throw new NotFoundException('User account not foound');
+    }
 
-    await this.userSerivce.updateUserInfo(userDto);
+    let auth: Auth = user.auth;
 
-    // email or mobile provided
+    const updatedUserResp: UserRespDto = await this.userSerivce.updateUserInfo(
+      userDto,
+      user,
+    );
+
+    const authDto: UpdateAuthDto = Object.assign(
+      new CreateAuthDto(),
+      user.auth,
+    );
+
+    // NOTE: can only change either email or mobile!
+    if (userDto.email) {
+      authDto.email = userDto.email;
+    }
+
+    if (userDto.mobile) {
+      authDto.email = userDto.email;
+      authDto.mobile.phoneNumber = userDto.mobile.phoneNumber;
+      authDto.mobile.countryCode = userDto.mobile.countryCode;
+      authDto.mobile.isoType = userDto.mobile.isoType;
+    }
+
     if (userDto.email || userDto.mobile) {
-      const authDto = new CreateAuthDto();
-      authDto.id = user.auth.id;
-      authDto.email = userDto?.email;
-      authDto.mobile = userDto?.mobile;
-      await this.updateAuthEmailOrMobile(authDto);
+      auth = await this.updateAuthEmailOrMobile(authDto);
+      updatedUserResp.email = auth.email;
+      updatedUserResp.mobile = MobileProcessor.mapEntityToResp(auth.mobile);
     }
 
     // update address
-    if (userDto.address) this.addressService.updateAddress(userDto.address);
+    if (userDto.address) {
+      const addressResp: Address = await this.addressService.updateAddress(
+        userDto.address,
+      );
+      const addressDto = AddressProcessor.mapEntityToResp(addressResp);
+
+      // look for the address id in the user's address list and replace it with the new address
+      updatedUserResp.addressList.addressList =
+        updatedUserResp.addressList.addressList.map((address) =>
+          address.id === addressDto.id ? addressDto : address,
+        );
+    }
+
+    return updatedUserResp;
   }
 }

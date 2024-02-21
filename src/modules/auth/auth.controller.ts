@@ -58,7 +58,7 @@ export class AuthController {
     try {
       this.logger.debug(
         'LoginOTPRequest endpoint called with request body: ' +
-          JSON.stringify(body, null, 2),
+          JSON.stringify(body),
       );
 
       const resp: AuthOtppRespDto = await this.authService.loginOtpRequest(
@@ -157,10 +157,7 @@ export class AuthController {
   @Post('verifyOtp')
   async verifyOtp(@Body() body: VerifyOtpDto, @Res() res: Response) {
     try {
-      this.logger.debug(
-        'VerifyOTP endpoint called with request body: ' +
-          JSON.stringify(body, null, 2),
-      );
+      this.logger.debug('VerifyOTP endpoint called');
       const { code } = body;
 
       const authId = res.locals.authId;
@@ -215,8 +212,6 @@ export class AuthController {
         loginDto,
         authId,
       );
-
-      console.log('loginResponse: ' + JSON.stringify(loginResponse, null, 2));
 
       const payload = createResponse('login successful', loginResponse);
 

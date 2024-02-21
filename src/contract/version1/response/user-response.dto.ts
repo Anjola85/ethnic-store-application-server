@@ -1,7 +1,7 @@
-import { MobileRespDto } from '../request/dto';
 import { AddressListRespDto } from './address-response.dto';
 import { BusinessListRespDto } from './business-response.dto';
 import { CountryRespDto } from './country-response.dto';
+import { MobileRespDto } from './mobile-response.dto';
 
 /**
  * Response class that deals with the user entity
@@ -14,7 +14,11 @@ export interface UserRespDto {
   dob: string;
   profileImage: string;
   active: boolean;
-  country: string;
+  country: CountryRespDto | null;
+  email: string;
+  mobile: MobileRespDto | null;
+  addressList: AddressListRespDto | null;
+  accountVerified: boolean;
 }
 
 export interface UserListRespDto {
@@ -38,4 +42,5 @@ export interface UserInformationRespDto {
   mobile: MobileRespDto;
   addressList: AddressListRespDto;
   favouriteList: BusinessListRespDto;
+  accountVerified: boolean;
 }

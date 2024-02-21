@@ -1,3 +1,4 @@
+import { MobileRespDto } from 'src/contract/version1/response/mobile-response.dto';
 /**
  * @see
  * This class handles the conversion of the user contract dto to the user entity or dto class needed for processing
@@ -5,10 +6,12 @@
 import { Logger } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserDto } from './dto/user.dto';
-import { UserInformationRespDto } from 'src/contract/version1/response/user-response.dto';
+import {
+  UserInformationRespDto,
+  UserRespDto,
+} from 'src/contract/version1/response/user-response.dto';
 import { User } from './entities/user.entity';
 import { Mobile } from '../mobile/mobile.entity';
-import { MobileRespDto } from 'src/contract/version1/request/dto';
 import {
   AddressListRespDto,
   AddressRespDto,
@@ -26,6 +29,8 @@ import { BusinessProcessor } from '../business/business.process';
 import { Favourite } from '../favourite/entities/favourite.entity';
 import { Business } from '../business/entities/business.entity';
 import { CountryProcessor } from '../country/country.process';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { MobileProcessor } from '../mobile/mobile.processor';
 
 export class UserProcessor {
   private readonly logger = new Logger(UserProcessor.name);
@@ -47,15 +52,16 @@ export class UserProcessor {
   /**
    * This method handles the conversion of the user entity to the user information response dto
    * It maps all user entity relations
-   * @param user
-   * @param mobile
+   * relations include: mobile, address, favourite, country
+   * @param user - includes all user entity relations
+   * @param mobile - includes just the mobile entity
    * @returns
    */
-  public static processUserInfo(
+  public static processUserRelationInfo(
     user: User,
     mobile: Mobile,
   ): UserInformationRespDto {
-    const mobileDto: MobileRespDto = Object.assign(new MobileRespDto(), mobile);
+    const mobileDto: MobileRespDto = MobileProcessor.mapEntityToResp(mobile);
 
     const addressList: AddressListRespDto =
       AddressProcessor.mapEntityListToResp(user.addresses);
@@ -82,15 +88,71 @@ export class UserProcessor {
       countryDto = CountryProcessor.mapEntityToResp(user.country);
 
     const userInfo: UserInformationRespDto = {
-      ...user,
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userProfile: user.userProfile,
+      dob: user.dob,
+      profileImage: user.profileImage || '',
+      active: user.active,
       email: user.auth.email || '',
       mobile: mobileDto,
       addressList,
       favouriteList: favouriteBusinessList,
       country: countryDto,
+      accountVerified: user.auth.accountVerified || false,
     };
 
-    console.log('userInfo: ', userInfo);
+    return userInfo;
+  }
+
+  /**
+   * This method handles the conversion of the user entity to the user response dto
+   * it maps all user entity relations except FAVOURITES
+   * @param user
+   * @param mobile
+   * @returns
+   */
+  public static processUserInfo(user: User): UserRespDto {
+    if (!user && !user.auth) {
+      throw new Error(
+        'User not found - user and user.auth cannot be null - processUserInfo - user.processor.ts',
+      );
+    }
+
+    let mobileDto: MobileRespDto;
+    let email = '';
+
+    if (user.auth.mobile) {
+      mobileDto = MobileProcessor.mapEntityToResp(user.auth.mobile);
+    }
+    if (user.auth.email) {
+      email = user.auth.email;
+    }
+
+    const addressList: AddressListRespDto =
+      AddressProcessor.mapEntityListToResp(user.addresses);
+
+    let countryDto: CountryRespDto;
+
+    if (user.country)
+      countryDto = CountryProcessor.mapEntityToResp(user.country);
+
+    const userInfo: UserRespDto = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userProfile: user.userProfile,
+      dob: user.dob,
+      profileImage: user.profileImage || '',
+      active: user.active,
+      email: email,
+      mobile: mobileDto || null,
+      addressList: addressList || null,
+      country: countryDto || null,
+      accountVerified: user.auth.accountVerified || false,
+    };
+
     return userInfo;
   }
 }
