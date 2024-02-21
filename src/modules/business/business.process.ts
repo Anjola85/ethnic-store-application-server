@@ -43,8 +43,8 @@ export class BusinessProcessor {
       BusinessProcessor.mapEntityToResp(business),
     );
     const payload: BusinessListRespDto = {
-      businessList: businessList,
       size: businessList.length,
+      businessList: businessList,
     };
     return payload;
   }

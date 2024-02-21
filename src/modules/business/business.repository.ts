@@ -2,6 +2,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Business, BusinessParam } from './entities/business.entity';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { GeoLocationDto } from './dto/geolocation.dto';
+import { GenericFilter } from '../common/generic-filter';
 
 @Injectable()
 export class BusinessRepository extends Repository<Business> {
@@ -174,5 +175,37 @@ export class BusinessRepository extends Repository<Business> {
       .getMany();
 
     return businessRelations;
+  }
+
+  async getPaginatedRelations(
+    filter: GenericFilter,
+  ): Promise<[Business[], number]> {
+    const { page, pageSize, orderBy, sortOrder } = filter;
+
+    const skip = (page - 1) * pageSize;
+
+    let queryBuilder = this.createQueryBuilder('business')
+      .leftJoinAndSelect('business.address', 'address')
+      .leftJoinAndSelect('business.mobile', 'mobile')
+      .leftJoinAndSelect('business.countries', 'countries')
+      .leftJoinAndSelect('business.regions', 'regions')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+          .from('address', 'address')
+          .where('address.id = business.addressId');
+      }, 'locationGeoJSON')
+      .skip(skip)
+      .take(pageSize);
+
+    // Optionally, handle ordering if orderBy is provided
+    if (orderBy && sortOrder) {
+      queryBuilder = queryBuilder.orderBy(`business.${orderBy}`, sortOrder);
+    }
+
+    // Execute the query to get paginated results
+    const [businessRelations, total] = await queryBuilder.getManyAndCount();
+
+    return [businessRelations, total];
   }
 }

@@ -9,6 +9,7 @@ import {
   Logger,
   HttpException,
   Get,
+  Query,
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -20,6 +21,7 @@ import {
   BusinessListRespDto,
   BusinessRespDto,
 } from 'src/contract/version1/response/business-response.dto';
+import { GenericFilter } from '../common/generic-filter';
 
 @Controller('business')
 export class BusinessController {
@@ -109,6 +111,23 @@ export class BusinessController {
     try {
       const businessResp: BusinessListRespDto =
         await this.businessService.findAll();
+      return createResponse('businesses fetched successfully', {
+        businessResp,
+      });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('list')
+  async getAll(@Query() filter: GenericFilter): Promise<any> {
+    try {
+      const businessResp: BusinessListRespDto =
+        await this.businessService.getAllRelations(filter);
       return createResponse('businesses fetched successfully', {
         businessResp,
       });

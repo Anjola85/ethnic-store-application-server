@@ -23,6 +23,6 @@ export interface BusinessRespDto {
 }
 
 export interface BusinessListRespDto {
-  businessList: BusinessRespDto[];
   size: number;
+  businessList: BusinessRespDto[];
 }

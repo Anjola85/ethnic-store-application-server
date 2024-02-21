@@ -20,9 +20,11 @@ import {
   BusinessListRespDto,
   BusinessRespDto,
 } from 'src/contract/version1/response/business-response.dto';
+import { PageService } from '../common/page.service';
+import { GenericFilter } from '../common/generic-filter';
 
 @Injectable()
-export class BusinessService {
+export class BusinessService extends PageService {
   private readonly logger = new Logger(BusinessService.name);
 
   constructor(
@@ -32,7 +34,9 @@ export class BusinessService {
     private mobileService: MobileService,
     private awsS3Service: AwsS3Service,
     private countryService: CountryService,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Register a business
@@ -213,5 +217,16 @@ export class BusinessService {
       await this.businessFileService.uploadBusinessImagesToS3(businessImages);
 
     return imagesUrl;
+  }
+
+  async getAllRelations(filter: GenericFilter): Promise<BusinessListRespDto> {
+    const businessList: [Business[], number] =
+      await this.businessRepository.getPaginatedRelations(filter);
+
+    const resp: BusinessListRespDto = BusinessProcessor.mapEntityListToResp(
+      businessList[0],
+    );
+
+    return resp;
   }
 }
