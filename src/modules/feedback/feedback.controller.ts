@@ -6,20 +6,31 @@ import {
   Patch,
   Param,
   Delete,
+  Logger,
+  HttpException,
+  HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { createResponse } from 'src/common/util/response';
+import { Response } from 'express';
+import { Feedback } from './entities/feedback.entity';
+import { encryptPayload } from 'src/common/util/crypto';
 
 @Controller('feedback')
 export class FeedbackController {
+  private logger = new Logger('FeedbackController');
   constructor(private readonly feedbackService: FeedbackService) {}
 
-  @Post('register')
-  register(@Body() createFeedbackDto: CreateFeedbackDto) {
+  @Post('add')
+  async register(@Body() createFeedbackDto: CreateFeedbackDto) {
     try {
-      const feedback = this.feedbackService.create(createFeedbackDto);
+      this.logger.debug(`Add feedback endpoint called`);
+      const feedback: Feedback = await this.feedbackService.add(
+        createFeedbackDto,
+      );
       return createResponse('Feedback created successfully', feedback);
     } catch (error) {
       throw new Error(error);
@@ -27,8 +38,34 @@ export class FeedbackController {
   }
 
   @Get('all')
-  findAll() {
-    return this.feedbackService.findAll();
+  async findAll(@Res() res: Response) {
+    try {
+      const userId = res.locals.userId;
+      const crypto = res.locals.crypto;
+      const allFeedback = await this.feedbackService.findAll(userId);
+
+      if (crypto === 'true') {
+        const encryptedResp = await encryptPayload(
+          createResponse('Successfully fetched feedbacks', allFeedback),
+        );
+        return res.status(HttpStatus.OK).json(encryptedResp);
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json(createResponse('Successfully fetched feedbacks', allFeedback));
+      }
+    } catch (error) {
+      this.logger.error(`Error while fetching feedbacks with error: ${error}`);
+      throw new HttpException(
+        'Error while fetching feedbacks',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('all-feedback')
+  findAllFeedback() {
+    return null;
   }
 
   @Get(':id')

@@ -5,7 +5,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 export class CreateFeedbackDto {
   @IsNotEmpty()
   @IsString()
-  @LimitWordCount(100)
+  @LimitWordCount(150)
   content: string;
 
   @IsNotEmpty()
@@ -13,6 +13,5 @@ export class CreateFeedbackDto {
   rating: number;
 
   @IsNotEmpty()
-  @IsString()
-  user: User[];
+  user: User;
 }

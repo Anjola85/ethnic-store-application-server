@@ -8,6 +8,7 @@ import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { Feedback } from './entities/feedback.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class FeedbackService {
@@ -23,19 +24,26 @@ export class FeedbackService {
    * @param createFeedbackDto
    * @returns
    */
-  async create(createFeedbackDto: CreateFeedbackDto) {
+  async add(createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
     try {
       const feedbackEntity = Object.assign(new Feedback(), createFeedbackDto);
-      const feedback = await this.feedbackRepository.save(feedbackEntity);
+      const feedback = await this.feedbackRepository
+        .create(feedbackEntity)
+        .save();
       return feedback;
     } catch (error) {
       throw new Error(error);
     }
   }
 
-  findAll() {
+  async findAll(userId: number): Promise<Feedback[]> {
     try {
-      return this.feedbackRepository.find();
+      const allFeedback = await this.feedbackRepository
+        .createQueryBuilder('feedback')
+        .where('feedback.user.id = :id', { id: userId })
+        .getMany();
+
+      return allFeedback;
     } catch (error) {
       throw new Error(error);
     }
