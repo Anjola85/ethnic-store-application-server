@@ -18,6 +18,10 @@ import { createResponse } from 'src/common/util/response';
 import { Response } from 'express';
 import { Feedback } from './entities/feedback.entity';
 import { encryptPayload } from 'src/common/util/crypto';
+import {
+  FeedbackListRespDto,
+  FeedbackRespDto,
+} from 'src/contract/version1/response/feedback-response.dto';
 
 @Controller('feedback')
 export class FeedbackController {
@@ -28,12 +32,15 @@ export class FeedbackController {
   async register(@Body() createFeedbackDto: CreateFeedbackDto) {
     try {
       this.logger.debug(`Add feedback endpoint called`);
-      const feedback: Feedback = await this.feedbackService.add(
+      const feedback: FeedbackRespDto = await this.feedbackService.add(
         createFeedbackDto,
       );
       return createResponse('Feedback created successfully', feedback);
     } catch (error) {
-      throw new Error(error);
+      throw new HttpException(
+        'Something went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -42,7 +49,8 @@ export class FeedbackController {
     try {
       const userId = res.locals.userId;
       const crypto = res.locals.crypto;
-      const allFeedback = await this.feedbackService.findAll(userId);
+      const allFeedback: FeedbackListRespDto =
+        await this.feedbackService.findAll(userId);
 
       if (crypto === 'true') {
         const encryptedResp = await encryptPayload(

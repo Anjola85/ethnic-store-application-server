@@ -1,2 +1,2 @@
-export { AddressDto } from './Address.dto';
+export { AddressReqDto } from './Address.dto';
 export { MobileReqDto } from './Mobile.dto';

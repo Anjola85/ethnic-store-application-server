@@ -31,7 +31,7 @@ export class UserService {
    * @param user - user dto object
    * @returns user - user entity with address
    */
-  async registerUserAndAddress(user: UserDto): Promise<User> {
+  async register(user: UserDto): Promise<User> {
     try {
       let userEntity = new User();
       Object.assign(userEntity, user);
