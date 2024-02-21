@@ -2,5 +2,11 @@ export interface MobileRespDto {
   id: number;
   isPrimary: boolean;
   countryCode: string;
-  number: string;
+  phoneNumber: string;
+  isoType: string;
+}
+
+export interface MobileListRespDto {
+  mobileList: MobileRespDto[];
+  size: number;
 }

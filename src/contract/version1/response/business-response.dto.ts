@@ -1,9 +1,11 @@
 import { AddressRespDto } from './address-response.dto';
+import { CountryListRespDto, CountryRespDto } from './country-response.dto';
 import { MobileRespDto } from './mobile-response.dto';
+import { RegionListRespDto } from './region-response.dto';
 import { ScheduleRespDto } from './schedule-response.dto';
 
-export interface businessPayloadResp {
-  id: string;
+export interface BusinessRespDto {
+  id: number;
   name: string;
   description: string;
   address: AddressRespDto;
@@ -11,12 +13,17 @@ export interface businessPayloadResp {
   mobile: MobileRespDto;
   schedule: ScheduleRespDto;
   website: string;
-  country: string;
-  countries: string[];
-  regions: string[];
+  // country: CountryRespDto;
+  countries: CountryListRespDto;
+  regions: RegionListRespDto;
   businessType: string;
   rating: string;
   backgroundImage: string;
   profileImage: string;
-  createdAt: string;
+  createdAt: number;
+}
+
+export interface BusinessListRespDto {
+  businessList: BusinessRespDto[];
+  size: number;
 }

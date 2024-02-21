@@ -5,6 +5,8 @@ import { addressDtoToEntity, entityToAddressDto } from './address-mapper';
 import { AddressRepository } from './address.respository';
 import { Address } from './entities/address.entity';
 import { GeocodingService } from '../geocoding/geocoding.service';
+import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
+import { AddressProcessor } from './address.processor';
 
 export interface AddressParams {
   id?: string;
@@ -60,7 +62,7 @@ export class AddressService {
    * @param addressDto
    * @returns updated AddressDto
    */
-  async updateAddress(addressDto: AddressDto): Promise<AddressDto> {
+  async updateAddress(addressDto: AddressDto): Promise<Address> {
     if (!addressDto || !addressDto.id)
       throw new Error('Address id is required');
 
@@ -69,7 +71,7 @@ export class AddressService {
       addressDto.id,
       addressEntity,
     );
-    const address: AddressDto = entityToAddressDto(updatedAddressEntity);
-    return address;
+
+    return updatedAddressEntity;
   }
 }

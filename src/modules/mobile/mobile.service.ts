@@ -15,10 +15,10 @@ export class MobileService {
    * @param params - auth, business or mobileDto
    * @returns
    */
-  async addMobile(mobileDto: MobileDto, isUser: boolean): Promise<Mobile> {
+  async registerMobile(mobileDto: MobileDto): Promise<Mobile> {
     try {
       const mobile: Mobile = Object.assign(new Mobile(), mobileDto);
-      if (isUser) mobile.isPrimary = true;
+
       const newMobile = await this.mobileRepository.create(mobile).save();
       return newMobile;
     } catch (error) {
@@ -50,7 +50,14 @@ export class MobileService {
     return await this.mobileRepository.getMobileArr(params);
   }
 
-  async getMobile(mobileParam: Mobile | MobileDto): Promise<Mobile> {
+  /**
+   * This method gets mobile by phone number
+   * @param mobileParam
+   * @returns - Mobile object with auth
+   */
+  async getMobileByPhoneNumber(
+    mobileParam: Mobile | MobileDto,
+  ): Promise<Mobile> {
     let mobile: Mobile;
     if (mobileParam instanceof MobileDto) {
       mobile = new Mobile();
@@ -64,12 +71,15 @@ export class MobileService {
 
   /**
    * Updates mobile for customer or business
-   * @param mobile
-   * @param params
+   * @param MobileDto - mobile to update
+   * @param params - contains ids for mobile, auth or business
    * @returns
    */
-  async updateMobile(mobile: Mobile, params: MobileParams) {
-    return this.mobileRepository.updateMobile(mobile, params);
+  async updateMobile(mobile: MobileDto): Promise<Mobile> {
+    const mobileEntity: Mobile = await this.mobileRepository.updateMobile(
+      mobile,
+    );
+    return mobileEntity;
   }
 
   /**
@@ -79,5 +89,10 @@ export class MobileService {
    */
   async deleteMobile(params: any) {
     return this.mobileRepository.deleteMobile(params);
+  }
+
+  async getMobileByAuth(auth: Auth): Promise<Mobile> {
+    if (!auth) throw new Error('Auth is required');
+    return await this.mobileRepository.getMobileByAuth(auth);
   }
 }

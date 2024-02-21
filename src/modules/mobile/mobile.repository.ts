@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Mobile, MobileParams } from './mobile.entity';
 import { Auth } from '../auth/entities/auth.entity';
 import { Business } from '../business/entities/business.entity';
+import { MobileDto } from 'src/common/dto/mobile.dto';
 
 @Injectable()
 export class MobileRepository extends Repository<Mobile> {
@@ -16,9 +17,9 @@ export class MobileRepository extends Repository<Mobile> {
    * Adds mobile for customer
    */
   async addMobile(mobile: Mobile, params: MobileParams) {
-    if (params.business && typeof params.business != 'string')
+    if (params.business && typeof params.business != 'number')
       mobile.business = params.business;
-    else if (params.auth && typeof params.auth != 'string') {
+    else if (params.auth && typeof params.auth != 'number') {
       // set mobile as primary
       mobile.isPrimary = true;
       // initialize auth
@@ -47,9 +48,9 @@ export class MobileRepository extends Repository<Mobile> {
   }
 
   /**
-   *
+   * Gets mobile using the phone number
    * @param params business id, auth id or mobile
-   * @returns - Mobile[]
+   * @returns - Mobile object with auth
    */
   async getMobile(mobile: Mobile): Promise<Mobile> {
     try {
@@ -63,7 +64,7 @@ export class MobileRepository extends Repository<Mobile> {
         .andWhere('mobile.iso_type = :isoType', {
           isoType: mobile.isoType,
         })
-        .leftJoinAndSelect('mobile.auth', 'auth') // Join and select the auth relation
+        .leftJoinAndSelect('mobile.auth', 'auth')
         .getOne();
 
       return mobileEntity;
@@ -118,35 +119,34 @@ export class MobileRepository extends Repository<Mobile> {
   }
 
   /**
-   * Changes the primary mobile for an existing user
-   * @param mobile
-   * @param params
+   * Updates existing mobile with mobile id
+   *
+   * Precondition: mobileDto must have an id
+   *
+   * @param mobile - new mobile data to update to
+   * @param params - auth, business or mobileDto
    * @returns
    */
-  async updateMobile(mobile: Mobile, params: MobileParams) {
+  async updateMobile(mobileDto: MobileDto): Promise<Mobile> {
     try {
-      // find the mobile to update
-      if (
-        (params.auth && typeof params.auth == 'string') ||
-        (params.business && typeof params.business == 'string') ||
-        (params.mobile && typeof params.mobile == 'string')
-      ) {
-        // grab mobile using either business or authId or mobileId
-        const existingMobile = await this.createQueryBuilder('mobile')
-          .where('mobile.id = :id', { id: params.mobile })
-          .orWhere('mobile.auth.id = :id', { id: params.auth })
-          .orWhere('mobile.business.id = :id', { id: params.business })
-          .getOne();
-        existingMobile.isPrimary = false;
-
-        // update mobile
-        existingMobile.save();
-
-        // add new mobile
-        const newMobile = await this.addMobile(mobile, params);
-
-        return newMobile;
+      if (!mobileDto && !mobileDto.id) {
+        throw new Error('Mobile id is required');
       }
+
+      const mobileToUpdate = await this.findOneBy({ id: mobileDto.id });
+
+      if (!mobileToUpdate) {
+        throw new Error('Mobile does not exist');
+      }
+
+      mobileToUpdate.phoneNumber = mobileDto.phoneNumber;
+      mobileToUpdate.countryCode = mobileDto.countryCode;
+      mobileToUpdate.isoType = mobileDto.isoType;
+      mobileToUpdate.isPrimary = mobileDto.isPrimary;
+
+      await mobileToUpdate.save();
+
+      return mobileToUpdate;
     } catch (error) {
       this.logger.error(
         `Error thrown in mobile.repository.ts, updateMobile method: ${error.message}`,
@@ -178,5 +178,20 @@ export class MobileRepository extends Repository<Mobile> {
         return existingMobile.remove();
       }
     } catch (error) {}
+  }
+
+  async getMobileByAuth(auth: Auth): Promise<Mobile> {
+    try {
+      const authId = auth.id;
+      const mobile = await this.createQueryBuilder('mobile')
+        .where('mobile.authId = :authId', { authId })
+        .getOne();
+      return mobile;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in mobile.repository.ts, getMobileByAuth method: ${error.message}`,
+      );
+      throw new Error('Unable to retrieve mobile from the database');
+    }
   }
 }

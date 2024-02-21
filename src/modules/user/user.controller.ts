@@ -22,28 +22,14 @@ import {
   createResponse,
   createEncryptedResponse,
 } from '../../common/util/response';
-import {
-  decryptPayload,
-  encryptKms,
-  encryptPayload,
-  toBuffer,
-} from 'src/common/util/crypto';
+import { encryptPayload } from 'src/common/util/crypto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UserRespDto } from 'src/contract/version1/response/user-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-// import { mapAuthToUser } from './user-mapper';
-import {
-  ApiBody,
-  ApiHeader,
-  ApiOperation,
-  ApiResponse,
-  getSchemaPath,
-} from '@nestjs/swagger';
-import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
-import { SignupResponseDtoEncrypted } from 'src/contract/version1/response/signupResponse.dto';
+import { UserProcessor } from './user.processor';
 import { User } from './entities/user.entity';
-import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
-import { OtpPayloadResp } from 'src/contract/version1/response/otp-response.dto';
+import { MobileService } from '../mobile/mobile.service';
+import { Mobile } from '../mobile/mobile.entity';
 
 @Controller('user')
 export class UserController {
@@ -52,238 +38,97 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly authService: AuthService,
+    private readonly mobileService: MobileService,
   ) {}
 
   /**
-   * Registers a user to the DB
-   * @param body - request passed by the user
-   * @returns {*}
+   * Get user info
+   * @param res
+   * @returns
    */
-  @Post('signup')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  )
-  @ApiOperation({ summary: 'Sign up', description: 'Register a new user' })
-  @ApiBody({
-    schema: {
-      oneOf: [
-        { $ref: getSchemaPath(EncryptedDTO) },
-        { $ref: getSchemaPath(UserDto) },
-      ],
-    },
-  })
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'Authorization header with the Bearer token',
-    required: true,
-    schema: { type: 'string', default: 'Bearer ' },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'User registration successful.',
-    type: SignupResponseDtoEncrypted,
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  async register(
-    @Body() userDto: UserDto,
-    @UploadedFiles() files: any,
-  ): Promise<any> {
+  @Get('info')
+  async getUser(@Res() res: Response): Promise<any> {
     try {
-      // perform validation and map the request body to the userDto
+      this.logger.log('get user info endpoint called');
+      const userId = res.locals.userId;
+      const crypto = res.locals.crypto;
 
-      this.logger.debug(
-        'sign up endpoint called with body: ' + JSON.stringify(userDto),
+      if (!userId)
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createError('400 user not found', 'token invalid'));
+
+      const user: User = await this.userService.getUserInfoById(userId);
+
+      if (!user.auth) throw new Error('User does not have an auth');
+
+      const mobile: Mobile = await this.mobileService.getMobileByAuth(
+        user.auth,
       );
 
-      // TODO: remove this line if we're not assigning profile image
-      userDto.profileImage = files?.profileImage[0] || null;
+      // perform necessary mapping
+      const clearResp = UserProcessor.processUserRelationInfo(user, mobile);
 
-      const response: {
-        token: string;
-        user: UserDto;
-        userExists: boolean;
-      } = await this.userService.register(userDto);
+      this.logger.debug('successfully retrieved user information');
 
-      if (response.userExists)
-        return createResponse('user with credentials already exist', response);
-      else return createResponse('user successfully registered', response);
+      //TODO: handle response (if encrypted or not)
+      if (crypto === 'true') {
+        const encryptedResp = await encryptPayload(
+          createResponse('successfully retrieved user information', clearResp),
+        );
+        return res
+          .status(HttpStatus.OK)
+          .json(createEncryptedResponse(encryptedResp));
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json(
+            createResponse(
+              'successfully retrieved user information',
+              clearResp,
+            ),
+          );
+      }
     } catch (error) {
       this.logger.error(
-        "Error occurred in 'register' method of UserController with error: " +
-          error,
+        'Error thrown in user.controller.ts, getUser method: ' + error,
       );
-      // Handle any error that occurs during the registration process
-      if (error instanceof UnauthorizedException)
-        throw new UnauthorizedException(error.message);
 
-      throw new InternalServerError(error.message);
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(createError('500 internal server error', 'something went wrong'));
     }
   }
 
-  @Post('request-signup')
-  async SignupOtpRequest(@Body() body: SignupOtpRequest) {
+  @Patch('update')
+  async updateUser(@Body() body: UpdateUserDto): Promise<any> {
     try {
-      this.logger.debug(
-        'request-signup endpoint called with body: ' + JSON.stringify(body),
-      );
+      this.logger.log('update user endpoint called');
 
-      const resp: OtpPayloadResp = await this.userService.signupOtpRequest(
-        body,
-      );
+      const resp: UserRespDto = await this.authService.updateUserInfo(body);
 
-      const payload = createResponse(resp.message, resp.token);
-
-      return payload;
+      return createResponse('successfully updated user information', resp);
     } catch (error) {
       this.logger.error(
-        "Error occurred in 'requestSignup' method of UserController with error: " +
-          error,
+        'Error thrown in user.controller.ts, updateUser method: ' + error,
       );
-      // Handle any error that occurs during the registration process
-      if (error instanceof ConflictException)
-        throw new ConflictException(error.message);
+
+      if (error instanceof InternalServerError) {
+        throw new HttpException(
+          'Error ocurred from user repository with updating user information',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      } else if (error instanceof UnauthorizedException) {
+        throw new HttpException(
+          'Error ocurred from user repository with updating user information',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
 
       throw new HttpException(
         "Something went wrong, we're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    }
-  }
-
-  // api to get user information
-  @Get('info')
-  async getUser(@Res() res: Response): Promise<any> {
-    try {
-      // get the authId from the res.locals
-      const userId = res.locals.id;
-      const crypto = res.locals.crypto;
-
-      if (!userId)
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('400 user not found', 'token invalid'));
-
-      // TODO: come back here to fix
-      const userObj = await this.authService.getAllUserInfo({ authId: userId });
-
-      const payload = { payload: userObj, status: true, message: 'user found' };
-      const encryptedResp = await encryptPayload(payload);
-
-      // return encrypted response
-      if (crypto === 'true')
-        return res
-          .status(HttpStatus.OK)
-          .json(createEncryptedResponse(encryptedResp));
-      else
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse('user found', userObj));
-    } catch (error) {
-      // Handle any error that occurs during the registration process
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createError('500 user registeration failed', error.message));
-      } else if (error instanceof UnauthorizedException) {
-        return res
-          .status(HttpStatus.UNAUTHORIZED)
-          .json(createError('401 user registeration failed', error.message));
-      }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('400 user registeration failed ', error.message));
-    }
-  }
-
-  /**
-   *
-   * this shoudl check for what input fields has been provided and do the necessary update
-   *
-   * @param requestBody
-   * @param files
-   * @param res
-   * @returns
-   */
-  @Patch('update')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'profileImage', maxCount: 1 }]),
-  )
-  async updateUser(
-    @Body() requestBody: EncryptedDTO,
-    @UploadedFiles() files: any,
-    @Res() res: Response,
-  ): Promise<any> {
-    try {
-      const crypto = res.locals.crypto;
-      const decryptedBody = await decryptPayload(requestBody.payload);
-
-      // map decrypted body to userDto
-      const userDto = new UpdateUserDto();
-      Object.assign(userDto, decryptedBody);
-
-      // grab profile image and add it to the userDTO
-      userDto.profileImage = files?.profileImage[0] || null;
-
-      // get auth record with the userId
-      const userId: number = res.locals.id;
-
-      if (!userId)
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('400 user not found', 'token invalid'));
-
-      userDto.id = userId;
-
-      // TODO: come back here to fix
-      const authObj = await this.authService.getAuth({ authId: userId });
-
-      // user not found
-      if (authObj == null)
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json(createError('user update failed', 'Could not find user'));
-
-      await this.userService.updateUserInfo(userDto, authObj.id);
-
-      // convert dto to user
-      const userEntity = new User();
-      Object.assign(userEntity, userDto);
-      const token = this.authService.generateJwt(userEntity);
-      // TODO: come back below to fix
-      const userInfo = await this.authService.getAllUserInfo({
-        authId: userDto.id,
-      });
-      // const user: UserDto = mapAuthToUser(userInfo); // rename to map user from Auth
-      const user = null;
-
-      const payload = {
-        message: 'Update successful',
-        status: true,
-        payload: {
-          token,
-          user,
-        },
-      };
-      const resp = await encryptPayload(payload);
-      if (crypto === 'true' || !crypto)
-        return res.status(HttpStatus.OK).json(createEncryptedResponse(resp));
-      else
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse(payload.message, payload.payload));
-    } catch (error) {
-      if (error instanceof InternalServerError) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json(createError('500 user registeration failed', error.message));
-      } else if (error instanceof UnauthorizedException) {
-        return res
-          .status(HttpStatus.UNAUTHORIZED)
-          .json(createError('401 user registeration failed', error.message));
-      }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(createError('400 user registeration failed ', error.message));
     }
   }
 }

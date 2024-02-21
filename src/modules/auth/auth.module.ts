@@ -31,6 +31,6 @@ import { MobileRepository } from '../mobile/mobile.repository';
     GeocodingService,
     MobileRepository,
   ],
-  exports: [AuthService, AwsSecretKey, AwsS3Service],
+  exports: [AuthService],
 })
 export class AuthModule {}

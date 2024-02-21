@@ -73,9 +73,9 @@ export class Business extends CommonEntity {
   @Column({ name: 'business_type', type: 'varchar', default: 'grocery' })
   businessType: string;
 
-  @ManyToOne(() => Country, (country) => country.name)
-  @JoinColumn({ name: 'primary_country' })
-  primaryCountry: Country;
+  // @ManyToOne(() => Country, (country) => country.name)
+  // @JoinColumn({ name: 'primary_country' })
+  // primaryCountry: Country;
 
   @ManyToMany(() => Country, (country) => country.businesses)
   countries: Country[];

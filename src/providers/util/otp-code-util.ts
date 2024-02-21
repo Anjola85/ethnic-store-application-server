@@ -1,3 +1,5 @@
+import { getCurrentEpochTime } from 'src/common/util/functions';
+
 /**
  * This function generates a random code of a given length.
  * @param length
@@ -6,7 +8,7 @@
 export function generateOtpCode(
   length = 4,
   expirationMinutes = 5,
-): { code: string; expiryTime: string } {
+): { code: string; expiryTime: number } {
   const digits = '0123456789';
   let code = '';
 
@@ -16,9 +18,12 @@ export function generateOtpCode(
   }
 
   // set expirty time to be 5 minutes from now
-  const expiryTime = new Date(
-    Date.now() + expirationMinutes * 60 * 1000,
-  ).toISOString();
+  // const expiryTime = new Date(
+  //   Date.now() + expirationMinutes * 60 * 1000,
+  // ).toISOString();
+
+  // set expiry time to be 5 minutes from now
+  const expiryTime = getCurrentEpochTime() + expirationMinutes * 60;
 
   return { code, expiryTime };
 }

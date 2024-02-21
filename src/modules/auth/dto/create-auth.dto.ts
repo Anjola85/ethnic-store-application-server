@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEmail,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
@@ -39,8 +40,8 @@ export class CreateAuthDto extends BaseDto {
   otpCode?: string;
 
   @IsOptional()
-  @IsDateString()
-  otpExpiry?: Date;
+  @IsNumber()
+  otpExpiry?: number;
 
   @IsOptional()
   user?: User;
