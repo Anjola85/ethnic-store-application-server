@@ -51,8 +51,7 @@ export class UserController {
     try {
       this.logger.log('get user info endpoint called');
       const userId = res.locals.userId;
-      //TODO: set this back to true
-      const crypto = res.locals.crypto || 'false';
+      const crypto = res.locals.crypto;
 
       if (!userId)
         return res
@@ -68,14 +67,14 @@ export class UserController {
       );
 
       // perform necessary mapping
-      const resp = UserProcessor.processUserRelationInfo(user, mobile);
+      const clearResp = UserProcessor.processUserRelationInfo(user, mobile);
 
       this.logger.debug('successfully retrieved user information');
 
       //TODO: handle response (if encrypted or not)
       if (crypto === 'true') {
         const encryptedResp = await encryptPayload(
-          createResponse('successfully retrieved user information', resp),
+          createResponse('successfully retrieved user information', clearResp),
         );
         return res
           .status(HttpStatus.OK)
@@ -84,7 +83,10 @@ export class UserController {
         return res
           .status(HttpStatus.OK)
           .json(
-            createResponse('successfully retrieved user information', resp),
+            createResponse(
+              'successfully retrieved user information',
+              clearResp,
+            ),
           );
       }
     } catch (error) {
