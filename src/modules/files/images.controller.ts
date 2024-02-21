@@ -176,8 +176,8 @@ export class ImagesController {
       const resp = await this.businessFileServices.uploadBusinessImagesToS3({
         business_id,
         background_image_blob: files.background_image[0],
-        featured_image_blob: files.featured_image[0],
         profile_image_blob: files.logo_image[0],
+        // featured_image_blob: files.featured_image[0],
       });
 
       return res.status(HttpStatus.OK).json({

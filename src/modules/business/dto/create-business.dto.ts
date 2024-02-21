@@ -26,10 +26,6 @@ export class CreateBusinessDto extends BaseDto {
   owner?: User;
 
   @ApiProperty()
-  @IsObject()
-  primaryCountry: Country;
-
-  @ApiProperty()
   @IsArray()
   countries: Country[];
 

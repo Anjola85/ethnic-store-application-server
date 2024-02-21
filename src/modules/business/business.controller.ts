@@ -16,7 +16,10 @@ import { GeoLocationDto } from './dto/geolocation.dto';
 import { createResponse } from 'src/common/util/response';
 import { Response } from 'express';
 import { CreateBusinessDto } from './dto/create-business.dto';
-import { BusinessListRespDto } from 'src/contract/version1/response/business-response.dto';
+import {
+  BusinessListRespDto,
+  BusinessRespDto,
+} from 'src/contract/version1/response/business-response.dto';
 
 @Controller('business')
 export class BusinessController {
@@ -42,15 +45,19 @@ export class BusinessController {
     @Body() businessBody: CreateBusinessDto,
     @UploadedFiles() files: any,
   ) {
-    businessBody.backgroundImage = files?.backgroundImage[0] || null;
-    businessBody.profileImage = files?.profileImage[0] || null;
-
     try {
-      const createdBusiness = await this.businessService.register(businessBody);
+      this.logger.debug('Register business endpoint hit');
 
-      return createResponse('Business registered successfully', {
-        business: createdBusiness,
-      });
+      businessBody.backgroundImage = files?.backgroundImage[0] || null;
+      businessBody.profileImage = files?.profileImage[0] || null;
+
+      const createdBusiness: BusinessRespDto =
+        await this.businessService.register(businessBody);
+
+      return createResponse(
+        'Business registered successfully',
+        createdBusiness,
+      );
     } catch (error) {
       this.logger.debug(
         'From register in business.controller.ts with error:',

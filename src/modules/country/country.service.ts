@@ -30,6 +30,19 @@ export class CountryService {
 
       if (
         error.name === 'QueryFailedError' &&
+        error.message.includes('violates foreign key constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a country with a non-existent continent: ${createCountryDto.continentId}`,
+        );
+
+        throw new ConflictException(
+          `Continent with id ${createCountryDto.continentId} does not exist`,
+        );
+      }
+
+      if (
+        error.name === 'QueryFailedError' &&
         error.message.includes('duplicate key value violates unique constraint')
       ) {
         this.logger.error(

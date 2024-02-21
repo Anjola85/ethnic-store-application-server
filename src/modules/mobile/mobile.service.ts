@@ -33,7 +33,7 @@ export class MobileService {
         );
 
         throw new ConflictException(
-          `Mobile with number ${mobileDto} already exists`,
+          `Mobile with number ${JSON.stringify(mobileDto)} already exists`,
         );
       }
 

@@ -1,3 +1,4 @@
+import { CreateBusinessDto } from './dto/create-business.dto';
 import {
   BusinessListRespDto,
   BusinessRespDto,
@@ -14,18 +15,18 @@ export class BusinessProcessor {
     const resp: BusinessRespDto = {
       id: business.id,
       name: business.name,
-      description: business.description,
+      description: business.description || '',
       address: AddressProcessor.mapEntityToResp(business.address),
+      email: business.email || '',
+      mobile: MobileProcessor.mapEntityToResp(business.mobile),
       schedule: business.schedule,
-      website: business.website,
-      // country: CountryProcessor.mapEntityToResp(business.primaryCountry),
+      website: business.website || '',
       countries: CountryProcessor.mapEntityListToResp(business.countries),
       regions: RegionProcessor.mapEntityListToResp(business.regions),
-      mobile: MobileProcessor.mapEntityToResp(business.mobile),
       businessType: business.businessType,
       rating: business.rating,
-      backgroundImage: business.backgroundImage,
-      profileImage: business.profileImage,
+      backgroundImage: business.backgroundImage || '',
+      profileImage: business.profileImage || '',
       createdAt: business.createdAt,
     };
     return resp;
@@ -42,5 +43,29 @@ export class BusinessProcessor {
       size: businessList.length,
     };
     return payload;
+  }
+
+  /**
+   * Maps CreateBusinessDto to Business entity
+   * NOTE: does not map the relations properties or images
+   *  EXCLUDED RELATIONS - mobile, address
+   * @param businessDto
+   * @returns - Business entity
+   */
+  public static mapCreateBusinessDtoToEntity(
+    businessDto: CreateBusinessDto,
+  ): Business {
+    const businessEntity: Business = new Business();
+    businessEntity.owner = businessDto?.owner;
+    businessEntity.name = businessDto.name;
+    businessEntity.description = businessDto.description;
+    businessEntity.email = businessDto.email;
+    businessEntity.website = businessDto.website;
+    businessEntity.rating = businessDto.rating;
+    businessEntity.businessType = businessDto.businessType;
+    businessEntity.schedule = businessDto.schedule;
+    businessEntity.countries = businessDto.countries;
+    businessEntity.regions = businessDto.regions;
+    return businessEntity;
   }
 }

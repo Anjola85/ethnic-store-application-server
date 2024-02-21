@@ -1,9 +1,9 @@
 import { IsOptional, IsString } from 'class-validator';
 
 export class S3BusinessImagesResponse {
-  @IsOptional()
-  @IsString()
-  featuredImage?: string;
+  // @IsOptional()
+  // @IsString()
+  // featuredImage?: string;
 
   @IsOptional()
   @IsString()
@@ -15,8 +15,8 @@ export class S3BusinessImagesResponse {
 }
 
 export class ImagesRequestDto {
-  @IsOptional()
-  featuredImage?: Express.Multer.File;
+  // @IsOptional()
+  // featuredImage?: Express.Multer.File;
 
   @IsOptional()
   backgroundImage?: Express.Multer.File;
@@ -28,6 +28,6 @@ export class ImagesRequestDto {
 export interface S3BusinessImagesRequest {
   business_id: string;
   background_image_blob?: Express.Multer.File;
-  featured_image_blob?: Express.Multer.File;
   profile_image_blob?: Express.Multer.File;
+  // featured_image_blob?: Express.Multer.File;
 }

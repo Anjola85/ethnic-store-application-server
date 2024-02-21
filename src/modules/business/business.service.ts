@@ -16,6 +16,7 @@ import { AddressProcessor } from '../address/address.processor';
 import { Country } from '../country/entities/country.entity';
 import { Region } from '../region/entities/region.entity';
 import { BusinessProcessor } from './business.process';
+import { BusinessRespDto } from 'src/contract/version1/response/business-response.dto';
 
 @Injectable()
 export class BusinessService {
@@ -35,7 +36,7 @@ export class BusinessService {
    * @param reqBody
    * @returns
    */
-  async register(reqBody: CreateBusinessDto): Promise<any> {
+  async register(reqBody: CreateBusinessDto): Promise<BusinessRespDto> {
     try {
       await this.businessExist(reqBody);
 
@@ -55,29 +56,35 @@ export class BusinessService {
         reqBody.address,
       );
 
-      // map business dto data to business entity
-      const businessEntity: Business = Object.assign(new Business(), {
-        ...businessDto,
-        // backgroundImage: businessDto.images.backgroundImage,
-        // profileImage: businessDto.images.profileImage,
-        primaryCountry: reqBody.primaryCountry.id,
-        mobile: mobileEntity,
-        address: addressEntity,
-        countries: reqBody.countries,
-        regions: reqBody.regions,
-      });
+      const businessEntity: Business =
+        BusinessProcessor.mapCreateBusinessDtoToEntity(businessDto);
+
+      // TODO: handle business images here
+
+      businessEntity.mobile = mobileEntity;
+      businessEntity.address = addressEntity;
 
       // save the business to the database
-      const createdBusiness = await this.businessRepository
-        .create(businessEntity)
-        .save();
+      const createdBusiness = await this.businessRepository.save(
+        businessEntity,
+      );
 
-      return createdBusiness;
+      const resp: BusinessRespDto =
+        BusinessProcessor.mapEntityToResp(createdBusiness);
+
+      return resp;
     } catch (error) {
       this.logger.debug(
         'From register in business.service.ts with error:',
         error,
       );
+
+      if (error.message.includes('violates foreign key constraint')) {
+        throw new HttpException(
+          `Country or region does not exist`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
 
       if (error instanceof HttpException) throw error;
 
@@ -129,7 +136,7 @@ export class BusinessService {
 
     if (businessExist)
       throw new HttpException(
-        `Business with ${type} already exists}`,
+        `Business with ${type} already exists`,
         HttpStatus.CONFLICT,
       );
   }
@@ -149,7 +156,6 @@ export class BusinessService {
         .createQueryBuilder('business')
         .leftJoinAndSelect('business.mobile', 'mobile')
         .leftJoinAndSelect('business.address', 'address')
-        .leftJoinAndSelect('business.primaryCountry', 'primaryCountry')
         .leftJoinAndSelect('business.countries', 'countries')
         .leftJoinAndSelect('business.regions', 'regions')
         .getMany();

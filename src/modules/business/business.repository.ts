@@ -28,7 +28,8 @@ export class BusinessRepository extends Repository<Business> {
           .where('business.name = :name', { name })
           .getOne();
       }
-      if (email && !type) {
+
+      if (email) {
         type = 'email';
         businessExist = await this.createQueryBuilder('business')
           .where('business.email = :email', { email })

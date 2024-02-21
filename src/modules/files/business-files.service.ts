@@ -51,8 +51,8 @@ export class BusinessFilesService {
 
     const imagesUrl: S3BusinessImagesResponse = {
       backgroundImage: result.background_image_blob || '',
-      featuredImage: result.featured_image_blob || '',
       profileImage: result.profile_image_blob || '',
+      // featuredImage: result.featured_image_blob || '',
     };
 
     return imagesUrl;
