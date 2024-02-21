@@ -57,56 +57,6 @@ export class BusinessRepository extends Repository<Business> {
     }
   }
 
-  async findNearbyBusinesses(geolocationDto: GeoLocationDto) {
-    try {
-      this.logger.debug(
-        `findNearbyBusinesses called with geolocation: ${JSON.stringify(
-          geolocationDto,
-        )}`,
-      );
-
-      const radius = 1000; // Define the search radius in meters
-      const { coordinates } = geolocationDto; // Assuming coordinates are [longitude, latitude]
-      const longitude = coordinates[0];
-      const latitude = coordinates[1];
-
-      // Convert coordinates to a GeoJSON Point object
-      const pointGeoJSON = {
-        type: 'Point',
-        coordinates: [longitude, latitude], // Ensure your DTO provides longitude and latitude
-      };
-
-      const businesses = await this.createQueryBuilder('business')
-        .innerJoin('business.address', 'address')
-        .where(
-          `ST_DistanceSphere(
-              address.location,
-              ST_GeomFromGeoJSON(:pointGeoJSON)
-            ) < :radius`,
-          {
-            pointGeoJSON: JSON.stringify(pointGeoJSON), // Pass the GeoJSON object as a JSON string
-            radius: radius,
-          },
-        )
-        .getMany();
-
-      this.logger.debug(
-        `findNearbyBusinesses responded with number of results: ${businesses.length}`,
-      );
-
-      return businesses;
-    } catch (error) {
-      this.logger.error(
-        `Error thrown in business.repository.ts, findNearbyBusinesses method with error: ${error}`,
-      );
-
-      throw new HttpException(
-        `Error fetching nearby businesses`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   /**
    * Retrieve all businesses belonging to a country
    * @param country - country name
@@ -192,6 +142,35 @@ export class BusinessRepository extends Repository<Business> {
           .from('address', 'address')
           .where('address.id = business.addressId');
       }, 'locationGeoJSON')
+      .getMany();
+
+    return businessRelations;
+  }
+
+  /**
+   * This method retrieves the closest businesses to a given location
+   * @param lat
+   * @param lon
+   * @returns
+   */
+  async getClosestBusinesses(lat: number, lon: number): Promise<Business[]> {
+    const pointOfInterest = `SRID=4326;POINT(${lon} ${lat})`; // Create a POINT for the provided lat & lon
+
+    const businessRelations = await this.createQueryBuilder('business')
+      .leftJoinAndSelect('business.address', 'address')
+      .leftJoinAndSelect('business.mobile', 'mobile')
+      .leftJoinAndSelect('business.countries', 'countries')
+      .leftJoinAndSelect('business.regions', 'regions')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+          .from('address', 'address')
+          .where('address.id = business.addressId');
+      }, 'locationGeoJSON')
+      .orderBy(
+        `ST_Distance(address.location, ST_GeomFromText('${pointOfInterest}', 4326))`,
+        'ASC',
+      ) // Order by distance to the point of interest
       .getMany();
 
     return businessRelations;

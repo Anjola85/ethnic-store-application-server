@@ -147,10 +147,12 @@ export class BusinessService {
   }
 
   async findStoresNearby(
-    geolocation: GeoLocationDto,
+    latitude: number,
+    longitude: number,
   ): Promise<BusinessListRespDto> {
-    const businesses = await this.businessRepository.findNearbyBusinesses(
-      geolocation,
+    const businesses = await this.businessRepository.getClosestBusinesses(
+      latitude,
+      longitude,
     );
 
     const businessList = BusinessProcessor.mapEntityListToResp(businesses);

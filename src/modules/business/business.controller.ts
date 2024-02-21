@@ -84,10 +84,11 @@ export class BusinessController {
     @Body() body: { latitude: number; longitude: number },
   ): Promise<any> {
     try {
-      const geolocationDto = new GeoLocationDto();
-      geolocationDto.coordinates = [body.latitude, body.longitude];
       const businessList: BusinessListRespDto =
-        await this.businessService.findStoresNearby(geolocationDto);
+        await this.businessService.findStoresNearby(
+          body.latitude,
+          body.longitude,
+        );
       return createResponse('Nearby businesses fetched successfully', {
         businessList,
       });
