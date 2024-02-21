@@ -302,7 +302,7 @@ export class AuthService {
         await this.mobileService.getMobileByPhoneNumber(userDto.mobile);
       userDto.auth = registeredMobile.auth;
 
-      const user: User = await this.userSerivce.registerUserAndAddress(userDto);
+      const user: User = await this.userSerivce.register(userDto);
 
       // generate jwt token with user id
       const token = this.generateJwt(user);
