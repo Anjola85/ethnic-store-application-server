@@ -65,8 +65,8 @@ export class MobileRepository extends Repository<Mobile> {
           isoType: mobile.isoType,
         })
         .leftJoinAndSelect('mobile.auth', 'auth')
+        .leftJoinAndSelect('auth.user', 'user')
         .getOne();
-
       return mobileEntity;
     } catch (error) {
       this.logger.error(
@@ -139,10 +139,12 @@ export class MobileRepository extends Repository<Mobile> {
         throw new Error('Mobile does not exist');
       }
 
-      mobileToUpdate.phoneNumber = mobileDto.phoneNumber;
-      mobileToUpdate.countryCode = mobileDto.countryCode;
-      mobileToUpdate.isoType = mobileDto.isoType;
-      mobileToUpdate.isPrimary = mobileDto.isPrimary;
+      // mobileToUpdate.phoneNumber = mobileDto.phoneNumber;
+      // mobileToUpdate.countryCode = mobileDto.countryCode;
+      // mobileToUpdate.isoType = mobileDto.isoType;
+      // mobileToUpdate.isPrimary = mobileDto.isPrimary;
+
+      Object.assign(mobileToUpdate, mobileDto);
 
       await mobileToUpdate.save();
 

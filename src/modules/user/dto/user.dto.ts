@@ -14,6 +14,7 @@ import { AddressDto } from 'src/modules/address/dto/address.dto';
 import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { CreateAuthDto } from 'src/modules/auth/dto/create-auth.dto';
 import { CreateBusinessDto } from 'src/modules/business/dto/create-business.dto';
+import { Auth } from 'src/modules/auth/entities/auth.entity';
 
 /**
  * Generic DTO
@@ -109,5 +110,5 @@ export class UserDto {
   profileImageUrl: string;
 
   @IsOptional()
-  auth: CreateAuthDto;
+  auth: Auth;
 }

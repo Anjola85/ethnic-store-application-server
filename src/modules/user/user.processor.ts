@@ -93,14 +93,14 @@ export class UserProcessor {
       lastName: user.lastName,
       userProfile: user.userProfile,
       dob: user.dob,
-      profileImage: user.profileImage || '',
+      profileImage: user?.profileImage || '',
       active: user.active,
-      email: user.auth.email || '',
+      email: user.auth?.email || '',
       mobile: mobileDto,
       addressList,
       favouriteList: favouriteBusinessList,
       country: countryDto,
-      accountVerified: user.auth.accountVerified || false,
+      accountVerified: user.auth?.accountVerified || false,
     };
 
     return userInfo;

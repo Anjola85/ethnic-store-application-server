@@ -202,7 +202,11 @@ export class AuthService {
         const registeredMobile =
           await this.mobileService.getMobileByPhoneNumber(mobile);
 
-        if (registeredMobile?.auth && registeredMobile?.auth?.id) {
+        if (
+          registeredMobile &&
+          registeredMobile.auth &&
+          registeredMobile.auth.id
+        ) {
           // get auth account if mobile is registered
           authAccount = await this.authRepository.findOneBy({
             id: registeredMobile.auth.id,
@@ -228,7 +232,8 @@ export class AuthService {
           Object.assign(mobile, newMobile);
 
           // update mobile record with auth Id
-          await this.mobileService.updateMobile(mobile);
+          await newMobile.save();
+          // await this.mobileService.updateMobile(mobile);
         }
       } else if (email) {
         // get email if it exists
@@ -300,6 +305,12 @@ export class AuthService {
       // retrieve auth account using mobile number
       const registeredMobile: Mobile =
         await this.mobileService.getMobileByPhoneNumber(userDto.mobile);
+
+      if (!registeredMobile)
+        throw new NotFoundException('Mobile is not registered');
+      if (registeredMobile.auth.user)
+        throw new ConflictException('User already exists');
+
       userDto.auth = registeredMobile.auth;
 
       const user: User = await this.userSerivce.register(userDto);

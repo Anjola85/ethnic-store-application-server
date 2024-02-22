@@ -13,11 +13,17 @@ export class FavouriteService {
   constructor(private favouriteRepository: FavouriteRepository) {}
 
   async addToFavourites(user: User, business: Business) {
-    return await this.favouriteRepository.addToFavourites(user, business);
+    const favourite: Favourite = await this.favouriteRepository.addToFavourites(
+      user,
+      business,
+    );
+    return favourite;
   }
 
   async getFavouriteByUserId(id: number) {
-    return await this.favouriteRepository.getFavouriteByUserId(id);
+    const favouriteList: Favourite[] =
+      await this.favouriteRepository.getFavouriteByUserId(id);
+    return favouriteList;
   }
 
   async removeFromFavourites(

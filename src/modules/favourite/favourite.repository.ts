@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Favourite } from './entities/favourite.entity';
 import { User } from '../user/entities/user.entity';
@@ -34,21 +40,21 @@ export class FavouriteRepository extends Repository<Favourite> {
     }
   }
 
-  async addToFavourites(user: User, business: Business): Promise<Favourite[]> {
+  async addToFavourites(user: User, business: Business): Promise<Favourite> {
     const favouriteExists = await this.createQueryBuilder('favourite').where(
       'favourite.user = :user AND favourite.business = :business',
       { user, business },
     );
 
-    if (!favouriteExists) {
-      const favourite = new Favourite();
-      favourite.user = user;
-      favourite.business = business;
-      await favourite.save();
-    }
+    if (favouriteExists)
+      throw new ConflictException('Business already favourited');
 
-    const allFavourites = await this.getFavouriteByUserId(user.id);
-    return allFavourites;
+    const favourite = new Favourite();
+    favourite.user = user;
+    favourite.business = business;
+    await favourite.save();
+
+    return favourite;
   }
 
   async removeFromFavourites(

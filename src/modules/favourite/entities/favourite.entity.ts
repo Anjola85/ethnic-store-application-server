@@ -6,10 +6,10 @@ import { Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 @Entity('favourite')
 export class Favourite extends CommonEntity {
   @ManyToOne(() => Business, (business) => business.favourites)
-  @JoinColumn({ name: 'business_id' })
+  @JoinColumn()
   business: Business;
 
   @ManyToOne(() => User, (user) => user.favourites)
-  @JoinColumn({ name: 'user_id ' })
+  @JoinColumn()
   user: User;
 }
