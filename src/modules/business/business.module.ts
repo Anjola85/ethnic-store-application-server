@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { BusinessController } from './business.controller';
 
@@ -11,6 +11,7 @@ import { CountryService } from '../country/country.service';
 import { Country } from '../country/entities/country.entity';
 import { AwsS3Service } from '../files/aws-s3.service';
 
+@Global()
 @Module({
   imports: [TypeOrmModule.forFeature([Business, Address, Country])],
   controllers: [BusinessController],

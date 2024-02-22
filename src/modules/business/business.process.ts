@@ -9,33 +9,44 @@ import { MobileProcessor } from '../mobile/mobile.processor';
 import { RegionProcessor } from '../region/region.process';
 
 import { Business } from './entities/business.entity';
-import { GeometryTransformer } from '../address/geometry-transformer';
-import { GeoJSONPoint } from '../address/dto/geo-json-point.dto';
+import { Logger } from '@nestjs/common';
 
 export class BusinessProcessor {
+  private static logger = new Logger(BusinessProcessor.name);
   public static mapEntityToResp(business: Business): BusinessRespDto {
-    // convert the address location to longitude and latitude
-
-    const resp: BusinessRespDto = {
-      id: business.id,
-      name: business.name,
-      description: business.description || '',
-      address: AddressProcessor.mapEntityToResp(business.address),
-      email: business.email || '',
-      mobile: MobileProcessor.mapEntityToResp(business.mobile),
-      schedule: business.schedule,
-      website: business.website || '',
-      countries: CountryProcessor.mapEntityListToResp(business.countries),
-      regions: RegionProcessor.mapEntityListToResp(business.regions),
-      businessType: business.businessType,
-      rating: business.rating,
-      backgroundImage: business.backgroundImage || '',
-      profileImage: business.profileImage || '',
-      createdAt: business.createdAt,
-    };
-    return resp;
+    try {
+      const resp: BusinessRespDto = {
+        id: business.id,
+        name: business.name,
+        description: business.description || '',
+        address: AddressProcessor.mapEntityToResp(business.address),
+        email: business.email || '',
+        mobile: MobileProcessor.mapEntityToResp(business.mobile),
+        schedule: business.schedule,
+        website: business.website || '',
+        countries: CountryProcessor.mapEntityListToResp(business.countries),
+        regions: RegionProcessor.mapEntityListToResp(business.regions),
+        businessType: business.businessType,
+        rating: business.rating,
+        backgroundImage: business.backgroundImage || '',
+        profileImage: business.profileImage || '',
+        createdAt: business.createdAt,
+      };
+      return resp;
+    } catch (error) {
+      this.logger.error(`Error mapping business entity to response: ${error}`);
+      // throw new Error(
+      //   'Error mapping business entity to response with error: ' +
+      //     error.message,
+      // );
+    }
   }
 
+  /**
+   * This method maps a list of business entities to a list of business response dto
+   * @param businesses
+   * @returns
+   */
   public static mapEntityListToResp(
     businesses: Business[],
   ): BusinessListRespDto {

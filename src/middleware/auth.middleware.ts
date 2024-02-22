@@ -35,9 +35,7 @@ export class AuthMiddleware implements NestMiddleware {
       res.locals.userId = userId;
 
       // check if url is user/info, if so, attach crypto to the request object
-      if (req.baseUrl === '/user/info') {
-        res.locals.crypto = req.headers.crypto || 'true';
-      }
+      res.locals.crypto = req.headers.crypto || 'true';
 
       next();
     } catch (error) {

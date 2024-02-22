@@ -14,22 +14,50 @@ import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { Response } from 'express';
 import { Types } from 'mongoose';
 import { createResponse } from 'src/common/util/response';
+import { encryptPayload } from 'src/common/util/crypto';
+import { FavouriteListRespDto } from 'src/contract/version1/response/favourite-response.dto';
 
 @Controller('favourite')
 export class FavouriteController {
   private readonly logger = new Logger(FavouriteController.name);
   constructor(private readonly favouriteService: FavouriteService) {}
 
-  @Post()
-  async create(@Body() createFavouriteDto: CreateFavouriteDto) {
+  @Post('add')
+  async create(
+    @Body() createFavouriteDto: CreateFavouriteDto,
+    @Res() res: Response,
+  ) {
     try {
       this.logger.log('create favourite endpoint called');
 
+      const userId: number = res.locals.userId;
+      const crypto = res.locals.crypto;
+
+      if (!userId) {
+        throw new HttpException(
+          'Unable to perform operation, user not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const favourite = await this.favouriteService.addToFavourites(
-        createFavouriteDto.user,
+        userId,
         createFavouriteDto.business,
       );
-      return createResponse('Favourite successfully added', favourite);
+
+      this.logger.log('Favourite successfully added');
+
+      if (crypto === 'true') {
+        const encryptedResponse = await encryptPayload(
+          createResponse('Favourite successfully added', favourite),
+        );
+
+        return res.status(HttpStatus.OK).json(encryptedResponse);
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json(createResponse('Favourite successfully added', favourite));
+      }
     } catch (error) {
       this.logger.error(
         'Error thrown in favourite.controller.ts, create method: ' +
@@ -41,18 +69,66 @@ export class FavouriteController {
       if (error instanceof HttpException) throw error;
 
       throw new HttpException(
-        'Somthing wen wrong',
+        'Somthing went wrong',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  @Get(':id')
-  async getFavouriteByUserId(@Param('id') id: string, @Res() res: Response) {
-    const favouriteList = await this.favouriteService.getFavouriteByUserId(
-      parseInt(id),
-    );
-    return res.status(HttpStatus.OK).json(favouriteList);
+  @Get('user')
+  async getFavouriteByUserId(@Res() res: Response) {
+    try {
+      this.logger.log('get favourite by user id endpoint called');
+
+      const userId: number = res.locals.userId;
+      const crypto = res.locals.crypto;
+
+      if (!userId) {
+        throw new HttpException(
+          'Unable to perform operation, user not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const favouriteList: FavouriteListRespDto =
+        await this.favouriteService.getFavouriteByUserId(userId);
+
+      this.logger.log('Favourite list successfully retrieved');
+
+      if (crypto === 'true') {
+        const encryptedResponse = await encryptPayload(
+          createResponse(
+            'Favourite list successfully retrieved',
+            favouriteList,
+          ),
+        );
+
+        return res.status(HttpStatus.OK).json(encryptedResponse);
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json(
+            createResponse(
+              'Favourite list successfully retrieved',
+              favouriteList,
+            ),
+          );
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.controller.ts, getFavouriteByUserId method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        'Somthing went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Post('remove')

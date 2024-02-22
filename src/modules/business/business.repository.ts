@@ -208,4 +208,22 @@ export class BusinessRepository extends Repository<Business> {
 
     return [businessRelations, total];
   }
+
+  async getRelationsByBusinessId(businesses: number[]): Promise<Business[]> {
+    const businessRelations = await this.createQueryBuilder('business')
+      .leftJoinAndSelect('business.address', 'address')
+      .leftJoinAndSelect('business.mobile', 'mobile')
+      .leftJoinAndSelect('business.countries', 'countries')
+      .leftJoinAndSelect('business.regions', 'regions')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+          .from('address', 'address')
+          .where('address.id = business.addressId');
+      }, 'locationGeoJSON')
+      .where('business.id IN (:...businesses)', { businesses })
+      .getMany();
+
+    return businessRelations;
+  }
 }

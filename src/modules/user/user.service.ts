@@ -138,7 +138,7 @@ export class UserService {
 
     this.userRepository.save(updatedUser);
 
-    const resp: UserRespDto = UserProcessor.processUserInfo(updatedUser);
+    const resp: UserRespDto = UserProcessor.mapEntityToResp(updatedUser);
     return resp;
   }
 }

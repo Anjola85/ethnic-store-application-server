@@ -33,11 +33,7 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 import { MobileProcessor } from '../mobile/mobile.processor';
 
 export class UserProcessor {
-  private readonly logger = new Logger(UserProcessor.name);
-
-  constructor() {
-    this.logger.log('UserProcessor initialized');
-  }
+  private static readonly logger = new Logger(UserProcessor.name);
 
   /**
    * Converts create user dto to user dto
@@ -113,46 +109,52 @@ export class UserProcessor {
    * @param mobile
    * @returns
    */
-  public static processUserInfo(user: User): UserRespDto {
-    if (!user && !user.auth) {
-      throw new Error(
-        'User not found - user and user.auth cannot be null - processUserInfo - user.processor.ts',
+  public static mapEntityToResp(user: User): UserRespDto {
+    try {
+      if (!user && !user.auth) {
+        throw new Error(
+          'User not found - user and user.auth cannot be null - processUserInfo - user.processor.ts',
+        );
+      }
+
+      let mobileDto: MobileRespDto;
+      let email = '';
+
+      if (user.auth.mobile) {
+        mobileDto = MobileProcessor.mapEntityToResp(user.auth.mobile);
+      }
+      if (user.auth.email) {
+        email = user.auth.email;
+      }
+
+      const addressList: AddressListRespDto =
+        AddressProcessor.mapEntityListToResp(user.addresses);
+
+      let countryDto: CountryRespDto;
+
+      if (user.country)
+        countryDto = CountryProcessor.mapEntityToResp(user.country);
+
+      const userInfo: UserRespDto = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userProfile: user.userProfile,
+        dob: user.dob,
+        profileImage: user.profileImage || '',
+        active: user.active,
+        email: email,
+        mobile: mobileDto || null,
+        addressList: addressList || null,
+        country: countryDto || null,
+        accountVerified: user.auth.accountVerified || false,
+      };
+
+      return userInfo;
+    } catch (error) {
+      this.logger.error(
+        'Error mapping user entity to response with error: ' + error,
       );
     }
-
-    let mobileDto: MobileRespDto;
-    let email = '';
-
-    if (user.auth.mobile) {
-      mobileDto = MobileProcessor.mapEntityToResp(user.auth.mobile);
-    }
-    if (user.auth.email) {
-      email = user.auth.email;
-    }
-
-    const addressList: AddressListRespDto =
-      AddressProcessor.mapEntityListToResp(user.addresses);
-
-    let countryDto: CountryRespDto;
-
-    if (user.country)
-      countryDto = CountryProcessor.mapEntityToResp(user.country);
-
-    const userInfo: UserRespDto = {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      userProfile: user.userProfile,
-      dob: user.dob,
-      profileImage: user.profileImage || '',
-      active: user.active,
-      email: email,
-      mobile: mobileDto || null,
-      addressList: addressList || null,
-      country: countryDto || null,
-      accountVerified: user.auth.accountVerified || false,
-    };
-
-    return userInfo;
   }
 }
