@@ -16,6 +16,7 @@ import { Types } from 'mongoose';
 import { createResponse } from 'src/common/util/response';
 import { encryptPayload } from 'src/common/util/crypto';
 import { FavouriteListRespDto } from 'src/contract/version1/response/favourite-response.dto';
+import { UpdateFavouriteDto } from './dto/update-favourite.dto';
 
 @Controller('favourite')
 export class FavouriteController {
@@ -132,17 +133,36 @@ export class FavouriteController {
   }
 
   @Post('remove')
-  async removeFromFavourites(
-    @Body('favouriteId') favouriteId: string,
-    @Body('userId') userId: string,
-    @Body('businessId') businessId: string,
-    @Res() res: Response,
-  ) {
-    await this.favouriteService.removeFromFavourites(
-      favouriteId,
-      parseInt(userId),
-      businessId,
-    );
-    return res.status(HttpStatus.OK).json({ message: 'Favourite removed' });
+  async removeFromFavourites(@Body() updateFavourite: UpdateFavouriteDto) {
+    try {
+      this.logger.log('remove from favourite endpoint called');
+
+      if (!updateFavourite.favourite) {
+        throw new HttpException(
+          'Favourite id not provided',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      await this.favouriteService.removeFromFavourites(
+        updateFavourite.favourite,
+      );
+
+      return createResponse('Favourite successfully removed');
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.controller.ts, removeFromFavourites method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        'Somthing went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

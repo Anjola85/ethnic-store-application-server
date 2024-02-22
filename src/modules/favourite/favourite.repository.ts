@@ -23,15 +23,7 @@ export class FavouriteRepository extends Repository<Favourite> {
   }
 
   async addToFavourites(user: User, business: Business): Promise<Favourite> {
-    const favouriteExists = await this.createQueryBuilder('favourite')
-      .where(
-        'favourite.userId = :userId AND favourite.businessId = :businessId',
-        {
-          userId: user.id,
-          businessId: business.id,
-        },
-      )
-      .getOne();
+    const favouriteExists = await this.favouriteExist(user.id, business.id);
 
     if (favouriteExists) {
       throw new ConflictException('Business already favourited');
@@ -45,39 +37,51 @@ export class FavouriteRepository extends Repository<Favourite> {
     return favourite;
   }
 
-  async removeFromFavourites(
-    favouriteId: string,
-    userId: number,
-    businessId: string,
-  ): Promise<Favourite[]> {
-    let favourite;
-    if (favouriteId) {
-      favourite = await this.createQueryBuilder('favourite')
-        .where('favourite.id = :favouriteId', { favouriteId })
-        .getOne();
-    } else {
-      favourite = await this.createQueryBuilder('favourite')
-        .where(
-          'favourite.userId = :userId AND favourite.business.id = :businessId',
-          {
-            userId,
-            businessId,
-          },
-        )
-        .getOne();
-    }
-    (await favourite.remove()).save();
-
-    const allFavourites = await this.getFavouriteByUserId(userId);
-    return allFavourites;
+  async favouriteExist(userId: number, businessId: number) {
+    return await this.createQueryBuilder('favourite')
+      .where(
+        'favourite.userId = :userId AND favourite.businessId = :businessId',
+        {
+          userId: userId,
+          businessId: businessId,
+        },
+      )
+      .leftJoinAndSelect('favourite.business', 'business')
+      .getOne();
   }
 
+  async removeFromFavourites(favouriteId: number): Promise<void> {
+    try {
+      // check if favourite exists for user
+
+      const favourite = await this.createQueryBuilder('favourite')
+        .where('favourite.id = :favouriteId', { favouriteId })
+        .andWhere('favourite.deleted = false') // Exclude records marked as deleted
+        .getOne();
+
+      favourite.deleted = true;
+      await this.save(favourite);
+    } catch (error) {
+      this.logger.debug(
+        'Error thrown in favourite.repository.ts, removeFromFavourites method with error: ' +
+          error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   *
+   * @param id
+   * @returns
+   */
   async getFavouriteByUserId(id: number): Promise<Favourite[]> {
     try {
       const favourites = await this.createQueryBuilder('favourite')
         .leftJoinAndSelect('favourite.business', 'business')
         .leftJoinAndSelect('favourite.user', 'user')
         .where('userId = :userId', { id })
+        .andWhere('favourite.deleted = false') // Exclude records marked as deleted
         .getMany();
       return favourites || null;
     } catch (error) {
@@ -104,6 +108,7 @@ export class FavouriteRepository extends Repository<Favourite> {
       .leftJoinAndSelect('favourite.business', 'business')
       .leftJoinAndSelect('favourite.user', 'user')
       .where('favourite.userId = :userId', { userId })
+      .andWhere('favourite.deleted = false')
       .getMany();
 
     return favourites;
@@ -135,5 +140,29 @@ export class FavouriteRepository extends Repository<Favourite> {
     });
 
     return favourites;
+  }
+
+  /**
+   * Gets all favourites including deleted ones
+   * @param userId
+   * @returns
+   */
+  async getAllFavouritesByUserId(userId: number): Promise<Favourite[]> {
+    try {
+      const favourites = await this.createQueryBuilder('favourite')
+        .leftJoinAndSelect('favourite.business', 'business')
+        .leftJoinAndSelect('favourite.user', 'user')
+        .where('userId = :userId', { userId })
+        .getMany();
+      return favourites;
+    } catch (error) {
+      this.logger.debug(
+        'Error thrown in favourite.repository.ts, getAllFavourites method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+      throw error;
+    }
   }
 }
