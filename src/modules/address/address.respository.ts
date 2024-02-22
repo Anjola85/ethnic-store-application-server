@@ -2,6 +2,8 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
 import { AddressParams } from './address.service';
+import { getCurrentEpochTime } from 'src/common/util/functions';
+import { AddressDto } from './dto/address.dto';
 
 @Injectable()
 export class AddressRepository extends Repository<Address> {
@@ -17,20 +19,71 @@ export class AddressRepository extends Repository<Address> {
    * @param address
    * @returns
    */
-  async addAddress(address: Address) {
+  async addAddress(
+    addressEntity: Address,
+    addressDto: AddressDto,
+  ): Promise<Address> {
     try {
+      const currentEpochTime = getCurrentEpochTime();
+
       const newAddress = await this.createQueryBuilder('address')
         .insert()
         .into(Address)
-        .values(address)
+        .values({
+          createdAt: currentEpochTime, // manually set the created at time
+          updatedAt: currentEpochTime, // manually set the updated at time
+          street: addressEntity.street,
+          city: addressEntity.city,
+          province: addressEntity.province,
+          postalCode: addressEntity.postalCode,
+          country: addressEntity.country,
+          user: addressEntity.user,
+          business: addressEntity.business,
+          isPrimary: addressEntity.isPrimary,
+          unit: addressEntity.unit,
+          location: () =>
+            `ST_SetSRID(ST_GeomFromGeoJSON('${JSON.stringify({
+              type: 'Point',
+              coordinates: [
+                addressDto.location.coordinates[0], // represents longitude
+                addressDto.location.coordinates[1], // represents latitude
+              ],
+            })}'), 4326)`,
+        })
+        .returning('*')
         .execute();
-      return newAddress;
+
+      const insertedAddressId = newAddress.generatedMaps[0].id;
+      const address = await this.getAddressWithLongLat(insertedAddressId);
+      return address;
     } catch (error) {
       this.logger.error(
-        `Error thrown in address.repository.ts, addAddress method: ${error.message}`,
+        `Error thrown in address.repository.ts, addAddress method: ${error}`,
       );
       throw new HttpException(
         'Unable to add address to the database',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getAddressWithLongLat(id: number): Promise<Address> {
+    try {
+      const query = this.createQueryBuilder('address')
+        .select('address', 'address')
+        .addSelect('ST_X(address.location::geometry)', 'longitude')
+        .addSelect('ST_Y(address.location::geometry)', 'latitude')
+        .where('address.id = :id', { id })
+        .getOne();
+
+      return query;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in address.repository.ts, getAddressWithLongLat method: ${error}`,
+      );
+
+      throw new HttpException(
+        'Unable to retrieve address with long lat from the database',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

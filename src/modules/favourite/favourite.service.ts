@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Favourite } from './entities/favourite.entity';
@@ -7,17 +7,59 @@ import { UserService } from '../user/user.service';
 import { FavouriteRepository } from './favourite.repository';
 import { User } from '../user/entities/user.entity';
 import { Business } from '../business/entities/business.entity';
+import { FavouriteListRespDto } from 'src/contract/version1/response/favourite-response.dto';
+import { FavouriteProcessor } from './favourite.process';
 
 @Injectable()
 export class FavouriteService {
-  constructor(private favouriteRepository: FavouriteRepository) {}
+  private readonly logger = new Logger(FavouriteService.name);
+  constructor(
+    private favouriteRepository: FavouriteRepository,
+    private readonly userService: UserService,
+  ) {}
 
-  async addToFavourites(user: User, business: Business) {
-    return await this.favouriteRepository.addToFavourites(user, business);
+  async addToFavourites(userId: number, business: Business) {
+    try {
+      // check if user exists
+      const userExists: User = await this.userService.getUserById(userId);
+
+      if (!userExists) throw new NotFoundException('User not found');
+
+      const newUser = new User();
+      newUser.id = userExists.id;
+      const newBusiness = Object.assign(new Business(), business);
+
+      const favourite: Favourite =
+        await this.favouriteRepository.addToFavourites(newUser, newBusiness);
+      return favourite;
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.service.ts, addToFavourites method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+      throw error;
+    }
   }
 
-  async getFavouriteByUserId(id: number) {
-    return await this.favouriteRepository.getFavouriteByUserId(id);
+  async getFavouriteByUserId(id: number): Promise<FavouriteListRespDto> {
+    try {
+      const favouriteList: Favourite[] =
+        await this.favouriteRepository.getFavouritesWithBusinessDetails(id);
+
+      const favouriteListRespDto: FavouriteListRespDto =
+        FavouriteProcessor.mapEntityListToResp(favouriteList);
+      return favouriteListRespDto;
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.service.ts, getFavouriteByUserId method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+      throw error;
+    }
   }
 
   async removeFromFavourites(

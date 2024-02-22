@@ -11,6 +11,7 @@ import { BaseDto } from 'src/common/dto/base.dto';
 import { LimitWordCount } from 'src/common/validation/decorator/limit-word-count.decorator';
 import { Business } from 'src/modules/business/entities/business.entity';
 import { User } from 'src/modules/user/entities/user.entity';
+import { GeoJSONPoint } from './geo-json-point.dto';
 
 export class AddressDto extends BaseDto {
   @ApiProperty()
@@ -62,9 +63,12 @@ export class AddressDto extends BaseDto {
   @ApiProperty({ description: 'test-description', example: 'test-value' })
   business: Business = null;
 
+  // @IsOptional()
+  // @IsLatitude()
+  // @IsLongitude()
+  // @ApiProperty({ description: 'test-description', example: 'test-value' })
+  // location: string;
+
   @IsOptional()
-  @IsLatitude()
-  @IsLongitude()
-  @ApiProperty({ description: 'test-description', example: 'test-value' })
-  location: string;
+  location: GeoJSONPoint;
 }

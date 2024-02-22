@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
@@ -20,14 +21,17 @@ import { Region } from 'src/modules/region/entities/region.entity';
 import { BusinessReqDto } from 'src/contract/version1/request/business/business-request.dto';
 
 export class CreateBusinessDto extends BaseDto {
+  @ApiProperty()
+  @IsObject()
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => MobileDto)
+  mobile: MobileDto;
+
   @IsOptional()
   @ApiProperty()
   @IsObject()
   owner?: User;
-
-  @ApiProperty()
-  @IsObject()
-  primaryCountry: Country;
 
   @ApiProperty()
   @IsArray()
@@ -55,13 +59,6 @@ export class CreateBusinessDto extends BaseDto {
   @IsOptional()
   @IsEmail()
   email: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => MobileDto)
-  mobile: MobileDto;
 
   @ApiProperty()
   @IsObject()

@@ -8,36 +8,24 @@ import {
   HttpException,
   UnauthorizedException,
   ConflictException,
-  Get,
   UseInterceptors,
   UploadedFiles,
   Patch,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { TempUserAccountDto } from '../user_account/dto/temporary-user-account.dto';
 import { AwsSecretKey } from 'src/common/util/secret';
 import { createResponse } from '../../common/util/response';
 import { SecureLoginDto } from './dto/secure-login.dto';
-import {
-  ApiBody,
-  ApiHeader,
-  ApiOperation,
-  ApiResponse,
-  getSchemaPath,
-} from '@nestjs/swagger';
+import { ApiResponse } from '@nestjs/swagger';
 import { decryptPayload, encryptPayload } from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
 import { NotFoundError } from 'rxjs';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
-import {
-  AuthOtppRespDto,
-  OtpRespDto,
-} from 'src/contract/version1/response/otp-response.dto';
+import { AuthOtppRespDto } from 'src/contract/version1/response/otp-response.dto';
 import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { UserDto } from '../user/dto/user.dto';
 import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
@@ -71,9 +59,7 @@ export class AuthController {
     } catch (error) {
       this.logger.debug('Auth Controller with error: ' + error);
 
-      if (error instanceof NotFoundError) {
-        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-      }
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         "Something went wrong, we're working on it",
@@ -96,7 +82,7 @@ export class AuthController {
       return createResponse(resp.message, resp.token);
     } catch (error) {
       this.logger.error(
-        "Error occurred in 'requestSignup' method of UserController with error: " +
+        "Error occurred in 'SignupOtpRequest' method of auth.controller.ts with error: " +
           error,
       );
       // Handle any error that occurs during the registration process
@@ -137,12 +123,11 @@ export class AuthController {
       return createResponse('user successfully registered', response);
     } catch (error) {
       this.logger.error(
-        "Error occurred in 'register' method of UserController with error: " +
+        "Error occurred in 'registerUser' method of auth.controller.ts with error: " +
           error,
       );
-      // Handle any error that occurs during the registration process
-      if (error instanceof UnauthorizedException)
-        throw new UnauthorizedException(error.message);
+
+      if (error instanceof HttpException) throw error;
 
       throw new InternalServerError(error.message);
     }

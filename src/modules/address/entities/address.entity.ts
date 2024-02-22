@@ -1,7 +1,15 @@
 import { Business } from 'src/modules/business/entities/business.entity';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { Entity, OneToOne, JoinColumn, ManyToOne, Column } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+} from 'typeorm';
+import { GeometryTransformer } from '../geometry-transformer';
 
 @Entity('address')
 export class Address extends CommonEntity {
@@ -37,16 +45,13 @@ export class Address extends CommonEntity {
   @Column()
   country: string;
 
+  @Index({ spatial: true })
   @Column({
-    type: 'point',
-    transformer: {
-      from(value: string): any {
-        return value; // Transform from database format to your class attribute format
-      },
-      to(value: any): string {
-        return value; // Transform from your class attribute format to database format
-      },
-    },
+    type: 'geometry',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
+    // transformer: new GeometryTransformer(),
   })
   location: string;
 }

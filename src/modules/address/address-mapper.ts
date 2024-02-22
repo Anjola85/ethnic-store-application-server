@@ -13,7 +13,8 @@ export function addressDtoToEntity(address: AddressDto): Address {
   addressEntity.country = address.country;
   addressEntity.user = address.user;
   addressEntity.business = address.business;
-  addressEntity.location = address.location;
+  // addressDto.location = address.location;
+  addressEntity.location = `${address.location.coordinates[0]} ${address.location.coordinates[1]}`;
 
   return addressEntity;
 }
@@ -31,7 +32,12 @@ export function entityToAddressDto(address: Address): AddressDto {
   addressDto.country = address.country;
   addressDto.user = address.user;
   addressDto.business = address.business;
-  addressDto.location = address.location;
+  // addressDto.location = address.location;
+  const coordinates = address.location.split(' ');
+  addressDto.location = {
+    type: 'Point',
+    coordinates: [parseFloat(coordinates[0]), parseFloat(coordinates[1])],
+  };
 
   return addressDto;
 }

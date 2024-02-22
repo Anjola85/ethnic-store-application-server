@@ -71,7 +71,6 @@ export class UserController {
 
       this.logger.debug('successfully retrieved user information');
 
-      //TODO: handle response (if encrypted or not)
       if (crypto === 'true') {
         const encryptedResp = await encryptPayload(
           createResponse('successfully retrieved user information', clearResp),

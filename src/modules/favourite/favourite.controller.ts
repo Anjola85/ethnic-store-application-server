@@ -6,102 +6,143 @@ import {
   Param,
   Res,
   HttpStatus,
+  Logger,
+  HttpException,
 } from '@nestjs/common';
 import { FavouriteService } from './favourite.service';
 import { CreateFavouriteDto } from './dto/create-favourite.dto';
 import { Response } from 'express';
 import { Types } from 'mongoose';
+import { createResponse } from 'src/common/util/response';
+import { encryptPayload } from 'src/common/util/crypto';
+import { FavouriteListRespDto } from 'src/contract/version1/response/favourite-response.dto';
 
 @Controller('favourite')
 export class FavouriteController {
-  // constructor(private readonly favouriteService: FavouriteService) {}
-  // /**
-  //  * Adds a favourited business with the customer id to the database.
-  //  * @param createFavouriteDto
-  //  * @param res
-  //  * @returns
-  //  */
-  // @Post('add')
-  // async addFavourite(
-  //   @Body() createFavouriteDto: CreateFavouriteDto,
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const userId = res.locals.userId;
-  //     const resp = await this.favouriteService.addFavourite(
-  //       userId,
-  //       createFavouriteDto,
-  //     );
-  //     return res.status(HttpStatus.CREATED).json({
-  //       success: true,
-  //       message: 'favourites successfully created',
-  //       favourites: resp,
-  //     });
-  //   } catch (err) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to create favourites',
-  //       error: err.message,
-  //     });
-  //   }
-  // }
-  // /**
-  //  * Gets all favourited businesses by taking in the customer id
-  //  * @param id - customer id
-  //  * @returns
-  //  */
-  // @Post('get')
-  // async getFavourites(@Body() requestBody, @Res() res: Response) {
-  //   try {
-  //     const custId = requestBody.custId;
-  //     const favouritedBusinesses = await this.favouriteService.getFavourites(
-  //       custId,
-  //     );
-  //     return res.status(HttpStatus.OK).json({
-  //       success: true,
-  //       message: 'favourites successfully retrieved',
-  //       favourites: favouritedBusinesses,
-  //     });
-  //   } catch (err) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to retrieve favourites',
-  //       error: err.message,
-  //     });
-  //   }
-  // }
-  // /**
-  //  * This unfavourites a business by taking in the business id
-  //  * @param id - business id
-  //  * @returns
-  //  */
-  // @Post('remove')
-  // async removeFavourite(
-  //   @Body() body: { custId: string; businessId: string },
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const { custId, businessId } = body;
-  //     const unfavouritedBusiness = await this.favouriteService.removeFavourite(
-  //       custId,
-  //       businessId,
-  //     );
-  //     if (!unfavouritedBusiness) {
-  //       return res.status(HttpStatus.NOT_FOUND).json({
-  //         success: false,
-  //         message: 'Unable to remove from favourites',
-  //       });
-  //     }
-  //     return res.status(HttpStatus.OK).json({
-  //       success: true,
-  //       message: 'favourite successfully removed',
-  //     });
-  //   } catch (err) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-  //       success: false,
-  //       message: 'failed to remove favourite',
-  //       error: err.message,
-  //     });
-  //   }
-  // }
+  private readonly logger = new Logger(FavouriteController.name);
+  constructor(private readonly favouriteService: FavouriteService) {}
+
+  @Post('add')
+  async create(
+    @Body() createFavouriteDto: CreateFavouriteDto,
+    @Res() res: Response,
+  ) {
+    try {
+      this.logger.log('create favourite endpoint called');
+
+      const userId: number = res.locals.userId;
+      const crypto = res.locals.crypto;
+
+      if (!userId) {
+        throw new HttpException(
+          'Unable to perform operation, user not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const favourite = await this.favouriteService.addToFavourites(
+        userId,
+        createFavouriteDto.business,
+      );
+
+      this.logger.log('Favourite successfully added');
+
+      if (crypto === 'true') {
+        const encryptedResponse = await encryptPayload(
+          createResponse('Favourite successfully added', favourite),
+        );
+
+        return res.status(HttpStatus.OK).json(encryptedResponse);
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json(createResponse('Favourite successfully added', favourite));
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.controller.ts, create method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        'Somthing went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('user')
+  async getFavouriteByUserId(@Res() res: Response) {
+    try {
+      this.logger.log('get favourite by user id endpoint called');
+
+      const userId: number = res.locals.userId;
+      const crypto = res.locals.crypto;
+
+      if (!userId) {
+        throw new HttpException(
+          'Unable to perform operation, user not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const favouriteList: FavouriteListRespDto =
+        await this.favouriteService.getFavouriteByUserId(userId);
+
+      this.logger.log('Favourite list successfully retrieved');
+
+      if (crypto === 'true') {
+        const encryptedResponse = await encryptPayload(
+          createResponse(
+            'Favourite list successfully retrieved',
+            favouriteList,
+          ),
+        );
+
+        return res.status(HttpStatus.OK).json(encryptedResponse);
+      } else {
+        return res
+          .status(HttpStatus.OK)
+          .json(
+            createResponse(
+              'Favourite list successfully retrieved',
+              favouriteList,
+            ),
+          );
+      }
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.controller.ts, getFavouriteByUserId method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        'Somthing went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('remove')
+  async removeFromFavourites(
+    @Body('favouriteId') favouriteId: string,
+    @Body('userId') userId: string,
+    @Body('businessId') businessId: string,
+    @Res() res: Response,
+  ) {
+    await this.favouriteService.removeFromFavourites(
+      favouriteId,
+      parseInt(userId),
+      businessId,
+    );
+    return res.status(HttpStatus.OK).json({ message: 'Favourite removed' });
+  }
 }

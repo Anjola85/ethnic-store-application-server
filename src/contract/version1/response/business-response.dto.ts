@@ -13,7 +13,6 @@ export interface BusinessRespDto {
   mobile: MobileRespDto;
   schedule: ScheduleRespDto;
   website: string;
-  // country: CountryRespDto;
   countries: CountryListRespDto;
   regions: RegionListRespDto;
   businessType: string;
@@ -24,6 +23,6 @@ export interface BusinessRespDto {
 }
 
 export interface BusinessListRespDto {
-  businessList: BusinessRespDto[];
   size: number;
+  businessList: BusinessRespDto[];
 }

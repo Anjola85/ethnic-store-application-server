@@ -20,7 +20,7 @@ export class RegionController {
   private readonly logger = new Logger(RegionController.name);
   constructor(private readonly regionService: RegionService) {}
 
-  @Post('add')
+  @Post('register')
   async create(@Body() createRegionDto: CreateRegionDto) {
     try {
       const resp = await this.regionService.create(createRegionDto);

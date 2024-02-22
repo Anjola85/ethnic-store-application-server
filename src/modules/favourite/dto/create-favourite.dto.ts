@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Business } from 'src/modules/business/entities/business.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 
 export class CreateFavouriteDto {
   @ApiProperty({
@@ -7,14 +9,12 @@ export class CreateFavouriteDto {
     required: true,
   })
   @IsNotEmpty()
-  @IsString()
-  readonly businessId: string;
+  readonly business: Business;
 
   @ApiProperty({
-    description: 'The customerID this favourite belongs to',
+    description: 'The userID this favourite belongs to',
     required: true,
   })
   @IsNotEmpty()
-  @IsString()
-  readonly customerId: string;
+  readonly user: User;
 }

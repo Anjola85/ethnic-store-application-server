@@ -16,9 +16,15 @@ import { AddressProcessor } from '../address/address.processor';
 import { Country } from '../country/entities/country.entity';
 import { Region } from '../region/entities/region.entity';
 import { BusinessProcessor } from './business.process';
+import {
+  BusinessListRespDto,
+  BusinessRespDto,
+} from 'src/contract/version1/response/business-response.dto';
+import { PageService } from '../common/page.service';
+import { GenericFilter } from '../common/generic-filter';
 
 @Injectable()
-export class BusinessService {
+export class BusinessService extends PageService {
   private readonly logger = new Logger(BusinessService.name);
 
   constructor(
@@ -28,15 +34,19 @@ export class BusinessService {
     private mobileService: MobileService,
     private awsS3Service: AwsS3Service,
     private countryService: CountryService,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Register a business
    * @param reqBody
    * @returns
    */
-  async register(reqBody: CreateBusinessDto): Promise<any> {
+  async register(reqBody: CreateBusinessDto): Promise<BusinessRespDto> {
     try {
+      console.log('register business api received: ', reqBody);
+
       await this.businessExist(reqBody);
 
       // map request object of DTO
@@ -55,29 +65,35 @@ export class BusinessService {
         reqBody.address,
       );
 
-      // map business dto data to business entity
-      const businessEntity: Business = Object.assign(new Business(), {
-        ...businessDto,
-        // backgroundImage: businessDto.images.backgroundImage,
-        // profileImage: businessDto.images.profileImage,
-        primaryCountry: reqBody.primaryCountry.id,
-        mobile: mobileEntity,
-        address: addressEntity,
-        countries: reqBody.countries,
-        regions: reqBody.regions,
-      });
+      const businessEntity: Business =
+        BusinessProcessor.mapCreateBusinessDtoToEntity(businessDto);
+
+      // TODO: handle business images here
+
+      businessEntity.mobile = mobileEntity;
+      businessEntity.address = addressEntity;
 
       // save the business to the database
-      const createdBusiness = await this.businessRepository
-        .create(businessEntity)
-        .save();
+      const createdBusiness = await this.businessRepository.save(
+        businessEntity,
+      );
 
-      return createdBusiness;
+      const resp: BusinessRespDto =
+        BusinessProcessor.mapEntityToResp(createdBusiness);
+
+      return resp;
     } catch (error) {
       this.logger.debug(
         'From register in business.service.ts with error:',
         error,
       );
+
+      if (error.message.includes('violates foreign key constraint')) {
+        throw new HttpException(
+          `Country or region does not exist`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
 
       if (error instanceof HttpException) throw error;
 
@@ -129,32 +145,31 @@ export class BusinessService {
 
     if (businessExist)
       throw new HttpException(
-        `Business with ${type} already exists}`,
+        `Business with ${type} already exists`,
         HttpStatus.CONFLICT,
       );
   }
 
-  async findStoresNearby(geolocation: GeoLocationDto): Promise<any> {
-    const businesses = await this.businessRepository.findNearbyBusinesses(
-      geolocation,
+  async findStoresNearby(
+    latitude: number,
+    longitude: number,
+  ): Promise<BusinessListRespDto> {
+    const businesses = await this.businessRepository.getClosestBusinesses(
+      latitude,
+      longitude,
     );
 
-    return businesses;
+    const businessList = BusinessProcessor.mapEntityListToResp(businesses);
+
+    return businessList;
   }
 
   async findAll() {
     try {
-      // const businesses = await this.businessRepository.find();
-      const businesses = await this.businessRepository
-        .createQueryBuilder('business')
-        .leftJoinAndSelect('business.mobile', 'mobile')
-        .leftJoinAndSelect('business.address', 'address')
-        .leftJoinAndSelect('business.primaryCountry', 'primaryCountry')
-        .leftJoinAndSelect('business.countries', 'countries')
-        .leftJoinAndSelect('business.regions', 'regions')
-        .getMany();
+      const businesses = await this.businessRepository.getAllRelation();
 
-      const businessList = BusinessProcessor.mapEntityListToResp(businesses);
+      const businessList: BusinessListRespDto =
+        BusinessProcessor.mapEntityListToResp(businesses);
 
       return businessList;
     } catch (error) {
@@ -202,5 +217,16 @@ export class BusinessService {
       await this.businessFileService.uploadBusinessImagesToS3(businessImages);
 
     return imagesUrl;
+  }
+
+  async getAllRelations(filter: GenericFilter): Promise<BusinessListRespDto> {
+    const businessList: [Business[], number] =
+      await this.businessRepository.getPaginatedRelations(filter);
+
+    const resp: BusinessListRespDto = BusinessProcessor.mapEntityListToResp(
+      businessList[0],
+    );
+
+    return resp;
   }
 }

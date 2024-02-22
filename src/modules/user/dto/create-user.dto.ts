@@ -68,4 +68,12 @@ export class CreateUserDto {
   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary' })
   country: string;
+
+  @IsOptional()
+  @IsEmail()
+  @ApiProperty({
+    description: 'The email of the person',
+    example: 'test@gsil.com',
+  })
+  email: string;
 }

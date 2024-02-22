@@ -35,7 +35,10 @@ export class UserService {
     try {
       let userEntity = new User();
       Object.assign(userEntity, user);
-      const newUser: User = await this.userRepository.create(userEntity).save();
+
+      const newUser: User = await this.userRepository.save(userEntity);
+      newUser.auth = user.auth;
+      newUser.save();
 
       const address = Object.assign(new Address(), user.address);
       address.user = newUser;
@@ -135,7 +138,7 @@ export class UserService {
 
     this.userRepository.save(updatedUser);
 
-    const resp: UserRespDto = UserProcessor.processUserInfo(updatedUser);
+    const resp: UserRespDto = UserProcessor.mapEntityToResp(updatedUser);
     return resp;
   }
 }
