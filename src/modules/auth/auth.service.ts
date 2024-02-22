@@ -416,29 +416,25 @@ export class AuthService {
   async loginOtpRequest(body: LoginOtpRequest): Promise<LoginOtpRespDto> {
     try {
       const { email, mobile } = body;
+      let authAccount: Auth;
 
       if (!email && !mobile)
         throw new BadRequestException('email or mobile is required');
 
       if (mobile) {
         const registeredMobile =
-          this.mobileService.getMobileByPhoneNumber(mobile);
+          await this.mobileService.getMobileByPhoneNumber(mobile);
 
         if (!registeredMobile)
           throw new NotFoundException('Mobile is not registered');
+
+        authAccount = registeredMobile.auth;
       } else {
         const authExist = await this.authRepository.findByUniq({ email });
 
         if (!authExist) throw new NotFoundException('Email is not registered');
-      }
 
-      let authAccount: Auth;
-
-      if (email) {
-        authAccount = await this.getAuthByEmail(email);
-      } else if (mobile) {
-        authAccount = (await this.mobileService.getMobileByPhoneNumber(mobile))
-          .auth;
+        authAccount = authExist;
       }
 
       const otpResponse: OtpRespDto = await this.genrateOtp(email, mobile);
@@ -448,7 +444,7 @@ export class AuthService {
       // save to auth
       authAccount.otpCode = otpResponse.code;
       authAccount.otpExpiry = otpResponse.expiryTime;
-      await this.authRepository.update(authAccount.id, authAccount);
+      authAccount.save();
 
       const response: LoginOtpRespDto = {
         ...otpResponse,

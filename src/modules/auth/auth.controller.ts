@@ -59,9 +59,7 @@ export class AuthController {
     } catch (error) {
       this.logger.debug('Auth Controller with error: ' + error);
 
-      if (error instanceof NotFoundError) {
-        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-      }
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         "Something went wrong, we're working on it",
