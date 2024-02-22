@@ -10,11 +10,4 @@ export class CreateFavouriteDto {
   })
   @IsNotEmpty()
   readonly business: Business;
-
-  @ApiProperty({
-    description: 'The userID this favourite belongs to',
-    required: true,
-  })
-  @IsNotEmpty()
-  readonly user: User;
 }

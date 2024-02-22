@@ -29,6 +29,23 @@ export class FavouriteService {
       newUser.id = userExists.id;
       const newBusiness = Object.assign(new Business(), business);
 
+      // check if favourite exists for user
+      const favouriteExist: Favourite =
+        await this.favouriteRepository.favouriteExist(userId, business.id);
+
+      if (
+        favouriteExist &&
+        favouriteExist.business.id === business.id &&
+        !favouriteExist.deleted
+      ) {
+        throw new NotFoundException('Business already favourited');
+      } else if (favouriteExist && favouriteExist.deleted) {
+        favouriteExist.deleted = false;
+        await this.favouriteRepository.save(favouriteExist);
+        return favouriteExist;
+      }
+
+      // add to favourites
       const favourite: Favourite =
         await this.favouriteRepository.addToFavourites(newUser, newBusiness);
       return favourite;
@@ -62,15 +79,18 @@ export class FavouriteService {
     }
   }
 
-  async removeFromFavourites(
-    favouriteId: string,
-    userId: number,
-    businessId: string,
-  ) {
-    return await this.favouriteRepository.removeFromFavourites(
-      favouriteId,
-      userId,
-      businessId,
-    );
+  async removeFromFavourites(favourite: Favourite): Promise<void> {
+    try {
+      const favouriteId: number = favourite.id;
+      await this.favouriteRepository.removeFromFavourites(favouriteId);
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.service.ts, removeFromFavourites method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+      throw error;
+    }
   }
 }
