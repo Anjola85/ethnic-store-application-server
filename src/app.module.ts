@@ -1,5 +1,10 @@
 import { BullModule } from '@nestjs/bull';
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
@@ -142,6 +147,8 @@ export class AppModule implements NestModule {
         'continent/all',
         'region/register',
         'region/all',
+        'category/register',
+        'category/all',
       )
       .forRoutes('*');
 

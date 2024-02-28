@@ -181,4 +181,6 @@ export class BusinessController {
       );
     }
   }
+
+  // abillity to get business by name, id or email
 }

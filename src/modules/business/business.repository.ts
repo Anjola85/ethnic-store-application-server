@@ -13,6 +13,10 @@ export class BusinessRepository extends Repository<Business> {
     super(Business, dataSource.createEntityManager());
   }
 
+  /**
+   * Retrieve all businesses
+   * @returns businesses - an array of businesses
+   */
   async findByUniq(params: BusinessParam): Promise<any> {
     this.logger.debug(
       `findByUniq called with params: ${JSON.stringify(params)}`,
@@ -177,6 +181,11 @@ export class BusinessRepository extends Repository<Business> {
     return businessRelations;
   }
 
+  /**
+   *
+   * @param filter
+   * @returns
+   */
   async getPaginatedRelations(
     filter: GenericFilter,
   ): Promise<[Business[], number]> {
@@ -209,6 +218,11 @@ export class BusinessRepository extends Repository<Business> {
     return [businessRelations, total];
   }
 
+  /**
+   * Retrieve all businesses provided their ids
+   * @param businesses
+   * @returns
+   */
   async getRelationsByBusinessId(businesses: number[]): Promise<Business[]> {
     const businessRelations = await this.createQueryBuilder('business')
       .leftJoinAndSelect('business.address', 'address')

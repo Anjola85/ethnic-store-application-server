@@ -111,9 +111,7 @@ export class AuthController {
     @UploadedFiles() files: any,
   ): Promise<any> {
     try {
-      this.logger.debug(
-        'sign up endpoint called with body: ' + JSON.stringify(body),
-      );
+      this.logger.debug('sign up endpoint called with body');
 
       body.profileImage = files?.profileImage[0] || null;
       body.profileImage = files?.backgroundImagee[0] || null;
@@ -174,12 +172,8 @@ export class AuthController {
   @Post('login')
   async loginUser(@Body() loginDto: SecureLoginDto, @Res() res: Response) {
     try {
-      this.logger.debug(
-        'Login endpoint called with request body: ' +
-          JSON.stringify(loginDto, null, 2),
-      );
+      this.logger.debug('Login endpoint called');
 
-      // verify otp is correct
       const authId = res.locals.authId;
 
       if (!authId)
@@ -218,36 +212,6 @@ export class AuthController {
     }
   }
 
-  // TODO: manually delete an account and everything associated with it
-  // From here: to be deleted
-  // @Post('reset')
-  // async reset(@Query('clear') clear: boolean, @Res() res: Response) {
-  //   try {
-  //     // take in query param resetType to be true or false
-  //     if (clear === undefined || clear === null) {
-  //       return res.status(HttpStatus.BAD_REQUEST).json({
-  //         message: 'clear query param is required',
-  //       });
-  //     } else if (clear === false) {
-  //       return res.status(HttpStatus.OK).json({
-  //         message: 'clear query param must be true in order to reset',
-  //       });
-  //     }
-  //     // reset user account
-  //     await this.authService.deleteRegisteredUsers();
-  //     return res.status(HttpStatus.OK).json(createResponse('reset successful'));
-  //   } catch (error) {
-  //     return res
-  //       .status(HttpStatus.BAD_REQUEST)
-  //       .json(
-  //         createError(
-  //           `400 reset failed from auth.controller.ts`,
-  //           error.message,
-  //         ),
-  //       );
-  //   }
-  // }
-
   @Post('encrypt')
   async encrypt(@Body() requestBody: any): Promise<any> {
     try {
@@ -280,4 +244,6 @@ export class AuthController {
       });
     }
   }
+
+  // TODO: endpoint to delete everything associated with a user
 }
