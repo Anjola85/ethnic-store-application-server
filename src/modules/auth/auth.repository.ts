@@ -1,6 +1,12 @@
 import { DataSource, Repository } from 'typeorm';
 import { Auth, AuthParams } from './entities/auth.entity';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Injectable()
@@ -82,7 +88,10 @@ export class AuthRepository extends Repository<Auth> {
   async updateEmail(authId: number, email: string): Promise<Auth> {
     try {
       const auth = await this.findOneBy({ id: authId });
-      if (!auth) throw new Error('Auth not found');
+      if (!auth) {
+        this.logger.error('Auth not found when updating Email Address');
+        throw new NotFoundException('Auth not found');
+      }
       auth.email = email;
       await this.save(auth);
       return auth;

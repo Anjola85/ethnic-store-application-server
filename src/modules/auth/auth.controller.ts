@@ -245,5 +245,21 @@ export class AuthController {
     }
   }
 
+  @Post('register-email')
+  async registerEmail(@Body() email: string, @Res() res: Response) {
+    try {
+      const authId = res.locals.authId;
+      await this.authService.registerEmail(email, authId);
+      return res
+        .status(HttpStatus.CREATED)
+        .json(createResponse('email registered'));
+    } catch (error) {
+      throw new HttpException(
+        'register email failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // TODO: endpoint to delete everything associated with a user
 }

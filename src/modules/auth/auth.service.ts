@@ -338,7 +338,33 @@ export class AuthService {
     }
   }
 
-  // TODO: IMPLEMENT API TO REGISTER EMAIL
+  /**
+   * Registers email for an existing auth account
+   * @param email
+   * @param authId
+   * @throws ConflictException if email exists
+   */
+  async registerEmail(email: string, authId: number): Promise<void> {
+    try {
+      await this.authRepository.updateEmail(authId, email);
+    } catch (error) {
+      if (
+        error.name === 'QueryFailedError' &&
+        error.message.includes('duplicate key value violates unique constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a auth with a duplicate email: ${email}`,
+        );
+
+        throw new ConflictException(`Auth with email ${email} already exists`);
+      }
+
+      throw new Error(
+        `Error from registerEmail method in auth.service.ts.
+        with error message: ${error.message}`,
+      );
+    }
+  }
 
   /**
    * This method logs in a user and returns the user information and token

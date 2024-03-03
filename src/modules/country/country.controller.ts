@@ -40,6 +40,8 @@ export class CountryController {
     }
   }
 
+  // controlle to get all countries and their respective region
+
   @Get('all')
   async findAll(): Promise<any> {
     try {
