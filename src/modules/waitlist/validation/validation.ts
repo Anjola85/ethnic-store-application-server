@@ -3,16 +3,16 @@ import { Logger } from '@nestjs/common';
 const logger = new Logger();
 
 export const customerValidation = (data: any) => {
-  const { firstName, lastName, mobile, email, zipCode, country, promotions } =
+  const { firstname, lastname, mobile, email, zipCode, country, promotions } =
     data;
 
-  logger.debug(`validation for customer with name: ${firstName} ${lastName}`);
+  logger.debug(`validation for customer with name: ${firstname} ${lastname}`);
   // convert all fields to lowercase
 
-  if (!firstName) {
+  if (!firstname) {
     throw new Error('First name is required');
   }
-  if (!lastName) {
+  if (!lastname) {
     throw new Error('Last name is required');
   }
   if (!mobile) {
@@ -111,14 +111,14 @@ export const businessValidation = (data: any) => {
 };
 
 export const shopperValidation = (data: any) => {
-  const { firstName, lastName, mobile, email, zipCode, country, age } = data;
+  const { firstname, lastname, mobile, email, zipCode, country, age } = data;
 
-  logger.debug(`shopper validation with name: ${firstName} ${lastName}`);
+  logger.debug(`shopper validation with name: ${firstname} ${lastname}`);
 
-  if (!firstName) {
+  if (!firstname) {
     throw new Error('First name is required');
   }
-  if (!lastName) {
+  if (!lastname) {
     throw new Error('Last name is required');
   }
   if (!mobile) {

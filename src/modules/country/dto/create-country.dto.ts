@@ -15,5 +15,5 @@ export class CreateCountryDto {
   @ApiProperty({
     description: 'The ID of the continent the country belongs to',
   })
-  continentId: number;
+  regionId: number;
 }

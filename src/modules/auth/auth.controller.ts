@@ -111,10 +111,10 @@ export class AuthController {
     @UploadedFiles() files: any,
   ): Promise<any> {
     try {
-      this.logger.debug('sign up endpoint called with body');
+      this.logger.debug('signup endpoint called');
 
-      body.profileImage = files?.profileImage[0] || null;
-      body.profileImage = files?.backgroundImagee[0] || null;
+      // body.profileImage = files?.profileImage[0] || null;
+      // body.profileImage = files?.backgroundImagee[0] || null;
 
       const response = await this.authService.registerUser(body);
 

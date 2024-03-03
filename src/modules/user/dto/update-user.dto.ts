@@ -24,12 +24,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @DefaultNull()
-  firstName: string;
+  firstname: string;
 
   @IsOptional()
   @IsString()
   @DefaultNull()
-  lastName: string;
+  lastname: string;
 
   @IsOptional()
   @IsEmail()

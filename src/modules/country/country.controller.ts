@@ -24,6 +24,7 @@ export class CountryController {
   @Post('register')
   async create(@Body() createCountryDto: CreateCountryDto): Promise<any> {
     try {
+      this.logger.debug('CountryController.create called');
       const resp = await this.countryService.create(createCountryDto);
       return createResponse('Country registered successfully', resp);
     } catch (err) {
@@ -42,6 +43,7 @@ export class CountryController {
   @Get('all')
   async findAll(): Promise<any> {
     try {
+      this.logger.debug('CountryController.findAll called');
       const countryList = await this.countryService.findAll();
       return createResponse('List of countries', countryList);
     } catch (error) {

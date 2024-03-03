@@ -59,8 +59,10 @@ export class UserProcessor {
   ): UserInformationRespDto {
     const mobileDto: MobileRespDto = MobileProcessor.mapEntityToResp(mobile);
 
-    const addressList: AddressListRespDto =
-      AddressProcessor.mapEntityListToResp(user.addresses);
+    let addressList: AddressListRespDto;
+    if (user.addresses) {
+      addressList = AddressProcessor.mapEntityListToResp(user.addresses);
+    }
 
     let favouriteBusinessList: BusinessListRespDto;
 
@@ -85,15 +87,14 @@ export class UserProcessor {
 
     const userInfo: UserInformationRespDto = {
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstname: user.firstname,
+      lastname: user.lastname,
       userProfile: user.userProfile,
-      dob: user.dob,
       profileImage: user?.profileImage || '',
       active: user.active,
       email: user.auth?.email || '',
       mobile: mobileDto,
-      addressList,
+      addressList: addressList || null,
       favouriteList: favouriteBusinessList,
       country: countryDto,
       accountVerified: user.auth?.accountVerified || false,
@@ -127,8 +128,10 @@ export class UserProcessor {
         email = user.auth.email;
       }
 
-      const addressList: AddressListRespDto =
-        AddressProcessor.mapEntityListToResp(user.addresses);
+      let addressList: AddressListRespDto;
+      if (user.addresses) {
+        addressList = AddressProcessor.mapEntityListToResp(user.addresses);
+      }
 
       let countryDto: CountryRespDto;
 
@@ -137,10 +140,9 @@ export class UserProcessor {
 
       const userInfo: UserRespDto = {
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstname: user.firstname,
+        lastname: user.lastname,
         userProfile: user.userProfile,
-        dob: user.dob,
         profileImage: user.profileImage || '',
         active: user.active,
         email: email,

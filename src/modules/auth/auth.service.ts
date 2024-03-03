@@ -102,14 +102,20 @@ export class AuthService {
       const validOtpCode = auth.otpCode == otp;
 
       if (validOtpCode) {
-        // mark account as verified
+        this.logger.debug('OTP successfully verified');
         await this.authRepository.update(authId, {
           ...auth,
           accountVerified: true,
         });
         return { message: 'OTP successfully verified', status: true };
-      } else throw new UnauthorizedException('OTP does not match');
-    } else throw new UnauthorizedException('OTP has expired');
+      } else {
+        this.logger.error('OTP does not match');
+        throw new UnauthorizedException('OTP does not match');
+      }
+    } else {
+      this.logger.error('OTP has expired');
+      throw new UnauthorizedException('OTP has expired');
+    }
   }
 
   /**
@@ -331,6 +337,8 @@ export class AuthService {
       throw error;
     }
   }
+
+  // TODO: IMPLEMENT API TO REGISTER EMAIL
 
   /**
    * This method logs in a user and returns the user information and token

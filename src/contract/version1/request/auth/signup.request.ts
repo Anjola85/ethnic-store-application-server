@@ -5,8 +5,8 @@
 import { AddressReqDto, MobileReqDto } from '../dto';
 
 export interface SignupReqDto {
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   address: AddressReqDto;
   userProfile: string;
   mobile: MobileReqDto;

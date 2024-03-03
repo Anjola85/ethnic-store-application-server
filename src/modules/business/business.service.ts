@@ -275,4 +275,28 @@ export class BusinessService extends PageService {
       );
     }
   }
+
+  async getBusinessByName(name: string): Promise<BusinessRespDto> {
+    try {
+      const business = await this.businessRepository.findByName(name);
+
+      if (!business) {
+        throw new HttpException('Business not found', HttpStatus.NOT_FOUND);
+      }
+
+      const resp: BusinessRespDto = BusinessProcessor.mapEntityToResp(business);
+
+      return resp;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in business.service.ts, getBusinessByName method: ${error.message}`,
+      );
+
+      throw new Error(
+        `Error fetching business from DB
+        \nfrom getBusinessByName method in business.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
 }

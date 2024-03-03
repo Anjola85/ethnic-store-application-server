@@ -10,8 +10,8 @@
 // import { entityToBusinessDto } from '../business/business-mapper';
 
 // export function userDtoToEntity(userDto: UserDto, userEntity: User): void {
-//   userEntity.firstName = userDto.firstName;
-//   userEntity.lastName = userDto.lastName;
+//   userEntity.firstname = userDto.firstname;
+//   userEntity.lastname = userDto.lastname;
 //   userEntity.addresses = userDto.address.map((addressDto) =>
 //     addressDtoToEntity(addressDto),
 //   );
@@ -24,8 +24,8 @@
 
 // export function userEntityToDto(user: User): UserDto {
 //   const userDto = new UserDto();
-//   userDto.firstName = user.firstName;
-//   userDto.lastName = user.lastName;
+//   userDto.firstname = user.firstname;
+//   userDto.lastname = user.lastname;
 //   userDto.address = user.addresses.map((address) =>
 //     entityToAddressDto(address),
 //   );
@@ -44,8 +44,8 @@
 //   if (!auth || !auth.user) return null;
 
 //   const userDto = new UserDto();
-//   userDto.firstName = auth.user.firstName;
-//   userDto.lastName = auth.user.lastName;
+//   userDto.firstname = auth.user.firstname;
+//   userDto.lastname = auth.user.lastname;
 //   userDto.address = auth.user.addresses.map((address) =>
 //     entityToAddressDto(address),
 //   );

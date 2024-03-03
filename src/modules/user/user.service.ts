@@ -38,20 +38,26 @@ export class UserService {
 
       const newUser: User = await this.userRepository.save(userEntity);
       newUser.auth = user.auth;
+
+      // TODO: come back here to remove the line below
       newUser.save();
 
-      const address = Object.assign(new Address(), user.address);
-      address.user = newUser;
+      // if address was provided during registration
 
-      const newAddress = await this.addressService.addAddress(user.address);
-      newUser.addresses = [];
-      newUser.addresses = [newAddress];
+      if (user.address !== undefined) {
+        const address = Object.assign(new Address(), user.address);
+        address.user = newUser;
+        const newAddress = await this.addressService.addAddress(user.address);
+        newUser.addresses = []; // DO NOT DELETE
+        newUser.addresses = [newAddress];
+      }
+
       userEntity = await this.userRepository.save(newUser);
 
       return userEntity;
     } catch (error) {
       this.logger.debug(
-        'Error thrown in user.service.ts, addUser method: ' + error,
+        'Error thrown in user.service.ts, register method: ' + error,
       );
     }
   }
@@ -131,9 +137,8 @@ export class UserService {
 
     const updatedUser: User = Object.assign(new User(), existingUser);
 
-    updatedUser.firstName = userDto.firstName || existingUser.firstName;
-    updatedUser.lastName = userDto.lastName || existingUser.lastName;
-    updatedUser.dob = userDto.dob || existingUser.dob;
+    updatedUser.firstname = userDto.firstname || existingUser.firstname;
+    updatedUser.lastname = userDto.lastname || existingUser.lastname;
     updatedUser.country = userDto.country || existingUser.country;
 
     this.userRepository.save(updatedUser);

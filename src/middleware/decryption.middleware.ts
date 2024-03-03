@@ -12,11 +12,11 @@ export class DecryptionMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     if ((req.headers.cryptoReq || req.body.payload) && req.body) {
-      this.logger.debug('Decryption middleware recieved: ' + req.body);
+      this.logger.debug('Decryption middleware recieved called');
       try {
         req.body = await decryptPayload(req.body.payload);
-        this.logger.debug('Decrypted payload: ' + JSON.stringify(req.body));
       } catch (error) {
+        this.logger.error('Decryption failed with error', error);
         return res.status(400).json({ error: 'Decryption failed' });
       }
     }

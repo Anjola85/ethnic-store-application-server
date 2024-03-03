@@ -50,6 +50,9 @@ export class RegionService {
     try {
       const regions = await this.regionRepository.find({
         select: ['name', 'id'],
+        order: {
+          id: 'ASC',
+        },
       });
       const regionList: RegionListRespDto =
         RegionProcessor.mapEntityListToResp(regions);

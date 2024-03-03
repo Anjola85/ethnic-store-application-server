@@ -33,11 +33,11 @@ export class CountryService {
         error.message.includes('violates foreign key constraint')
       ) {
         this.logger.error(
-          `Attempted to create a country with a non-existent continent: ${createCountryDto.continentId}`,
+          `Attempted to create a country with a non-existent continent: ${createCountryDto.regionId}`,
         );
 
         throw new ConflictException(
-          `Continent with id ${createCountryDto.continentId} does not exist`,
+          `Continent with id ${createCountryDto.regionId} does not exist`,
         );
       }
 
@@ -62,6 +62,9 @@ export class CountryService {
     try {
       const country = await this.countryRepository.find({
         select: ['name', 'id'],
+        order: {
+          id: 'ASC',
+        },
       });
       const countryList: CountryListRespDto =
         CountryProcessor.mapEntityListToResp(country);
@@ -73,6 +76,10 @@ export class CountryService {
         \nWith error message: ${error.message}`,
       );
     }
+  }
+
+  async getCountryWithContinent(): Promise<Country[]> {
+    return null;
   }
 
   async getCountryEntities(): Promise<Country[]> {

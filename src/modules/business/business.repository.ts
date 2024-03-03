@@ -147,6 +147,7 @@ export class BusinessRepository extends Repository<Business> {
           .from('address', 'address')
           .where('address.id = business.addressId');
       }, 'locationGeoJSON')
+      .orderBy('business.id', 'ASC')
       .getMany();
 
     return businessRelations;
@@ -239,5 +240,18 @@ export class BusinessRepository extends Repository<Business> {
       .getMany();
 
     return businessRelations;
+  }
+
+  /**
+   * Retrieve business by name
+   * @param name
+   * @returns
+   */
+  async findByName(name: string): Promise<Business> {
+    const business = await this.createQueryBuilder('business')
+      .where('business.name = :name', { name })
+      .getOne();
+
+    return business;
   }
 }

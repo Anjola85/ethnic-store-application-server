@@ -7,10 +7,11 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-
+import { Country } from 'src/modules/country/entities/country.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
 import { UserProfile } from '../user.enums';
 import { AddressDto } from 'src/modules/address/dto/address.dto';
+import { IsAlphaNumeric } from 'src/common/validation/decorator/aphanumeric.decorator';
 
 /**
  * User signup DTO
@@ -20,14 +21,16 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ description: 'The first name of the person', example: 'John' })
-  firstName: string;
+  @IsAlphaNumeric()
+  firstname: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ description: 'The last name of the person', example: 'Doe' })
-  lastName: string;
+  @IsAlphaNumeric()
+  lastname: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({
     description: 'The address of the person',
     example: {
@@ -48,6 +51,7 @@ export class CreateUserDto {
     example: 'customer',
   })
   userProfile: string | UserProfile;
+
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => MobileDto)
@@ -57,17 +61,14 @@ export class CreateUserDto {
   })
   mobile: MobileDto;
 
-  @IsOptional()
-  @ApiProperty({ description: 'The Date of birth', example: '2005-06-15' })
-  dob: string;
+  //TODO: implement this with S3(make sure link stays valid)
+  // @IsOptional()
+  // @ApiProperty({ type: 'string', format: 'binary' })
+  // profileImage: Express.Multer.File;
 
   @IsOptional()
-  @ApiProperty({ type: 'string', format: 'binary' })
-  profileImage: Express.Multer.File;
-
-  @IsOptional()
-  @ApiProperty({ type: 'string', format: 'binary' })
-  country: string;
+  @ApiProperty({ type: 'Country', format: 'binary' })
+  country: Country;
 
   @IsOptional()
   @IsEmail()

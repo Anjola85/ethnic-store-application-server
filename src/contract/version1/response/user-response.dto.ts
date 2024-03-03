@@ -8,10 +8,9 @@ import { MobileRespDto } from './mobile-response.dto';
  */
 export interface UserRespDto {
   id: number;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   userProfile: string;
-  dob: string;
   profileImage: string;
   active: boolean;
   country: CountryRespDto | null;
@@ -31,10 +30,9 @@ export interface UserListRespDto {
  */
 export interface UserInformationRespDto {
   id: number;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   userProfile: string;
-  dob: string;
   profileImage: string;
   active: boolean;
   country: CountryRespDto;

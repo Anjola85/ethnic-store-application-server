@@ -15,6 +15,7 @@ import { Favourite } from 'src/modules/favourite/entities/favourite.entity';
 import { CreateAuthDto } from 'src/modules/auth/dto/create-auth.dto';
 import { CreateBusinessDto } from 'src/modules/business/dto/create-business.dto';
 import { Auth } from 'src/modules/auth/entities/auth.entity';
+import { Country } from 'src/modules/country/entities/country.entity';
 
 /**
  * Generic DTO
@@ -32,12 +33,12 @@ export class UserDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ description: 'The first name of the person', example: 'John' })
-  firstName: string;
+  firstname: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ description: 'The last name of the person', example: 'Doe' })
-  lastName: string;
+  lastname: string;
 
   @IsNotEmpty()
   @ApiProperty({
@@ -111,4 +112,8 @@ export class UserDto {
 
   @IsOptional()
   auth: Auth;
+
+  @IsOptional()
+  @ApiProperty({ type: 'Country', format: 'binary' })
+  country: Country;
 }

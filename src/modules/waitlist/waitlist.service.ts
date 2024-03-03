@@ -88,21 +88,21 @@ export class WaitlistService {
 
     if (shopperExists) {
       this.logger.debug(
-        `Shopper with firstName:${waitlistShopper.firstName} lastName:${waitlistShopper.lastName} already exists`,
+        `Shopper with firstname:${waitlistShopper.firstname} lastname:${waitlistShopper.lastname} already exists`,
       );
       throw new ConflictException('Shopper already exists');
     } else {
       // call waitlist thrid-party service
       const waitlist_uuid = await this.sendToWaitlistService(waitlistShopper);
       this.logger.debug(
-        `Successfully added customer with fistName:${waitlistShopper.firstName} and lastName:${waitlistShopper.lastName} to getwaitlist.com`,
+        `Successfully added customer with fistName:${waitlistShopper.firstname} and lastname:${waitlistShopper.lastname} to getwaitlist.com`,
       );
       waitlistShopper.waitlist_uuid = waitlist_uuid;
 
       this.shopperRespository.create(waitlistShopper).save();
       this.sendgridService.shopperWelcomeEmail(
         waitlistShopper.email,
-        waitlistShopper.firstName,
+        waitlistShopper.firstname,
       );
     }
   }
@@ -116,19 +116,19 @@ export class WaitlistService {
 
     if (customerExists) {
       this.logger.debug(
-        `Customer ${body.firstName} ${body.lastName} already exists`,
+        `Customer ${body.firstname} ${body.lastname} already exists`,
       );
       throw new ConflictException('Customer already exists');
     } else {
       const waitlist_uuid = await this.sendToWaitlistService(body);
       this.logger.debug(
-        `Successfully added ${body.firstName} ${body.lastName} to getwaitlist.com`,
+        `Successfully added ${body.firstname} ${body.lastname} to getwaitlist.com`,
       );
       body.waitlist_uuid = waitlist_uuid;
 
       this.customerRespository.create(body).save();
 
-      this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
+      this.sendgridService.customerWelcomeEmail(body.email, body.firstname);
     }
   }
 
@@ -218,8 +218,8 @@ export class WaitlistService {
     data = {
       waitlist_id: Number(EnvConfigService.get('WAITLIST_ID')),
       phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
-      first_name: payload.firstName,
-      last_name: payload.lastName,
+      first_name: payload.firstname,
+      last_name: payload.lastname,
       email: payload.email,
       answers: [
         {
@@ -251,8 +251,8 @@ export class WaitlistService {
     data = {
       waitlist_id: Number(EnvConfigService.get('WAITLIST_ID')),
       phone: `${payload.mobile.countryCode}${payload.mobile.phoneNumber}`,
-      first_name: payload.firstName,
-      last_name: payload.lastName,
+      first_name: payload.firstname,
+      last_name: payload.lastname,
       email: payload.email,
       answers: [
         {

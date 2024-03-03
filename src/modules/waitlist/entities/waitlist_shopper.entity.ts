@@ -5,10 +5,10 @@ import { Column, Entity } from 'typeorm';
 @Entity('waitlist_shopper')
 export class WaitlistShopper extends CommonEntity {
   @Column({ type: 'varchar', name: 'first_name' })
-  firstName: string;
+  firstname: string;
 
   @Column({ type: 'varchar', name: 'last_name' })
-  lastName: string;
+  lastname: string;
 
   @Column({ type: 'varchar', name: 'mobile' })
   mobile: MobileDto;
