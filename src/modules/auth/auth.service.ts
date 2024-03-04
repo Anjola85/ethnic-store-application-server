@@ -316,11 +316,6 @@ export class AuthService {
           'Inomplete registration process! Mobile is not registered',
         );
 
-      console.log(
-        'registeredMobile: ',
-        JSON.stringify(registeredMobile, null, 2),
-      );
-
       if (registeredMobile.auth.user !== null) {
         throw new ConflictException('User already exists');
       }

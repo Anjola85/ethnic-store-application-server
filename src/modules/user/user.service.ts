@@ -41,13 +41,11 @@ export class UserService {
       let userEntity: User = new User();
       Object.assign(userEntity, userDto);
 
-      console.log('registering entity: ' + JSON.stringify(userEntity, null, 2));
-      const newUser: User = await this.userRepository.save(userEntity);
-      console.log('unable to register');
+      let newUser: User = await this.userRepository.save(userEntity);
       newUser.auth = userDto.auth;
-      newUser.save(); // registers auth reference
 
-      // if address was provided during registration
+      newUser = await this.userRepository.updateAuth(userDto.auth, newUser.id);
+
       if (userDto.address) {
         console.log('trying to add address');
         const address = Object.assign(new Address(), userDto.address);

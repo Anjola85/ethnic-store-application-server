@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { getCurrentEpochTime } from 'src/common/util/functions';
+import { Auth } from '../auth/entities/auth.entity';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -124,5 +125,17 @@ export class UserRepository extends Repository<User> {
       where: { id: userId },
       relations: ['addresses', 'business', 'countryOfOrigin', 'auth'],
     });
+  }
+
+  async updateAuth(auth: Auth, userId: number): Promise<User> {
+    const updateResult = await this.createQueryBuilder('user')
+      .update(User)
+      .set({ auth })
+      .where('id = :id', { id: userId })
+      .returning('*')
+      .execute();
+
+    const updatedUser = updateResult.raw[0] as User; // Accessing the updated record from the raw property
+    return updatedUser;
   }
 }
