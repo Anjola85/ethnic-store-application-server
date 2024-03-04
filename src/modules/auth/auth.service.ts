@@ -316,8 +316,14 @@ export class AuthService {
           'Inomplete registration process! Mobile is not registered',
         );
 
-      if (registeredMobile.auth.user)
+      console.log(
+        'registeredMobile: ',
+        JSON.stringify(registeredMobile, null, 2),
+      );
+
+      if (registeredMobile.auth.user !== null) {
         throw new ConflictException('User already exists');
+      }
 
       userDto.auth = registeredMobile.auth;
 
@@ -481,6 +487,12 @@ export class AuthService {
         authAccount = authExist;
       }
 
+      console.log('heree: ', authAccount.user);
+
+      // check if user is registered
+      if (!authAccount.user)
+        throw new NotFoundException('User is not registered');
+
       const otpResponse: OtpRespDto = await this.genrateOtp(email, mobile);
 
       const token = this.generateJwt(authAccount);
@@ -497,8 +509,10 @@ export class AuthService {
       };
 
       return response;
-    } catch (e) {
-      throw new Error(`From AuthService.requestLoginOtp: ${e}`);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new Error(`From AuthService.requestLoginOtp: ${error}`);
     }
   }
 

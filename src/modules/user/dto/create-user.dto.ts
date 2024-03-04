@@ -68,7 +68,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @ApiProperty({ type: 'Country', format: 'binary' })
-  country: Country;
+  countryOfOrigin: Country;
 
   @IsOptional()
   @IsEmail()

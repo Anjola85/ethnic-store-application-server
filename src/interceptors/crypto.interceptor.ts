@@ -7,6 +7,7 @@ import {
   CallHandler,
   ExecutionContext,
   Injectable,
+  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, mergeMap } from 'rxjs';
@@ -15,6 +16,7 @@ import { createEncryptedResponse } from 'src/common/util/response';
 
 @Injectable()
 export class CryptoInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(CryptoInterceptor.name);
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       mergeMap(async (data) => {
@@ -34,11 +36,11 @@ export class CryptoInterceptor implements NestInterceptor {
           request.headers['cryptoresp'] === 'true' ||
           request.headers['cryptoresp'] === undefined
         ) {
-          console.log('encrypting response to client');
+          this.logger.debug('Encrypting response payload');
           const encryptedResp = await encryptPayload(data);
           return createEncryptedResponse(encryptedResp);
         }
-        // clear data if crypto is false
+        this.logger.debug('Clear response payload');
         return data;
       }),
     );

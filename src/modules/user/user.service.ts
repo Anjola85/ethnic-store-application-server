@@ -38,11 +38,14 @@ export class UserService {
    */
   async register(userDto: UserDto): Promise<User> {
     try {
-      let userEntity = new User();
+      let userEntity: User = new User();
       Object.assign(userEntity, userDto);
+
+      console.log('registering entity: ' + JSON.stringify(userEntity, null, 2));
       const newUser: User = await this.userRepository.save(userEntity);
+      console.log('unable to register');
       newUser.auth = userDto.auth;
-      newUser.save();
+      newUser.save(); // registers auth reference
 
       // if address was provided during registration
       if (userDto.address) {
@@ -61,13 +64,11 @@ export class UserService {
 
       return userEntity;
     } catch (error) {
-      if (error.code === '23505') {
-        throw new ConflictException('User already exists');
-      }
-
       this.logger.error(
         'Error thrown in user.service.ts, register method: ' + error,
       );
+
+      throw new Error('Error ocurred with error: ' + error);
     }
   }
 

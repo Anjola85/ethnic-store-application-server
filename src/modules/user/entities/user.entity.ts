@@ -10,6 +10,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
 } from 'typeorm';
@@ -58,7 +59,7 @@ export class User extends CommonEntity {
   @OneToMany(() => Favourite, (favourite) => favourite.user)
   favourites: Favourite[];
 
-  @OneToOne(() => Country, (country) => country.name, { nullable: true })
+  @ManyToOne(() => Country, (country) => country.name, { nullable: true })
   @JoinColumn()
   countryOfOrigin: Country;
 
