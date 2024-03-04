@@ -248,9 +248,8 @@ export class AuthController {
   @Post('register-email')
   async registerEmail(@Body() body: any, @Res() res: Response) {
     try {
-      if (!body.email) {
+      if (!body.email)
         throw new HttpException('email is required', HttpStatus.BAD_REQUEST);
-      }
 
       const email = body.email;
 

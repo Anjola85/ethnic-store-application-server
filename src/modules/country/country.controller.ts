@@ -56,4 +56,19 @@ export class CountryController {
       );
     }
   }
+
+  // @Get('all-with-region')
+  // async findAllWithRegion(): Promise<any> {
+  //   try {
+  //     this.logger.debug('CountryController.findAllWithRegion called');
+  //     const countryList = await this.countryService.findAllWithRegion();
+  //     return createResponse('List of countries with region', countryList);
+  //   } catch (error) {
+  //     this.logger.debug(error);
+  //     throw new HttpException(
+  //       "We're working on it",
+  //       HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
 }

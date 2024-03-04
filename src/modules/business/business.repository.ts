@@ -7,7 +7,6 @@ import { GenericFilter } from '../common/generic-filter';
 @Injectable()
 export class BusinessRepository extends Repository<Business> {
   private readonly logger = new Logger(BusinessRepository.name);
-  private readonly WGS84_SRID = 4326;
 
   constructor(private dataSource: DataSource) {
     super(Business, dataSource.createEntityManager());

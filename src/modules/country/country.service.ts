@@ -1,5 +1,10 @@
 import { UpdateCategoryDto } from './../category/dto/update-category.dto';
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Country } from './entities/country.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,15 +14,13 @@ import {
   CountryRespDto,
 } from 'src/contract/version1/response/country-response.dto';
 import { CountryProcessor } from './country.process';
+import { CountryRepository } from './country.repository';
 
 @Injectable()
 export class CountryService {
   private readonly logger = new Logger(CountryService.name);
 
-  constructor(
-    @InjectRepository(Country)
-    protected countryRepository: Repository<Country>,
-  ) {}
+  constructor(private countryRepository: CountryRepository) {}
 
   async create(createCountryDto: CreateCountryDto): Promise<CountryRespDto> {
     try {
@@ -141,4 +144,32 @@ export class CountryService {
     });
     return businesses;
   }
+
+  // TODO: finish region, country continent mapping
+  // async findAllWithRegion(): Promise<any> {
+  //   try {
+  //     const countries =
+  //       await this.countryRepository.getAllCountriesWithRegionWithContinent();
+
+  //     if (!countries) throw new NotFoundException('No countries found');
+
+  //     const respList: CountryRegionContinentListRespDto =
+  //       CountryRegionContinentProcessor.mapEntityListToResp(
+  //         countries.map((country) => {
+  //           return CountryRegionContinentProcessor.mapEntityToResp(
+  //             country,
+  //             country.regionId,
+  //             country.regionId.continentId,
+  //           );
+  //         }),
+  //       );
+  //     return respList;
+  //   } catch (error) {
+  //     throw new Error(
+  //       `Error retrieving all country from mongo
+  //       \nfrom findAll method in country.service.ts.
+  //       \nWith error message: ${error.message}`,
+  //     );
+  //   }
+  // }
 }

@@ -10,6 +10,7 @@ import { Address } from '../address/entities/address.entity';
 import { CountryService } from '../country/country.service';
 import { Country } from '../country/entities/country.entity';
 import { AwsS3Service } from '../files/aws-s3.service';
+import { CountryRepository } from '../country/country.repository';
 
 @Global()
 @Module({
@@ -20,6 +21,7 @@ import { AwsS3Service } from '../files/aws-s3.service';
     BusinessRepository,
     BusinessFilesService,
     CountryService,
+    CountryRepository,
     AwsS3Service,
   ],
 })

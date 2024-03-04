@@ -5,11 +5,12 @@ import { CountryController } from './country.controller';
 import { Country } from './entities/country.entity';
 import { type } from 'os';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CountryRepository } from './country.repository';
 
 @Global()
 @Module({
   imports: [TypeOrmModule.forFeature([Country])],
   controllers: [CountryController],
-  providers: [CountryService],
+  providers: [CountryService, CountryRepository],
 })
 export class CountryModule {}
