@@ -18,7 +18,7 @@ export interface AuthParams {
 
 @Entity('auth')
 export class Auth extends CommonEntity {
-  @Column({ unique: true, nullable: true })
+  @Column({ unique: true, default: null })
   email: string;
 
   @OneToMany(() => Mobile, (mobile) => mobile.auth, { nullable: true })

@@ -86,22 +86,14 @@ export class AuthRepository extends Repository<Auth> {
    * @returns
    */
   async updateEmail(authId: number, email: string): Promise<Auth> {
-    try {
-      const auth = await this.findOneBy({ id: authId });
-      if (!auth) {
-        this.logger.error('Auth not found when updating Email Address');
-        throw new NotFoundException('Auth not found');
-      }
-      auth.email = email;
-      await this.save(auth);
-      return auth;
-    } catch (e) {
-      this.logger.error(
-        'Error thrown in auth.repository.ts, updateAuth method, with error: ' +
-          e,
-      );
-      throw new Error(`Unable to update account`);
+    const auth = await this.findOneBy({ id: authId });
+    if (!auth) {
+      this.logger.error('Auth not found when updating Email Address');
+      throw new NotFoundException('Auth not found');
     }
+    auth.email = email;
+    await this.save(auth);
+    return auth;
   }
 
   async unverifyAccount(authId: number): Promise<Auth> {

@@ -103,7 +103,13 @@ export class UserRepository extends Repository<User> {
   async getUserWithRelations(userId: number): Promise<User> {
     return this.findOne({
       where: { id: userId },
-      relations: ['addresses', 'favourites', 'business', 'country', 'auth'],
+      relations: [
+        'addresses',
+        'favourites',
+        'business',
+        'countryOfOrigin',
+        'auth',
+      ],
     });
   }
 
@@ -116,7 +122,7 @@ export class UserRepository extends Repository<User> {
   async getUserInfoById(userId: number): Promise<User> {
     return this.findOne({
       where: { id: userId },
-      relations: ['addresses', 'business', 'country', 'auth'],
+      relations: ['addresses', 'business', 'countryOfOrigin', 'auth'],
     });
   }
 }

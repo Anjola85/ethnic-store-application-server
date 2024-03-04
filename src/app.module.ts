@@ -129,6 +129,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        '/',
         'auth/request-login',
         'auth/request-signup',
         'test/*',

@@ -60,7 +60,7 @@ export class User extends CommonEntity {
 
   @OneToOne(() => Country, (country) => country.name, { nullable: true })
   @JoinColumn()
-  country: Country;
+  countryOfOrigin: Country;
 
   @OneToMany(() => Feedback, (feedback) => feedback.user)
   feedbacks: Feedback[];

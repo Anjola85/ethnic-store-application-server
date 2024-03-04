@@ -308,12 +308,14 @@ export class AuthService {
     try {
       const userDto: UserDto = Object.assign(new UserDto(), reqBody);
 
-      // retrieve auth account using mobile number
       const registeredMobile: Mobile =
         await this.mobileService.getMobileByPhoneNumber(userDto.mobile);
 
       if (!registeredMobile)
-        throw new NotFoundException('Mobile is not registered');
+        throw new NotFoundException(
+          'Inomplete registration process! Mobile is not registered',
+        );
+
       if (registeredMobile.auth.user)
         throw new ConflictException('User already exists');
 
@@ -321,7 +323,7 @@ export class AuthService {
 
       const user: User = await this.userSerivce.register(userDto);
 
-      // generate jwt token with user id
+      // generate jwt token with userId
       const token = this.generateJwt(user);
 
       const response: SignupRespDto = {
@@ -346,7 +348,10 @@ export class AuthService {
    */
   async registerEmail(email: string, authId: number): Promise<void> {
     try {
-      await this.authRepository.updateEmail(authId, email);
+      // get auth record with authId
+      const auth = await this.authRepository.findOneBy({ id: authId });
+      auth.email = email;
+      await this.authRepository.update(authId, auth);
     } catch (error) {
       if (
         error.name === 'QueryFailedError' &&
@@ -358,6 +363,11 @@ export class AuthService {
 
         throw new ConflictException(`Auth with email ${email} already exists`);
       }
+
+      this.logger.error(
+        `Error from registerEmail method in auth.service.ts.
+        with error message: ${error.message}`,
+      );
 
       throw new Error(
         `Error from registerEmail method in auth.service.ts.
@@ -621,8 +631,11 @@ export class AuthService {
    * @param userDto
    * @returns {token, user}
    */
-  async updateUserInfo(userDto: UpdateUserDto): Promise<UserRespDto> {
-    const user: User = await this.userSerivce.getUserInfoById(userDto.id);
+  async updateUserInfo(
+    userDto: UpdateUserDto,
+    userId: number,
+  ): Promise<UserRespDto> {
+    const user: User = await this.userSerivce.getUserInfoById(userId);
 
     if (!user) {
       this.logger.error('User account not found');
@@ -641,13 +654,11 @@ export class AuthService {
       user.auth,
     );
 
-    // NOTE: can only change either email or mobile!
     if (userDto.email) {
       authDto.email = userDto.email;
     }
 
     if (userDto.mobile) {
-      authDto.email = userDto.email;
       authDto.mobile.phoneNumber = userDto.mobile.phoneNumber;
       authDto.mobile.countryCode = userDto.mobile.countryCode;
       authDto.mobile.isoType = userDto.mobile.isoType;

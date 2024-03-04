@@ -2,7 +2,12 @@
  * This class contains business logic related to the user database
  */
 import { AddressService } from './../address/address.service';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UserFileService } from '../files/user-files.service';
@@ -31,32 +36,36 @@ export class UserService {
    * @param user - user dto object
    * @returns user - user entity with address
    */
-  async register(user: UserDto): Promise<User> {
+  async register(userDto: UserDto): Promise<User> {
     try {
       let userEntity = new User();
-      Object.assign(userEntity, user);
-
+      Object.assign(userEntity, userDto);
       const newUser: User = await this.userRepository.save(userEntity);
-      newUser.auth = user.auth;
-
-      // TODO: come back here to remove the line below
+      newUser.auth = userDto.auth;
       newUser.save();
 
       // if address was provided during registration
-
-      if (user.address !== undefined) {
-        const address = Object.assign(new Address(), user.address);
+      if (userDto.address) {
+        console.log('trying to add address');
+        const address = Object.assign(new Address(), userDto.address);
         address.user = newUser;
-        const newAddress = await this.addressService.addAddress(user.address);
+        const newAddress = await this.addressService.addAddress(
+          userDto.address,
+        );
         newUser.addresses = []; // DO NOT DELETE
         newUser.addresses = [newAddress];
+        userEntity = await this.userRepository.save(newUser);
+      } else {
+        userEntity.addresses = null;
       }
-
-      userEntity = await this.userRepository.save(newUser);
 
       return userEntity;
     } catch (error) {
-      this.logger.debug(
+      if (error.code === '23505') {
+        throw new ConflictException('User already exists');
+      }
+
+      this.logger.error(
         'Error thrown in user.service.ts, register method: ' + error,
       );
     }
@@ -125,12 +134,12 @@ export class UserService {
   ): Promise<UserRespDto> {
     if (userDto.profileImage) {
       userDto.profileImageUrl = await this.userFileService.uploadProfileImage(
-        userDto.id,
+        existingUser.id,
         userDto.profileImage,
       );
 
       this.userRepository.updateUserImageUrl(
-        userDto.id,
+        existingUser.id,
         userDto.profileImageUrl,
       );
     }
@@ -139,7 +148,8 @@ export class UserService {
 
     updatedUser.firstname = userDto.firstname || existingUser.firstname;
     updatedUser.lastname = userDto.lastname || existingUser.lastname;
-    updatedUser.country = userDto.country || existingUser.country;
+    updatedUser.countryOfOrigin =
+      userDto.countryOfOrigin || existingUser.countryOfOrigin;
 
     this.userRepository.save(updatedUser);
 

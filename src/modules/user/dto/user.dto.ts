@@ -115,5 +115,5 @@ export class UserDto {
 
   @IsOptional()
   @ApiProperty({ type: 'Country', format: 'binary' })
-  country: Country;
+  countryOfOrigin: Country;
 }

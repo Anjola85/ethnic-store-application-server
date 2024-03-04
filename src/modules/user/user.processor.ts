@@ -57,12 +57,21 @@ export class UserProcessor {
     user: User,
     mobile: Mobile,
   ): UserInformationRespDto {
+    if (!user || !mobile) {
+      this.logger.error(
+        'User and mobile cannot be null in method processUserRelationInfo and file user.processor.ts',
+      );
+      throw new Error(
+        'User and mobile cannot be null in method processUserRelationInfo and file user.processor.ts',
+      );
+    }
+
     const mobileDto: MobileRespDto = MobileProcessor.mapEntityToResp(mobile);
 
     let addressList: AddressListRespDto;
-    if (user.addresses) {
+
+    if (user.addresses)
       addressList = AddressProcessor.mapEntityListToResp(user.addresses);
-    }
 
     let favouriteBusinessList: BusinessListRespDto;
 
@@ -82,8 +91,8 @@ export class UserProcessor {
 
     let countryDto: CountryRespDto;
 
-    if (user.country)
-      countryDto = CountryProcessor.mapEntityToResp(user.country);
+    if (user.countryOfOrigin)
+      countryDto = CountryProcessor.mapEntityToResp(user.countryOfOrigin);
 
     const userInfo: UserInformationRespDto = {
       id: user.id,
@@ -135,8 +144,8 @@ export class UserProcessor {
 
       let countryDto: CountryRespDto;
 
-      if (user.country)
-        countryDto = CountryProcessor.mapEntityToResp(user.country);
+      if (user.countryOfOrigin)
+        countryDto = CountryProcessor.mapEntityToResp(user.countryOfOrigin);
 
       const userInfo: UserRespDto = {
         id: user.id,
@@ -148,7 +157,7 @@ export class UserProcessor {
         email: email,
         mobile: mobileDto || null,
         addressList: addressList || null,
-        country: countryDto || null,
+        countryOfOrigin: countryDto || null,
         accountVerified: user.auth.accountVerified || false,
       };
 

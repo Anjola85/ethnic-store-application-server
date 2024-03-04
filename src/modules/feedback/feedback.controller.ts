@@ -48,7 +48,7 @@ export class FeedbackController {
   async findAll(@Res() res: Response) {
     try {
       const userId = res.locals.userId;
-      const crypto = res.locals.crypto;
+      const crypto = res.locals.cryptoresp;
       const allFeedback: FeedbackListRespDto =
         await this.feedbackService.findAll(userId);
 

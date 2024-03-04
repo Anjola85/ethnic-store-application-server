@@ -109,6 +109,7 @@ export class BusinessController {
   @Get('all')
   async findAll(): Promise<any> {
     try {
+      this.logger.debug('Get all businesses endpoint hit');
       const businessResp: BusinessListRespDto =
         await this.businessService.findAll();
 
@@ -209,5 +210,4 @@ export class BusinessController {
       );
     }
   }
-  qqqq;
 }

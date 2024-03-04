@@ -1,5 +1,8 @@
 /**
- * This middleware decrypts the payload request made by the client.
+ * @see
+ * @brief - This middleware decrypts the payload request made by the client.
+ * @cryptoReq - specifies if the request is encrypted or now
+ * @crytpoResp - specifies if the response should be encrypted or not
  */
 
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
@@ -19,7 +22,10 @@ export class DecryptionMiddleware implements NestMiddleware {
         this.logger.error('Decryption failed with error', error);
         return res.status(400).json({ error: 'Decryption failed' });
       }
+    } else {
+      this.logger.debug('Decryption middleware passed');
     }
+
     next();
   }
 }

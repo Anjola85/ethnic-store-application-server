@@ -13,7 +13,7 @@ export interface UserRespDto {
   userProfile: string;
   profileImage: string;
   active: boolean;
-  country: CountryRespDto | null;
+  countryOfOrigin: CountryRespDto | null;
   email: string;
   mobile: MobileRespDto | null;
   addressList: AddressListRespDto | null;
