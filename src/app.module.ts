@@ -160,6 +160,7 @@ export class AppModule implements NestModule {
         'auth/decrypt',
         'waitlist/*',
         'business/register',
+        'auth/verifyOtp',
       )
       .forRoutes('*');
   }
