@@ -4,11 +4,11 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 export class WaitlistShopperDto {
   @IsNotEmpty()
   @IsString()
-  firstName: string;
+  firstname: string;
 
   @IsNotEmpty()
   @IsString()
-  lastName: string;
+  lastname: string;
 
   @IsNotEmpty()
   @IsJSON()

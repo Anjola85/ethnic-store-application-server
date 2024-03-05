@@ -51,7 +51,7 @@ export class UserController {
     try {
       this.logger.log('get user info endpoint called');
       const userId = res.locals.userId;
-      const crypto = res.locals.crypto;
+      const crypto = res.locals.cryptoresp;
 
       if (!userId)
         return res
@@ -100,13 +100,34 @@ export class UserController {
   }
 
   @Patch('update')
-  async updateUser(@Body() body: UpdateUserDto): Promise<any> {
+  async updateUser(
+    @Body() body: UpdateUserDto,
+    @Res() res: Response,
+  ): Promise<any> {
     try {
       this.logger.log('update user endpoint called');
 
-      const resp: UserRespDto = await this.authService.updateUserInfo(body);
+      const userId: number = res.locals.id;
+      const cryptoresp = res.locals.cryptoresp;
 
-      return createResponse('successfully updated user information', resp);
+      const resp: UserRespDto = await this.authService.updateUserInfo(
+        body,
+        userId,
+      );
+
+      const clearResponse = createResponse(
+        'successfully updated user information',
+        resp,
+      );
+
+      if (cryptoresp === 'true') {
+        const encryptedResp = await encryptPayload(clearResponse);
+        return res
+          .status(HttpStatus.OK)
+          .json(createEncryptedResponse(encryptedResp));
+      }
+
+      return res.status(HttpStatus.OK).json(clearResponse);
     } catch (error) {
       this.logger.error(
         'Error thrown in user.controller.ts, updateUser method: ' + error,

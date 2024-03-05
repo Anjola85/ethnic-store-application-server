@@ -76,11 +76,25 @@ export const encryptData = (keyIn: string, data: any): string => {
   // create encryptor
   const cipher = crypto.createCipheriv(algorithm, key, iv);
 
+  let stringifiedData: string;
+  // if (data instanceof Object) {
+  //   data = JSON.stringify(data);
+  // }
+
   if (data instanceof Object) {
-    data = JSON.stringify(data);
+    try {
+      stringifiedData = JSON.stringify(data, getCircularReplacer());
+    } catch (error) {
+      console.error(
+        'Failed to stringify data in encryptData method in crypto.js ',
+        error,
+      );
+    }
+  } else {
+    stringifiedData = data;
   }
 
-  let encryptedData = cipher.update(data, 'utf8', 'base64');
+  let encryptedData = cipher.update(stringifiedData, 'utf8', 'base64');
 
   encryptedData += cipher.final('base64');
 
@@ -105,16 +119,20 @@ export const decryptData = (keyIn: string, cipherText: string): string => {
 };
 
 export const toBuffer = (data: any) => {
-  let buffer: Buffer;
-  if (typeof data === 'string') {
-    buffer = Buffer.from(data);
-  } else if (typeof data === 'object' && data !== null) {
-    const json = JSON.stringify(data);
-    buffer = Buffer.from(json);
-  } else {
-    throw new Error('Invalid data type. Expected string or object.');
+  try {
+    let buffer: Buffer;
+    if (typeof data === 'string') {
+      buffer = Buffer.from(data);
+    } else if (typeof data === 'object' && data !== null) {
+      const json = JSON.stringify(data, getCircularReplacer());
+      buffer = Buffer.from(json);
+    } else {
+      throw new Error('Invalid data type. Expected string or object.');
+    }
+    return buffer;
+  } catch (error) {
+    console.error('Error thrown in toBuffer method in crypto.js ', error);
   }
-  return buffer;
 };
 
 export const encryptPayload = async (payload: {
@@ -133,3 +151,17 @@ export const encryptPayload = async (payload: {
 
   return encryptedResp;
 };
+
+function getCircularReplacer() {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        // Circular reference found, discard key
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+}

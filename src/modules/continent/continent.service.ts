@@ -55,6 +55,9 @@ export class ContinentService {
     try {
       const continents = await this.continentRepository.find({
         select: ['name', 'id'],
+        order: {
+          id: 'ASC',
+        },
       });
 
       // const continentList: ContinentListRespDto

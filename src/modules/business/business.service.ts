@@ -8,7 +8,7 @@ import {
 } from './dto/image.dto';
 import { GeoLocationDto } from './dto/geolocation.dto';
 import { AddressService } from '../address/address.service';
-import { Business } from './entities/business.entity';
+import { Business, BusinessParam } from './entities/business.entity';
 import { BusinessFilesService } from '../files/business-files.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { AwsS3Service } from '../files/aws-s3.service';
@@ -104,6 +104,11 @@ export class BusinessService extends PageService {
     }
   }
 
+  /**
+   * This handles registering the businesss images to AWS S3
+   * @param businessDto
+   * @param reqBody
+   */
   private async setBusinessImage(
     businessDto: CreateBusinessDto,
     reqBody: CreateBusinessDto,
@@ -137,7 +142,7 @@ export class BusinessService extends PageService {
    * @param reqBody
    * @throws HttpException if business exists
    */
-  private async businessExist(reqBody: CreateBusinessDto) {
+  private async businessExist(reqBody: CreateBusinessDto): Promise<void> {
     const { businessExist, type } = await this.businessRepository.findByUniq({
       name: reqBody.name,
       email: reqBody.email,
@@ -150,6 +155,12 @@ export class BusinessService extends PageService {
       );
   }
 
+  /**
+   *
+   * @param latitude
+   * @param longitude
+   * @returns
+   */
   async findStoresNearby(
     latitude: number,
     longitude: number,
@@ -164,6 +175,9 @@ export class BusinessService extends PageService {
     return businessList;
   }
 
+  /**
+   * Fetches all busi
+   */
   async findAll() {
     try {
       const businesses = await this.businessRepository.getAllRelation();
@@ -181,11 +195,21 @@ export class BusinessService extends PageService {
     }
   }
 
+  /**
+   *
+   * @param country
+   * @returns Business[]
+   */
   async getBusinessByCountry(country: string): Promise<any> {
     const businesses = await this.businessRepository.findByCountry(country);
     return businesses;
   }
 
+  /**
+   *
+   * @param region
+   * @returns Business[]
+   */
   async getBusinessesByRegion(region: string): Promise<any> {
     const businesses = await this.businessRepository.findByRegion(region);
     return businesses;
@@ -219,6 +243,11 @@ export class BusinessService extends PageService {
     return imagesUrl;
   }
 
+  /**
+   * Applies the filter to the business list
+   * @param filter
+   * @returns
+   */
   async getAllRelations(filter: GenericFilter): Promise<BusinessListRespDto> {
     const businessList: [Business[], number] =
       await this.businessRepository.getPaginatedRelations(filter);
@@ -228,5 +257,46 @@ export class BusinessService extends PageService {
     );
 
     return resp;
+  }
+
+  async getBusinessByUnique(params: BusinessParam): Promise<any> {
+    try {
+      const business = await this.businessRepository.findByUniq(params);
+      return business;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in business.service.ts, getBusinessByUnique method: ${error.message}`,
+      );
+
+      throw new Error(
+        `Error fetching business from DB
+        \nfrom getBusinessByUnique method in business.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
+
+  async getBusinessByName(name: string): Promise<BusinessRespDto> {
+    try {
+      const business = await this.businessRepository.findByName(name);
+
+      if (!business) {
+        throw new HttpException('Business not found', HttpStatus.NOT_FOUND);
+      }
+
+      const resp: BusinessRespDto = BusinessProcessor.mapEntityToResp(business);
+
+      return resp;
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in business.service.ts, getBusinessByName method: ${error.message}`,
+      );
+
+      throw new Error(
+        `Error fetching business from DB
+        \nfrom getBusinessByName method in business.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
   }
 }

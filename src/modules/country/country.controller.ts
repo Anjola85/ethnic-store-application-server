@@ -24,6 +24,7 @@ export class CountryController {
   @Post('register')
   async create(@Body() createCountryDto: CreateCountryDto): Promise<any> {
     try {
+      this.logger.debug('CountryController.create called');
       const resp = await this.countryService.create(createCountryDto);
       return createResponse('Country registered successfully', resp);
     } catch (err) {
@@ -39,9 +40,12 @@ export class CountryController {
     }
   }
 
+  // controlle to get all countries and their respective region
+
   @Get('all')
   async findAll(): Promise<any> {
     try {
+      this.logger.debug('CountryController.findAll called');
       const countryList = await this.countryService.findAll();
       return createResponse('List of countries', countryList);
     } catch (error) {
@@ -52,4 +56,19 @@ export class CountryController {
       );
     }
   }
+
+  // @Get('all-with-region')
+  // async findAllWithRegion(): Promise<any> {
+  //   try {
+  //     this.logger.debug('CountryController.findAllWithRegion called');
+  //     const countryList = await this.countryService.findAllWithRegion();
+  //     return createResponse('List of countries with region', countryList);
+  //   } catch (error) {
+  //     this.logger.debug(error);
+  //     throw new HttpException(
+  //       "We're working on it",
+  //       HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
 }

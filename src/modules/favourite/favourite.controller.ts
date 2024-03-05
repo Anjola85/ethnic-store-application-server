@@ -32,7 +32,7 @@ export class FavouriteController {
       this.logger.log('create favourite endpoint called');
 
       const userId: number = res.locals.userId;
-      const crypto = res.locals.crypto;
+      const crypto = res.locals.cryptoresp;
 
       if (!userId) {
         throw new HttpException(
@@ -82,7 +82,7 @@ export class FavouriteController {
       this.logger.log('get favourite by user id endpoint called');
 
       const userId: number = res.locals.userId;
-      const crypto = res.locals.crypto;
+      const crypto = res.locals.cryptoresp;
 
       if (!userId) {
         throw new HttpException(

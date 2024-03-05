@@ -129,6 +129,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        '/',
         'auth/request-login',
         'auth/request-signup',
         'test/*',
@@ -142,6 +143,9 @@ export class AppModule implements NestModule {
         'continent/all',
         'region/register',
         'region/all',
+        'category/register',
+        'category/all',
+        'country/all-with-region',
       )
       .forRoutes('*');
 
@@ -151,7 +155,6 @@ export class AppModule implements NestModule {
       .exclude(
         'auth/encrypt',
         'auth/decrypt',
-        'auth/verifyOtp',
         'waitlist/*',
         'business/register',
       )

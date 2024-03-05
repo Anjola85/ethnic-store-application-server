@@ -102,14 +102,20 @@ export class AuthService {
       const validOtpCode = auth.otpCode == otp;
 
       if (validOtpCode) {
-        // mark account as verified
+        this.logger.debug('OTP successfully verified');
         await this.authRepository.update(authId, {
           ...auth,
           accountVerified: true,
         });
         return { message: 'OTP successfully verified', status: true };
-      } else throw new UnauthorizedException('OTP does not match');
-    } else throw new UnauthorizedException('OTP has expired');
+      } else {
+        this.logger.error('OTP does not match');
+        throw new UnauthorizedException('OTP does not match');
+      }
+    } else {
+      this.logger.error('OTP has expired');
+      throw new UnauthorizedException('OTP has expired');
+    }
   }
 
   /**
@@ -198,6 +204,7 @@ export class AuthService {
 
       // check if mobile was provided
       if (mobile) {
+        console.log('mobile provided');
         // get mobile if it exists
         const registeredMobile =
           await this.mobileService.getMobileByPhoneNumber(mobile);
@@ -207,11 +214,17 @@ export class AuthService {
           registeredMobile.auth &&
           registeredMobile.auth.id
         ) {
+          console.log('mobile exists');
           // get auth account if mobile is registered
-          authAccount = await this.authRepository.findOneBy({
-            id: registeredMobile.auth.id,
-          });
+          // authAccount = await this.authRepository.findOneBy({
+          //   id: registeredMobile.auth.id,
+          // });
+
+          authAccount = await this.authRepository.getUserByAuthId(
+            registeredMobile.auth.id,
+          );
         } else {
+          console.log('mobile does not exist');
           // create auth account if mobile does not exist
           const auth = new Auth();
           auth.email = email;
@@ -236,28 +249,47 @@ export class AuthService {
           // await this.mobileService.updateMobile(mobile);
         }
       } else if (email) {
+        console.log('email provided');
         // get email if it exists
         authAccount = await this.findByEmail(body.email);
 
         // create new auth account if email does not exist
         if (!authAccount) {
+          console.log('email does not exist');
           const auth = new Auth();
           auth.email = email;
           authAccount = await this.registerAuthAccount(auth);
+        } else {
+          console.log('email exists');
+          // get auth account with it id
+          authAccount = await this.authRepository.getUserByAuthId(
+            authAccount.id,
+          );
         }
       }
 
-      // check if user has been registered and verified
-      if (authAccount && authAccount.accountVerified && authAccount.user)
-        return { userExists: true } as SignupOtpRespDto;
+      const authAccountExists = authAccount != null && authAccount != undefined;
 
+      // check if user has been registered and verified
+      if (
+        authAccountExists &&
+        authAccount.accountVerified &&
+        authAccount.user != null
+      ) {
+        throw new ConflictException('User already exists, please login');
+      }
+
+      console.log('generating otp adn jwt');
       const otpResp: OtpRespDto = await this.genrateOtp(email, mobile);
       const token = this.generateJwt(authAccount);
 
-      // save to auth
-      authAccount.otpCode = otpResp.code;
-      authAccount.otpExpiry = otpResp.expiryTime;
-      await this.authRepository.update(authAccount.id, authAccount);
+      console.log('expiry: ', otpResp.expiryTime);
+      await this.authRepository.updateOtp(
+        authAccount.id,
+        otpResp.code,
+        otpResp.expiryTime,
+      );
+      console.log('updating auth account with otp code and expiry time');
 
       const signupOtpResp = {
         ...otpResp,
@@ -267,7 +299,7 @@ export class AuthService {
 
       return signupOtpResp;
     } catch (error) {
-      this.logger.debug(
+      this.logger.error(
         'Error thrown in auth.service.ts, signupOtpRequest method: ' + error,
       );
 
@@ -302,20 +334,23 @@ export class AuthService {
     try {
       const userDto: UserDto = Object.assign(new UserDto(), reqBody);
 
-      // retrieve auth account using mobile number
       const registeredMobile: Mobile =
         await this.mobileService.getMobileByPhoneNumber(userDto.mobile);
 
       if (!registeredMobile)
-        throw new NotFoundException('Mobile is not registered');
-      if (registeredMobile.auth.user)
+        throw new NotFoundException(
+          'Inomplete registration process! Mobile is not registered',
+        );
+
+      if (registeredMobile.auth.user !== null) {
         throw new ConflictException('User already exists');
+      }
 
       userDto.auth = registeredMobile.auth;
 
       const user: User = await this.userSerivce.register(userDto);
 
-      // generate jwt token with user id
+      // generate jwt token with userId
       const token = this.generateJwt(user);
 
       const response: SignupRespDto = {
@@ -329,6 +364,42 @@ export class AuthService {
         'Error thrown in auth.service.ts, registerUser method: ' + error,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Registers email for an existing auth account
+   * @param email
+   * @param authId
+   * @throws ConflictException if email exists
+   */
+  async updateAuthWithEmail(email: string, authId: number): Promise<void> {
+    try {
+      // get auth record with authId
+      const auth = await this.authRepository.findOneBy({ id: authId });
+      auth.email = email;
+      await this.authRepository.update(authId, auth);
+    } catch (error) {
+      if (
+        error.name === 'QueryFailedError' &&
+        error.message.includes('duplicate key value violates unique constraint')
+      ) {
+        this.logger.error(
+          `Attempted to create a auth with a duplicate email: ${email}`,
+        );
+
+        throw new ConflictException(`Auth with email ${email} already exists`);
+      }
+
+      this.logger.error(
+        `Error from registerEmail method in auth.service.ts.
+        with error message: ${error.message}`,
+      );
+
+      throw new Error(
+        `Error from registerEmail method in auth.service.ts.
+        with error message: ${error.message}`,
+      );
     }
   }
 
@@ -364,7 +435,7 @@ export class AuthService {
       //   authId,
       // };
 
-      // pull all user info from the database
+      // get all user info from the database
       const authAcct: Auth = await this.authRepository.getUserByAuthId(authId);
 
       if (!authAcct) {
@@ -437,6 +508,12 @@ export class AuthService {
         authAccount = authExist;
       }
 
+      // check if user is registered
+      if (!authAccount.user) {
+        this.logger.error('User is not registered');
+        throw new NotFoundException('User is not registered');
+      }
+
       const otpResponse: OtpRespDto = await this.genrateOtp(email, mobile);
 
       const token = this.generateJwt(authAccount);
@@ -452,9 +529,13 @@ export class AuthService {
         token,
       };
 
+      this.logger.debug('User found');
+
       return response;
-    } catch (e) {
-      throw new Error(`From AuthService.requestLoginOtp: ${e}`);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new Error(`From AuthService.requestLoginOtp: ${error}`);
     }
   }
 
@@ -587,8 +668,11 @@ export class AuthService {
    * @param userDto
    * @returns {token, user}
    */
-  async updateUserInfo(userDto: UpdateUserDto): Promise<UserRespDto> {
-    const user: User = await this.userSerivce.getUserInfoById(userDto.id);
+  async updateUserInfo(
+    userDto: UpdateUserDto,
+    userId: number,
+  ): Promise<UserRespDto> {
+    const user: User = await this.userSerivce.getUserInfoById(userId);
 
     if (!user) {
       this.logger.error('User account not found');
@@ -607,13 +691,11 @@ export class AuthService {
       user.auth,
     );
 
-    // NOTE: can only change either email or mobile!
     if (userDto.email) {
       authDto.email = userDto.email;
     }
 
     if (userDto.mobile) {
-      authDto.email = userDto.email;
       authDto.mobile.phoneNumber = userDto.mobile.phoneNumber;
       authDto.mobile.countryCode = userDto.mobile.countryCode;
       authDto.mobile.isoType = userDto.mobile.isoType;

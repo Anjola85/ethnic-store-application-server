@@ -1,5 +1,10 @@
 import { UpdateCategoryDto } from './../category/dto/update-category.dto';
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Country } from './entities/country.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,15 +14,13 @@ import {
   CountryRespDto,
 } from 'src/contract/version1/response/country-response.dto';
 import { CountryProcessor } from './country.process';
+import { CountryRepository } from './country.repository';
 
 @Injectable()
 export class CountryService {
   private readonly logger = new Logger(CountryService.name);
 
-  constructor(
-    @InjectRepository(Country)
-    protected countryRepository: Repository<Country>,
-  ) {}
+  constructor(private countryRepository: CountryRepository) {}
 
   async create(createCountryDto: CreateCountryDto): Promise<CountryRespDto> {
     try {
@@ -33,11 +36,11 @@ export class CountryService {
         error.message.includes('violates foreign key constraint')
       ) {
         this.logger.error(
-          `Attempted to create a country with a non-existent continent: ${createCountryDto.continentId}`,
+          `Attempted to create a country with a non-existent continent: ${createCountryDto.regionId}`,
         );
 
         throw new ConflictException(
-          `Continent with id ${createCountryDto.continentId} does not exist`,
+          `Continent with id ${createCountryDto.regionId} does not exist`,
         );
       }
 
@@ -62,6 +65,9 @@ export class CountryService {
     try {
       const country = await this.countryRepository.find({
         select: ['name', 'id'],
+        order: {
+          id: 'ASC',
+        },
       });
       const countryList: CountryListRespDto =
         CountryProcessor.mapEntityListToResp(country);
@@ -73,6 +79,10 @@ export class CountryService {
         \nWith error message: ${error.message}`,
       );
     }
+  }
+
+  async getCountryWithContinent(): Promise<Country[]> {
+    return null;
   }
 
   async getCountryEntities(): Promise<Country[]> {
@@ -134,4 +144,32 @@ export class CountryService {
     });
     return businesses;
   }
+
+  // TODO: finish region, country continent mapping
+  // async findAllWithRegion(): Promise<any> {
+  //   try {
+  //     const countries =
+  //       await this.countryRepository.getAllCountriesWithRegionWithContinent();
+
+  //     if (!countries) throw new NotFoundException('No countries found');
+
+  //     const respList: CountryRegionContinentListRespDto =
+  //       CountryRegionContinentProcessor.mapEntityListToResp(
+  //         countries.map((country) => {
+  //           return CountryRegionContinentProcessor.mapEntityToResp(
+  //             country,
+  //             country.regionId,
+  //             country.regionId.continentId,
+  //           );
+  //         }),
+  //       );
+  //     return respList;
+  //   } catch (error) {
+  //     throw new Error(
+  //       `Error retrieving all country from mongo
+  //       \nfrom findAll method in country.service.ts.
+  //       \nWith error message: ${error.message}`,
+  //     );
+  //   }
+  // }
 }

@@ -1,6 +1,11 @@
 /**
- * This middleware handles authentication validates and extract ids from the token attached to the header request
- *
+ * @see
+ * @brief - This middleware handles authentication and token validation, it extracts ids from the token attached to the header request
+ * @authId - the id of the user's session
+ * @userId - the id of the user
+ * @cryptoResp - specifies if the response should be encrypted or not
+ * @cryptoReq - specifies if the request is encrypted or now
+ * @validateToken - validates and extract ids from token, if validated, user has an active session
  */
 import {
   Injectable,
@@ -27,6 +32,9 @@ export class AuthMiddleware implements NestMiddleware {
       );
     }
 
+    // TODO: check if crypto or cryptoReq, add resp to crypto, dont make it a magic variable.
+    // call the update user, and make sure the right data is being encrypted and decrypted
+
     try {
       const { authId, userId } = await this.validateToken(res, token);
 
@@ -34,8 +42,8 @@ export class AuthMiddleware implements NestMiddleware {
       res.locals.authId = authId;
       res.locals.userId = userId;
 
-      // check if url is user/info, if so, attach crypto to the request object
-      res.locals.crypto = req.headers.crypto || 'true';
+      // if cryptoResp is not provided in the header, default to true
+      res.locals.cryptoresp = req.headers.cryptoresp || 'true';
 
       next();
     } catch (error) {

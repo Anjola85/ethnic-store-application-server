@@ -57,10 +57,21 @@ export class UserProcessor {
     user: User,
     mobile: Mobile,
   ): UserInformationRespDto {
+    if (!user || !mobile) {
+      this.logger.error(
+        'User and mobile cannot be null in method processUserRelationInfo and file user.processor.ts',
+      );
+      throw new Error(
+        'User and mobile cannot be null in method processUserRelationInfo and file user.processor.ts',
+      );
+    }
+
     const mobileDto: MobileRespDto = MobileProcessor.mapEntityToResp(mobile);
 
-    const addressList: AddressListRespDto =
-      AddressProcessor.mapEntityListToResp(user.addresses);
+    let addressList: AddressListRespDto;
+
+    if (user.addresses)
+      addressList = AddressProcessor.mapEntityListToResp(user.addresses);
 
     let favouriteBusinessList: BusinessListRespDto;
 
@@ -80,22 +91,21 @@ export class UserProcessor {
 
     let countryDto: CountryRespDto;
 
-    if (user.country)
-      countryDto = CountryProcessor.mapEntityToResp(user.country);
+    if (user.countryOfOrigin)
+      countryDto = CountryProcessor.mapEntityToResp(user.countryOfOrigin);
 
     const userInfo: UserInformationRespDto = {
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstname: user.firstname,
+      lastname: user.lastname,
       userProfile: user.userProfile,
-      dob: user.dob,
       profileImage: user?.profileImage || '',
       active: user.active,
       email: user.auth?.email || '',
       mobile: mobileDto,
-      addressList,
+      addressList: addressList || null,
       favouriteList: favouriteBusinessList,
-      country: countryDto,
+      countryOfOrigin: countryDto,
       accountVerified: user.auth?.accountVerified || false,
     };
 
@@ -127,26 +137,27 @@ export class UserProcessor {
         email = user.auth.email;
       }
 
-      const addressList: AddressListRespDto =
-        AddressProcessor.mapEntityListToResp(user.addresses);
+      let addressList: AddressListRespDto;
+      if (user.addresses) {
+        addressList = AddressProcessor.mapEntityListToResp(user.addresses);
+      }
 
       let countryDto: CountryRespDto;
 
-      if (user.country)
-        countryDto = CountryProcessor.mapEntityToResp(user.country);
+      if (user.countryOfOrigin)
+        countryDto = CountryProcessor.mapEntityToResp(user.countryOfOrigin);
 
       const userInfo: UserRespDto = {
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstname: user.firstname,
+        lastname: user.lastname,
         userProfile: user.userProfile,
-        dob: user.dob,
         profileImage: user.profileImage || '',
         active: user.active,
         email: email,
         mobile: mobileDto || null,
         addressList: addressList || null,
-        country: countryDto || null,
+        countryOfOrigin: countryDto || null,
         accountVerified: user.auth.accountVerified || false,
       };
 

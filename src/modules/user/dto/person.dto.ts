@@ -14,12 +14,12 @@
 //   @IsNotEmpty()
 //   @IsString()
 //   @ApiProperty({ description: 'The first name of the person', example: 'John' })
-//   firstName: string;
+//   firstname: string;
 
 //   @IsNotEmpty()
 //   @IsString()
 //   @ApiProperty({ description: 'The last name of the person', example: 'Doe' })
-//   lastName: string;
+//   lastname: string;
 
 //   @IsNotEmpty()
 //   @ApiProperty({

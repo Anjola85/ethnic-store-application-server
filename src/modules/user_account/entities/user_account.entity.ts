@@ -18,13 +18,13 @@
 //     type: String,
 //     required: true,
 //   })
-//   firstName: string;
+//   firstname: string;
 
 //   @Prop({
 //     type: String,
 //     required: true,
 //   })
-//   lastName: string;
+//   lastname: string;
 
 //   @Prop({
 //     type: String,

@@ -1,3 +1,5 @@
+import { EncryptedDTO } from '../dto/encrypted.dto';
+
 export function createResponse(
   message?: string,
   payload = null,
@@ -17,8 +19,9 @@ export function createError(message: string, error?: any) {
   };
 }
 
-export function createEncryptedResponse(encryptedData: string) {
-  return {
-    data: encryptedData,
+export function createEncryptedResponse(encryptedData: string): EncryptedDTO {
+  const resp: EncryptedDTO = {
+    payload: encryptedData,
   };
+  return resp;
 }

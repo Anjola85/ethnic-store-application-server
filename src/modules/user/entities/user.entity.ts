@@ -10,6 +10,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
 } from 'typeorm';
@@ -24,10 +25,10 @@ import { Feedback } from 'src/modules/feedback/entities/feedback.entity';
 @Entity('user')
 export class User extends CommonEntity {
   @Column({ name: 'first_name', type: 'varchar', nullable: true })
-  firstName: string;
+  firstname: string;
 
   @Column({ name: 'last_name', type: 'varchar', nullable: true })
-  lastName: string;
+  lastname: string;
 
   @Column({
     name: 'user_profile',
@@ -35,9 +36,6 @@ export class User extends CommonEntity {
     default: UserProfile.CUSTOMER,
   })
   userProfile: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  dob: string;
 
   @Column({ name: 'profile_image', type: 'varchar', nullable: true })
   profileImage: string;
@@ -61,9 +59,9 @@ export class User extends CommonEntity {
   @OneToMany(() => Favourite, (favourite) => favourite.user)
   favourites: Favourite[];
 
-  @OneToOne(() => Country, (country) => country.name, { nullable: true })
+  @ManyToOne(() => Country, (country) => country.name, { nullable: true })
   @JoinColumn()
-  country: Country;
+  countryOfOrigin: Country;
 
   @OneToMany(() => Feedback, (feedback) => feedback.user)
   feedbacks: Feedback[];
@@ -71,9 +69,8 @@ export class User extends CommonEntity {
   @BeforeInsert()
   @BeforeUpdate()
   lowercaseFields() {
-    this.firstName = this.firstName.toLowerCase();
-    this.lastName = this.lastName.toLowerCase();
+    this.firstname = this.firstname.toLowerCase();
+    this.lastname = this.lastname.toLowerCase();
     this.userProfile = this.userProfile.toLowerCase();
-    this.dob = this.dob.toLowerCase();
   }
 }
