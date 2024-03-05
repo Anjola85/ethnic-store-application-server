@@ -108,27 +108,29 @@ export class WaitlistService {
   }
 
   async joinCustomerWaitlist(body: WaitlistCustomerDto) {
-    const customerExists = await this.customerRespository
-      .createQueryBuilder('waitlist_customer')
-      .where('waitlist_customer.email = :email', { email: body.email })
-      .orWhere('waitlist_customer.mobile = :mobile', { mobile: body.mobile })
-      .getOne();
-
-    if (customerExists) {
-      this.logger.debug(
-        `Customer ${body.firstname} ${body.lastname} already exists`,
-      );
-      throw new ConflictException('Customer already exists');
-    } else {
+    console.log('body: ', body);
+    try {
       const waitlist_uuid = await this.sendToWaitlistService(body);
       this.logger.debug(
-        `Successfully added ${body.firstname} ${body.lastname} to getwaitlist.com`,
+        `Successfully added ${body.firstName} ${body.lastName} to getwaitlist.com`,
       );
+
       body.waitlist_uuid = waitlist_uuid;
 
-      this.customerRespository.create(body).save();
+      const newCustomer = this.customerRespository.create(body).save();
 
-      this.sendgridService.customerWelcomeEmail(body.email, body.firstname);
+      this.sendgridService.customerWelcomeEmail(body.email, body.firstName);
+    } catch (error) {
+      if (error.message.includes('duplicate')) {
+        this.logger.error(
+          `Customer with email:${body.email} already exists in waitlist`,
+        );
+        throw new ConflictException('Customer already exists');
+      }
+      this.logger.error(
+        'Error in joinCustomerWaitlistMethod, with error ' + error,
+      );
+      throw new ConflictException('customer already exists');
     }
   }
 
