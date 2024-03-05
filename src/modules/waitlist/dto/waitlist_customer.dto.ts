@@ -1,8 +1,10 @@
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
   IsJSON,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Length,
 } from 'class-validator';
@@ -11,14 +13,14 @@ import { MobileDto } from 'src/common/dto/mobile.dto';
 export class WaitlistCustomerDto {
   @IsNotEmpty()
   @IsString()
-  firstname: string;
+  firstName: string;
 
   @IsNotEmpty()
   @IsString()
-  lastname: string;
+  lastName: string;
 
   @IsNotEmpty()
-  @IsJSON()
+  @Type(() => MobileDto)
   mobile: MobileDto;
 
   @IsNotEmpty()
@@ -37,6 +39,7 @@ export class WaitlistCustomerDto {
   @IsNotEmpty()
   promotions: boolean;
 
+  @IsOptional()
   @IsString()
   waitlist_uuid: string;
 }

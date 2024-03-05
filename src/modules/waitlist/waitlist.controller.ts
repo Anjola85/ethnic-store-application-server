@@ -30,19 +30,16 @@ export class WaitlistController {
 
   @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-customer')
-  async joinCustomerWaitlist(@Body() reqBody: any): Promise<any> {
+  async joinCustomerWaitlist(
+    @Body() reqBody: WaitlistCustomerDto,
+  ): Promise<any> {
     try {
       this.logger.debug(
         'join customer waitlist endpoint called with body: ' +
           JSON.stringify(reqBody, null, 2),
       );
 
-      customerValidation(reqBody);
-
-      const waitlistCustomer = new WaitlistCustomerDto();
-      Object.assign(waitlistCustomer, reqBody);
-
-      await this.waitlistService.joinCustomerWaitlist(waitlistCustomer);
+      await this.waitlistService.joinCustomerWaitlist(reqBody);
       return createResponse('customer added');
     } catch (error: any) {
       this.logger.error(

@@ -138,7 +138,7 @@ NOTE: Remember to login to aws on EC2, if no configuration for docker command co
 `sudo chmod 666 /var/run/docker.sock`
 
 1. Run the following command to pull this image from the ECR Repository on EC2
-   `docker pull 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
+   `docker pull 376620901748.dkr.ecr.ca-central-1.amazonaws.com/monolith-ecr:latest`
 
 2. Run `docker images` to see if the image has been added
 
