@@ -1,3 +1,4 @@
+import { Country } from './../country/entities/country.entity';
 import {
   Controller,
   Post,
@@ -13,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { BusinessService } from './business.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { GeoLocationDto } from './dto/geolocation.dto';
 import { createResponse } from 'src/common/util/response';
 import { Response } from 'express';
 import { CreateBusinessDto } from './dto/create-business.dto';
@@ -49,7 +49,6 @@ export class BusinessController {
   ) {
     try {
       this.logger.debug('Register business endpoint hit');
-
       businessBody.backgroundImage = files?.backgroundImage[0] || null;
       businessBody.profileImage = files?.profileImage[0] || null;
 
@@ -86,6 +85,7 @@ export class BusinessController {
     @Body() body: { latitude: number; longitude: number },
   ): Promise<any> {
     try {
+      this.logger.debug('Nearby business endpoint hit');
       const businessList: BusinessListRespDto =
         await this.businessService.findStoresNearby(
           body.latitude,
@@ -109,8 +109,10 @@ export class BusinessController {
   @Get('all')
   async findAll(): Promise<any> {
     try {
+      this.logger.debug('Get all businesses endpoint hit');
       const businessResp: BusinessListRespDto =
         await this.businessService.findAll();
+
       return createResponse('businesses fetched successfully', {
         businessResp,
       });
@@ -126,6 +128,7 @@ export class BusinessController {
   @Get('list')
   async getAll(@Query() filter: GenericFilter): Promise<any> {
     try {
+      this.logger.debug('Get all businesses endpoint hit');
       const businessResp: BusinessListRespDto =
         await this.businessService.getAllRelations(filter);
       return createResponse('businesses fetched successfully', {
@@ -148,6 +151,7 @@ export class BusinessController {
   @Get('country/:country')
   async getBusinessByCountry(@Res() res: Response, country: string) {
     try {
+      this.logger.debug('Get business by country endpoint hit');
       const businesses = await this.businessService.getBusinessByCountry(
         country,
       );
@@ -168,11 +172,36 @@ export class BusinessController {
    */
   @Get('region/:region')
   async getBusinessesByRegion(@Res() res: Response, region: string) {
+    this.logger.debug('Get business by region endpoint hit');
     try {
       const businesses = await this.businessService.getBusinessesByRegion(
         region,
       );
       return createResponse('Businesses fetched successfully', { businesses });
+    } catch (error) {
+      this.logger.debug(error);
+      throw new HttpException(
+        "We're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // abillity to get business by name, id or email
+
+  /**
+   * Get business by name
+   * @param name
+   * @returns
+   */
+
+  //conuntu
+  @Get('name/:name')
+  async getBusinessByName(@Res() res: Response, name: string) {
+    try {
+      this.logger.debug('Get business by name endpoint hit');
+      const business = await this.businessService.getBusinessByName(name);
+      return createResponse('Business fetched successfully', { business });
     } catch (error) {
       this.logger.debug(error);
       throw new HttpException(

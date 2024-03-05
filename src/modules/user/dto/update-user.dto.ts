@@ -17,19 +17,13 @@ import { Country } from 'src/modules/country/entities/country.entity';
 import { DefaultNull } from 'src/common/validation/decorator/default-null.decorator';
 
 export class UpdateUserDto {
-  @IsNotEmpty()
-  @IsNumber()
-  id: number;
+  @IsOptional()
+  @IsString()
+  firstname: string;
 
   @IsOptional()
   @IsString()
-  @DefaultNull()
-  firstName: string;
-
-  @IsOptional()
-  @IsString()
-  @DefaultNull()
-  lastName: string;
+  lastname: string;
 
   @IsOptional()
   @IsEmail()
@@ -37,7 +31,6 @@ export class UpdateUserDto {
     description: 'The email address of the person',
     example: 'johndoe@quickie.com',
   })
-  @DefaultNull()
   email: string;
 
   @IsOptional()
@@ -66,26 +59,20 @@ export class UpdateUserDto {
       location: '43.6532, 79.3832',
     },
   })
-  @DefaultNull()
   address: AddressDto;
 
   @IsOptional()
   @ApiProperty({ description: 'The Date of birth', example: '2005-06-15' })
-  @DefaultNull()
   dob: string;
 
   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary' })
-  @DefaultNull()
   profileImage: Express.Multer.File;
 
   @IsOptional()
   @IsString()
-  @DefaultNull()
   profileImageUrl: string;
 
   @IsOptional()
-  @IsNumber()
-  @DefaultNull()
-  country: Country;
+  countryOfOrigin: Country;
 }

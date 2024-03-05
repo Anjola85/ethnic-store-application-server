@@ -8,13 +8,12 @@ import { MobileRespDto } from './mobile-response.dto';
  */
 export interface UserRespDto {
   id: number;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   userProfile: string;
-  dob: string;
   profileImage: string;
   active: boolean;
-  country: CountryRespDto | null;
+  countryOfOrigin: CountryRespDto | null;
   email: string;
   mobile: MobileRespDto | null;
   addressList: AddressListRespDto | null;
@@ -31,13 +30,12 @@ export interface UserListRespDto {
  */
 export interface UserInformationRespDto {
   id: number;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   userProfile: string;
-  dob: string;
   profileImage: string;
   active: boolean;
-  country: CountryRespDto;
+  countryOfOrigin: CountryRespDto;
   email: string;
   mobile: MobileRespDto;
   addressList: AddressListRespDto;

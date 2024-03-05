@@ -7,12 +7,15 @@ import { GenericFilter } from '../common/generic-filter';
 @Injectable()
 export class BusinessRepository extends Repository<Business> {
   private readonly logger = new Logger(BusinessRepository.name);
-  private readonly WGS84_SRID = 4326;
 
   constructor(private dataSource: DataSource) {
     super(Business, dataSource.createEntityManager());
   }
 
+  /**
+   * Retrieve all businesses
+   * @returns businesses - an array of businesses
+   */
   async findByUniq(params: BusinessParam): Promise<any> {
     this.logger.debug(
       `findByUniq called with params: ${JSON.stringify(params)}`,
@@ -143,6 +146,7 @@ export class BusinessRepository extends Repository<Business> {
           .from('address', 'address')
           .where('address.id = business.addressId');
       }, 'locationGeoJSON')
+      .orderBy('business.id', 'ASC')
       .getMany();
 
     return businessRelations;
@@ -177,6 +181,11 @@ export class BusinessRepository extends Repository<Business> {
     return businessRelations;
   }
 
+  /**
+   *
+   * @param filter
+   * @returns
+   */
   async getPaginatedRelations(
     filter: GenericFilter,
   ): Promise<[Business[], number]> {
@@ -209,6 +218,11 @@ export class BusinessRepository extends Repository<Business> {
     return [businessRelations, total];
   }
 
+  /**
+   * Retrieve all businesses provided their ids
+   * @param businesses
+   * @returns
+   */
   async getRelationsByBusinessId(businesses: number[]): Promise<Business[]> {
     const businessRelations = await this.createQueryBuilder('business')
       .leftJoinAndSelect('business.address', 'address')
@@ -225,5 +239,18 @@ export class BusinessRepository extends Repository<Business> {
       .getMany();
 
     return businessRelations;
+  }
+
+  /**
+   * Retrieve business by name
+   * @param name
+   * @returns
+   */
+  async findByName(name: string): Promise<Business> {
+    const business = await this.createQueryBuilder('business')
+      .where('business.name = :name', { name })
+      .getOne();
+
+    return business;
   }
 }

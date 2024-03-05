@@ -1,6 +1,12 @@
 import { DataSource, Repository } from 'typeorm';
 import { Auth, AuthParams } from './entities/auth.entity';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Injectable()
@@ -80,19 +86,14 @@ export class AuthRepository extends Repository<Auth> {
    * @returns
    */
   async updateEmail(authId: number, email: string): Promise<Auth> {
-    try {
-      const auth = await this.findOneBy({ id: authId });
-      if (!auth) throw new Error('Auth not found');
-      auth.email = email;
-      await this.save(auth);
-      return auth;
-    } catch (e) {
-      this.logger.error(
-        'Error thrown in auth.repository.ts, updateAuth method, with error: ' +
-          e,
-      );
-      throw new Error(`Unable to update account`);
+    const auth = await this.findOneBy({ id: authId });
+    if (!auth) {
+      this.logger.error('Auth not found when updating Email Address');
+      throw new NotFoundException('Auth not found');
     }
+    auth.email = email;
+    await this.save(auth);
+    return auth;
   }
 
   async unverifyAccount(authId: number): Promise<Auth> {
@@ -109,5 +110,13 @@ export class AuthRepository extends Repository<Auth> {
       );
       throw new Error(`Unable to unverify account`);
     }
+  }
+
+  async updateOtp(authId: number, code: string, expiry: number): Promise<void> {
+    await this.createQueryBuilder('auth')
+      .update(Auth)
+      .set({ otpCode: code, otpExpiry: expiry })
+      .where('id = :id', { id: authId })
+      .execute();
   }
 }
