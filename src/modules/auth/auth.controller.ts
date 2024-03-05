@@ -48,14 +48,11 @@ export class AuthController {
         'LoginOTPRequest endpoint called with request body: ' +
           JSON.stringify(body),
       );
-
       const resp: AuthOtppRespDto = await this.authService.loginOtpRequest(
         body,
       );
 
-      const payload = createResponse(resp.message, resp.token);
-
-      return payload;
+      return createResponse(resp.message, resp.token);
     } catch (error) {
       this.logger.debug('Auth Controller with error: ' + error);
 
@@ -74,7 +71,6 @@ export class AuthController {
       this.logger.debug(
         'request-signup endpoint called with body: ' + JSON.stringify(body),
       );
-
       const resp: AuthOtppRespDto = await this.authService.signupOtpRequest(
         body,
       );
@@ -144,6 +140,7 @@ export class AuthController {
       const { code } = body;
 
       const authId = res.locals.authId;
+      const cryptoresp = res.locals.cryptoresp;
 
       if (!authId)
         throw new UnauthorizedException('authId not found in request');
@@ -153,9 +150,18 @@ export class AuthController {
       if (!isOtpVerified.status)
         throw new HttpException(isOtpVerified.message, HttpStatus.BAD_REQUEST);
 
-      const payload = createResponse('otp verification successful');
+      const clearResp = createResponse('otp verification successful');
 
-      return res.status(HttpStatus.OK).json(payload);
+      if (cryptoresp === 'false')
+        return res.status(HttpStatus.OK).json(clearResp);
+
+      const encryptedData = await encryptPayload(clearResp);
+
+      const encryptedRespsone: EncryptedDTO = {
+        payload: encryptedData,
+      };
+
+      return res.status(HttpStatus.OK).json(encryptedRespsone);
     } catch (error) {
       this.logger.debug('Auth Controller with error: ' + error);
 
@@ -175,6 +181,7 @@ export class AuthController {
       this.logger.debug('Login endpoint called');
 
       const authId = res.locals.authId;
+      const cryptoresp = res.locals.cryptoresp;
 
       if (!authId)
         throw new UnauthorizedException('Unable to retrieve authId from token');
@@ -192,9 +199,18 @@ export class AuthController {
         authId,
       );
 
-      const payload = createResponse('login successful', loginResponse);
+      const clearResponse = createResponse('login successful', loginResponse);
 
-      return res.status(HttpStatus.OK).json(payload);
+      if (cryptoresp === 'false')
+        return res.status(HttpStatus.OK).json(clearResponse);
+
+      const encryptedData = await encryptPayload(clearResponse);
+
+      const encryptedResp: EncryptedDTO = {
+        payload: encryptedData,
+      };
+
+      return res.status(HttpStatus.OK).json(encryptedResp);
     } catch (error) {
       if (error instanceof HttpException) {
         this.logger.debug('Auth Controller with error: ' + error);
@@ -255,7 +271,7 @@ export class AuthController {
 
       this.logger.debug('register email endpoint called');
       const authId = res.locals.authId;
-      await this.authService.registerEmail(email, authId);
+      await this.authService.updateAuthWithEmail(email, authId);
       return res
         .status(HttpStatus.CREATED)
         .json(createResponse('email registered'));

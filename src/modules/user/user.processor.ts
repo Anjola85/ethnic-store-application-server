@@ -105,7 +105,7 @@ export class UserProcessor {
       mobile: mobileDto,
       addressList: addressList || null,
       favouriteList: favouriteBusinessList,
-      country: countryDto,
+      countryOfOrigin: countryDto,
       accountVerified: user.auth?.accountVerified || false,
     };
 

@@ -111,4 +111,12 @@ export class AuthRepository extends Repository<Auth> {
       throw new Error(`Unable to unverify account`);
     }
   }
+
+  async updateOtp(authId: number, code: string, expiry: number): Promise<void> {
+    await this.createQueryBuilder('auth')
+      .update(Auth)
+      .set({ otpCode: code, otpExpiry: expiry })
+      .where('id = :id', { id: authId })
+      .execute();
+  }
 }

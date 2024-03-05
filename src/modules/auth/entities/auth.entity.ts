@@ -37,6 +37,6 @@ export class Auth extends CommonEntity {
   })
   otpExpiry: number;
 
-  @OneToOne(() => User, (user) => user.auth)
+  @OneToOne(() => User, (user) => user.auth, { nullable: true })
   user: User;
 }

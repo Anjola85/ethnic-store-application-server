@@ -155,7 +155,6 @@ export class AppModule implements NestModule {
       .exclude(
         'auth/encrypt',
         'auth/decrypt',
-        'auth/verifyOtp',
         'waitlist/*',
         'business/register',
       )

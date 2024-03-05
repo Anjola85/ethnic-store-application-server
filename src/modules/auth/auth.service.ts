@@ -204,6 +204,7 @@ export class AuthService {
 
       // check if mobile was provided
       if (mobile) {
+        console.log('mobile provided');
         // get mobile if it exists
         const registeredMobile =
           await this.mobileService.getMobileByPhoneNumber(mobile);
@@ -213,11 +214,17 @@ export class AuthService {
           registeredMobile.auth &&
           registeredMobile.auth.id
         ) {
+          console.log('mobile exists');
           // get auth account if mobile is registered
-          authAccount = await this.authRepository.findOneBy({
-            id: registeredMobile.auth.id,
-          });
+          // authAccount = await this.authRepository.findOneBy({
+          //   id: registeredMobile.auth.id,
+          // });
+
+          authAccount = await this.authRepository.getUserByAuthId(
+            registeredMobile.auth.id,
+          );
         } else {
+          console.log('mobile does not exist');
           // create auth account if mobile does not exist
           const auth = new Auth();
           auth.email = email;
@@ -242,28 +249,47 @@ export class AuthService {
           // await this.mobileService.updateMobile(mobile);
         }
       } else if (email) {
+        console.log('email provided');
         // get email if it exists
         authAccount = await this.findByEmail(body.email);
 
         // create new auth account if email does not exist
         if (!authAccount) {
+          console.log('email does not exist');
           const auth = new Auth();
           auth.email = email;
           authAccount = await this.registerAuthAccount(auth);
+        } else {
+          console.log('email exists');
+          // get auth account with it id
+          authAccount = await this.authRepository.getUserByAuthId(
+            authAccount.id,
+          );
         }
       }
 
-      // check if user has been registered and verified
-      if (authAccount && authAccount.accountVerified && authAccount.user)
-        return { userExists: true } as SignupOtpRespDto;
+      const authAccountExists = authAccount != null && authAccount != undefined;
 
+      // check if user has been registered and verified
+      if (
+        authAccountExists &&
+        authAccount.accountVerified &&
+        authAccount.user != null
+      ) {
+        throw new ConflictException('User already exists, please login');
+      }
+
+      console.log('generating otp adn jwt');
       const otpResp: OtpRespDto = await this.genrateOtp(email, mobile);
       const token = this.generateJwt(authAccount);
 
-      // save to auth
-      authAccount.otpCode = otpResp.code;
-      authAccount.otpExpiry = otpResp.expiryTime;
-      await this.authRepository.update(authAccount.id, authAccount);
+      console.log('expiry: ', otpResp.expiryTime);
+      await this.authRepository.updateOtp(
+        authAccount.id,
+        otpResp.code,
+        otpResp.expiryTime,
+      );
+      console.log('updating auth account with otp code and expiry time');
 
       const signupOtpResp = {
         ...otpResp,
@@ -273,7 +299,7 @@ export class AuthService {
 
       return signupOtpResp;
     } catch (error) {
-      this.logger.debug(
+      this.logger.error(
         'Error thrown in auth.service.ts, signupOtpRequest method: ' + error,
       );
 
@@ -347,7 +373,7 @@ export class AuthService {
    * @param authId
    * @throws ConflictException if email exists
    */
-  async registerEmail(email: string, authId: number): Promise<void> {
+  async updateAuthWithEmail(email: string, authId: number): Promise<void> {
     try {
       // get auth record with authId
       const auth = await this.authRepository.findOneBy({ id: authId });
@@ -409,7 +435,7 @@ export class AuthService {
       //   authId,
       // };
 
-      // pull all user info from the database
+      // get all user info from the database
       const authAcct: Auth = await this.authRepository.getUserByAuthId(authId);
 
       if (!authAcct) {
@@ -482,11 +508,11 @@ export class AuthService {
         authAccount = authExist;
       }
 
-      console.log('heree: ', authAccount.user);
-
       // check if user is registered
-      if (!authAccount.user)
+      if (!authAccount.user) {
+        this.logger.error('User is not registered');
         throw new NotFoundException('User is not registered');
+      }
 
       const otpResponse: OtpRespDto = await this.genrateOtp(email, mobile);
 
@@ -502,6 +528,8 @@ export class AuthService {
         userExists: false,
         token,
       };
+
+      this.logger.debug('User found');
 
       return response;
     } catch (error) {

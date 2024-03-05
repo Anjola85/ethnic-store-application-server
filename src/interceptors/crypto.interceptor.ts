@@ -11,6 +11,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, mergeMap } from 'rxjs';
+import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { encryptPayload } from 'src/common/util/crypto';
 import { createEncryptedResponse } from 'src/common/util/response';
 

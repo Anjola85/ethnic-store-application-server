@@ -107,6 +107,7 @@ export class UserRepository extends Repository<User> {
       relations: [
         'addresses',
         'favourites',
+        'countryOfOrigin',
         'business',
         'countryOfOrigin',
         'auth',

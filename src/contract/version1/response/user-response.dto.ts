@@ -35,7 +35,7 @@ export interface UserInformationRespDto {
   userProfile: string;
   profileImage: string;
   active: boolean;
-  country: CountryRespDto;
+  countryOfOrigin: CountryRespDto;
   email: string;
   mobile: MobileRespDto;
   addressList: AddressListRespDto;
