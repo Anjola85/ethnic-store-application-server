@@ -30,6 +30,7 @@ import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
+import { SignupRespDto } from 'src/contract/version1/response/signup-response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -112,7 +113,7 @@ export class AuthController {
       // body.profileImage = files?.profileImage[0] || null;
       // body.profileImage = files?.backgroundImagee[0] || null;
 
-      const response = await this.authService.registerUser(body);
+      const response: SignupRespDto = await this.authService.registerUser(body);
 
       return createResponse('user successfully registered', response);
     } catch (error) {
@@ -179,6 +180,8 @@ export class AuthController {
   async loginUser(@Body() loginDto: SecureLoginDto, @Res() res: Response) {
     try {
       this.logger.debug('Login endpoint called');
+
+      console.log('recievd objcet: ', loginDto);
 
       const authId = res.locals.authId;
       const cryptoresp = res.locals.cryptoresp;
