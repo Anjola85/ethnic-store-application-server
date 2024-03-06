@@ -99,6 +99,13 @@ export class BusinessService extends PageService {
 
       if (error instanceof HttpException) throw error;
 
+      if (error.message.includes('duplicate key value')) {
+        throw new HttpException(
+          `Business with name or email already exists`,
+          HttpStatus.CONFLICT,
+        );
+      }
+
       throw new HttpException(
         "We're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,
