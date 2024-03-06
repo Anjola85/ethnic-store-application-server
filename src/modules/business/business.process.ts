@@ -14,6 +14,7 @@ import { Logger } from '@nestjs/common';
 export class BusinessProcessor {
   private static logger = new Logger(BusinessProcessor.name);
   public static mapEntityToResp(business: Business): BusinessRespDto {
+    if (!business) return;
     try {
       const resp: BusinessRespDto = {
         id: business.id,
@@ -50,13 +51,15 @@ export class BusinessProcessor {
   public static mapEntityListToResp(
     businesses: Business[],
   ): BusinessListRespDto {
-    const businessList: BusinessRespDto[] = businesses.map((business) =>
-      BusinessProcessor.mapEntityToResp(business),
-    );
+    const businessList: BusinessRespDto[] = businesses
+      .map((business) => BusinessProcessor.mapEntityToResp(business))
+      .filter((businessResp) => businessResp !== null);
+
     const payload: BusinessListRespDto = {
       size: businessList.length,
       businessList: businessList,
     };
+
     return payload;
   }
 
