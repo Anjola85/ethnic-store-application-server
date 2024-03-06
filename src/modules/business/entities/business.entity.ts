@@ -77,7 +77,7 @@ export class Business extends CommonEntity {
   // @JoinColumn({ name: 'primary_country' })
   // primaryCountry: Country;
 
-  @ManyToMany(() => Country, (country) => country.businesses, { cascade: true })
+  @ManyToMany(() => Country, (country) => country.businesses)
   countries: Country[];
 
   @ManyToMany(() => Region, (region) => region.businesses)
