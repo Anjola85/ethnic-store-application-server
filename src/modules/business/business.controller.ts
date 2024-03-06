@@ -110,11 +110,11 @@ export class BusinessController {
   async findAll(): Promise<any> {
     try {
       this.logger.debug('Get all businesses endpoint hit');
-      const businessResp: BusinessListRespDto =
+      const result: BusinessListRespDto =
         await this.businessService.findAll();
 
       return createResponse('businesses fetched successfully', {
-        businessResp,
+        result,
       });
     } catch (error) {
       this.logger.debug(error);
