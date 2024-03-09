@@ -66,6 +66,7 @@ export class EnvConfigService {
       { name: 'TWILIO_PHONE_NUMBER', isSecure: true },
       { name: 'SENDGRID_API_KEY', isSecure: true },
       { name: 'WAITLIST_ID', isSecure: true },
+      { name: 'JWT_SECRET_KEY', isSecure: true },
     ];
 
     for (const params of parametersToLoad) {

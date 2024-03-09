@@ -11,9 +11,15 @@ export class CountryProcessor {
   }
 
   public static mapEntityListToResp(countries: Country[]): CountryListRespDto {
-    const countryList: CountryRespDto[] = countries.map((country) =>
-      CountryProcessor.mapEntityToResp(country),
-    );
+    if (!countries || countries.length === 0)
+      return { size: 0, countryList: [] };
+
+    const countryList: CountryRespDto[] = countries
+      .map((country) => CountryProcessor.mapEntityToResp(country))
+      .filter(
+        (countryResp) => countryResp !== null && countryResp !== undefined,
+      );
+
     const payload = {
       countryList: countryList,
       size: countryList.length,
