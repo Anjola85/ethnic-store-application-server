@@ -46,7 +46,7 @@ export class UserService {
 
       newUser = await this.userRepository.updateAuth(userDto.auth, newUser.id);
 
-      if (userDto.address) {
+      if (userDto.address !== undefined && userDto.address !== null) {
         console.log('trying to add address');
         const address = Object.assign(new Address(), userDto.address);
         address.user = newUser;

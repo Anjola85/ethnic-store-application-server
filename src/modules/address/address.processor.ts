@@ -25,7 +25,7 @@ export class AddressProcessor {
   }
 
   public static mapEntityListToResp(addresses: Address[]): AddressListRespDto {
-    if (!addresses || addresses.length === 0)
+    if (addresses === undefined || addresses === null || addresses.length === 0)
       return { size: 0, addressList: [] };
 
     const addressList: AddressRespDto[] = addresses
