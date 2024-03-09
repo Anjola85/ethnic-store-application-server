@@ -46,6 +46,7 @@ import { Address } from '../address/entities/address.entity';
 import { AddressProcessor } from '../address/address.processor';
 import { MobileProcessor } from '../mobile/mobile.processor';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { EnvConfigService } from '../config/env-config.';
 
 @Injectable()
 export class AuthService {
@@ -633,7 +634,9 @@ export class AuthService {
    * @returns
    */
   public generateJwt(obj: Auth | User): string {
-    const privateKey = fs.readFileSync('./secrets/private_key.pem');
+    console.log('reached');
+    const privateKey = EnvConfigService.get('JWT_SECRET_KEY');
+    console.log('privateKey: ', privateKey);
     if (obj instanceof Auth) {
       const token = jsonwebtoken.sign(
         { authId: obj.id as number },

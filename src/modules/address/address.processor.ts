@@ -25,9 +25,15 @@ export class AddressProcessor {
   }
 
   public static mapEntityListToResp(addresses: Address[]): AddressListRespDto {
-    const addressList = addresses.map((address) =>
-      this.mapEntityToResp(address),
-    );
+    if (!addresses || addresses.length === 0)
+      return { size: 0, addressList: [] };
+
+    const addressList: AddressRespDto[] = addresses
+      .map((address) => this.mapEntityToResp(address))
+      .filter(
+        (addressResp) => addressResp !== null && addressResp !== undefined,
+      );
+
     const payload: AddressListRespDto = {
       addressList: addressList,
       size: addressList.length,

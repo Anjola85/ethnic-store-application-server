@@ -51,9 +51,14 @@ export class BusinessProcessor {
   public static mapEntityListToResp(
     businesses: Business[],
   ): BusinessListRespDto {
+    // if (!businesses || businesses.length === 0)
+    //   return { size: 0, businessList: [] };
+
     const businessList: BusinessRespDto[] = businesses
       .map((business) => BusinessProcessor.mapEntityToResp(business))
-      .filter((businessResp) => businessResp !== null);
+      .filter(
+        (businessResp) => businessResp !== null && businessResp !== undefined,
+      );
 
     const payload: BusinessListRespDto = {
       size: businessList.length,

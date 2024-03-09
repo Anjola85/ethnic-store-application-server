@@ -58,31 +58,49 @@ export class UserProcessor {
 
     const mobileDto: MobileRespDto = MobileProcessor.mapEntityToResp(mobile);
 
-    let addressList: AddressListRespDto;
+    // let addressList: AddressListRespDto;
+    // if (
+    //   user.addresses !== undefined &&
+    //   user.addresses != null &&
+    //   user.addresses.length > 0
+    // )
+    //   addressList = AddressProcessor.mapEntityListToResp(user.addresses);
+    const addressList: AddressListRespDto =
+      AddressProcessor.mapEntityListToResp(user.addresses);
 
-    if (user.addresses)
-      addressList = AddressProcessor.mapEntityListToResp(user.addresses);
+    // let favouriteBusinessList: BusinessListRespDto;
 
-    let favouriteBusinessList: BusinessListRespDto;
+    // if (
+    //   user.favourites !== undefined &&
+    //   user.favourites != null &&
+    //   user.favourites.length > 0
+    // ) {
+    //   const favouritedBusinessEntities: Business[] = user.favourites.map(
+    //     (favourite: Favourite) => favourite.business,
+    //   );
+    //   favouriteBusinessList = BusinessProcessor.mapEntityListToResp(
+    //     favouritedBusinessEntities,
+    //   );
+    // } else {
+    //   favouriteBusinessList = {
+    //     businessList: [],
+    //     size: 0,
+    //   };
+    // }
+    const favouritedBusinessEntities: Business[] = user.favourites.map(
+      (favourite: Favourite) => favourite.business,
+    );
+    const favouriteBusinessList: BusinessListRespDto =
+      BusinessProcessor.mapEntityListToResp(favouritedBusinessEntities);
 
-    if (user.favourites && user.favourites.length > 0) {
-      const favouritedBusinessEntities: Business[] = user.favourites.map(
-        (favourite: Favourite) => favourite.business,
-      );
-      favouriteBusinessList = BusinessProcessor.mapEntityListToResp(
-        favouritedBusinessEntities,
-      );
-    } else {
-      favouriteBusinessList = {
-        businessList: [],
-        size: 0,
-      };
-    }
+    // let countryDto: CountryRespDto;
 
-    let countryDto: CountryRespDto;
+    // if (user.countryOfOrigin)
+    //   countryDto = CountryProcessor.mapEntityToResp(user.countryOfOrigin);
 
-    if (user.countryOfOrigin)
-      countryDto = CountryProcessor.mapEntityToResp(user.countryOfOrigin);
+    const countryDto: CountryRespDto = CountryProcessor.mapEntityToResp(
+      user.countryOfOrigin,
+    );
 
     const userInfo: UserInformationRespDto = {
       id: user.id,

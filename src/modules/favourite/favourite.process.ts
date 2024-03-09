@@ -20,9 +20,12 @@ export class FavouriteProcessor {
   public static mapEntityListToResp(
     favourites: Favourite[],
   ): FavouriteListRespDto {
-    const favouriteList = favourites.map((favourite) =>
-      FavouriteProcessor.mapEntityToResp(favourite),
-    );
+    const favouriteList: FavouriteRespDto[] = favourites
+      .map((favourite) => FavouriteProcessor.mapEntityToResp(favourite))
+      .filter(
+        (favouriteResp) =>
+          favouriteResp !== null && favouriteResp !== undefined,
+      );
 
     const payload = {
       favouriteList: favouriteList,
