@@ -7,8 +7,8 @@ import { Address } from './entities/address.entity';
 export class AddressProcessor {
   public static mapEntityToResp(address: Address): AddressRespDto {
     const location = address.location as any; // as GeoJSONPoint;
-    const longitude: number = location.coordinates[0];
-    const latitude: number = location.coordinates[1];
+    const longitude: number = location?.coordinates[0];
+    const latitude: number = location?.coordinates[1];
     const resp: AddressRespDto = {
       id: address.id,
       isPrimary: address.isPrimary,

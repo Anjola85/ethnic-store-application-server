@@ -9,5 +9,5 @@ export class CreateFavouriteDto {
     required: true,
   })
   @IsNotEmpty()
-  readonly business: Business;
+  business: Business;
 }

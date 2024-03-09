@@ -31,16 +31,16 @@ export class Business extends CommonEntity {
   @Column({ nullable: false, unique: true })
   name: string;
 
-  @Column({ type: 'text', default: '' })
+  @Column({ type: 'text', default: null })
   description: string;
 
-  @Column({ type: 'varchar', default: '', unique: true, nullable: true })
+  @Column({ type: 'varchar', unique: true, nullable: true })
   email: string;
 
-  @Column({ type: 'varchar', default: '' })
+  @Column({ type: 'varchar', default: null })
   website: string;
 
-  @Column({ type: 'text', default: '3.0' })
+  @Column({ type: 'text', default: '3.8' })
   rating: string;
 
   @OneToOne(() => Address, (address) => address.business, {

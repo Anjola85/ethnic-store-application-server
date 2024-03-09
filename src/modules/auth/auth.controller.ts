@@ -21,7 +21,6 @@ import { ApiResponse } from '@nestjs/swagger';
 import { decryptPayload, encryptPayload } from 'src/common/util/crypto';
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { VerifyOtpDto } from './dto/otp-verification.dto';
-import { NotFoundError } from 'rxjs';
 import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
 import { AuthOtppRespDto } from 'src/contract/version1/response/otp-response.dto';
 import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';

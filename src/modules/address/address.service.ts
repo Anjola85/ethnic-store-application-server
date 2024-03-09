@@ -1,14 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AddressDto } from './dto/address.dto';
-import { UpdateAddressDto } from './dto/update-address.dto';
 import { addressDtoToEntity, entityToAddressDto } from './address-mapper';
 import { AddressRepository } from './address.respository';
 import { Address } from './entities/address.entity';
 import { GeocodingService } from '../geocoding/geocoding.service';
-import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
-import { AddressProcessor } from './address.processor';
-import { getCurrentEpochTime } from 'src/common/util/functions';
-import { GeoJSONPoint } from './dto/geo-json-point.dto';
 
 export interface AddressParams {
   id?: string;

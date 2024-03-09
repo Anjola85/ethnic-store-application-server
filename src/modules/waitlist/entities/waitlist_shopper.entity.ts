@@ -22,7 +22,7 @@ export class WaitlistShopper extends CommonEntity {
   @Column({ type: 'varchar', name: 'age' })
   age: string;
 
-  @Column({ type: 'varchar', name: 'country', default: '' })
+  @Column({ type: 'varchar', name: 'country', default: null })
   country: string;
 
   @Column({ type: 'varchar', name: 'waitlist_uuid', nullable: true })
