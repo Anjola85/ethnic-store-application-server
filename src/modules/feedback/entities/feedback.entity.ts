@@ -14,7 +14,7 @@ export class Feedback extends CommonEntity {
   @Column('varchar', { length: 500 })
   content: string;
 
-  @Column('double precision', { default: 0 })
+  @Column('double precision', { default: null })
   rating: number;
 
   @ManyToOne(() => User, (user) => user.feedbacks, {

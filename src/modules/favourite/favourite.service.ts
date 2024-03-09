@@ -25,14 +25,19 @@ export class FavouriteService {
 
       if (!userExists) throw new NotFoundException('User not found');
 
+      console.log('user exists');
+
       const newUser = new User();
       newUser.id = userExists.id;
+
+      // mapping business to new business object
       const newBusiness = Object.assign(new Business(), business);
 
       // check if favourite exists for user
       const favouriteExist: Favourite =
         await this.favouriteRepository.favouriteExist(userId, business.id);
 
+      // check if favourite exists for user or it was deleted
       if (
         favouriteExist &&
         favouriteExist.business.id === business.id &&
@@ -46,10 +51,19 @@ export class FavouriteService {
       }
 
       // add to favourites
-      const favourite: Favourite =
-        await this.favouriteRepository.addToFavourites(newUser, newBusiness);
+      const favourite: Favourite = await this.favouriteRepository
+        .create({
+          user: newUser,
+          business: newBusiness,
+        })
+        .save();
+
       return favourite;
     } catch (error) {
+      if (error.code === '23503') {
+        throw new NotFoundException('Business Id to favourite does not exist');
+      }
+
       this.logger.error(
         'Error thrown in favourite.service.ts, addToFavourites method: ' +
           error +
@@ -65,15 +79,15 @@ export class FavouriteService {
       const favouriteList: Favourite[] =
         await this.favouriteRepository.getFavouritesWithBusinessDetails(id);
 
+      console.log('got back: ', favouriteList);
+
       const favouriteListRespDto: FavouriteListRespDto =
         FavouriteProcessor.mapEntityListToResp(favouriteList);
       return favouriteListRespDto;
     } catch (error) {
       this.logger.error(
-        'Error thrown in favourite.service.ts, getFavouriteByUserId method: ' +
-          error +
-          ' with error message: ' +
-          error.message,
+        'Error thrown in favourite.service.ts, getFavouriteByUserId method, with error: ' +
+          error,
       );
       throw error;
     }

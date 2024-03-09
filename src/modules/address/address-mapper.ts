@@ -33,11 +33,19 @@ export function entityToAddressDto(address: Address): AddressDto {
   addressDto.user = address.user;
   addressDto.business = address.business;
   // addressDto.location = address.location;
-  const coordinates = address.location.split(' ');
-  addressDto.location = {
-    type: 'Point',
-    coordinates: [parseFloat(coordinates[0]), parseFloat(coordinates[1])],
-  };
+  if (address.location) {
+    const coordinates = address.location.split(' ');
+    addressDto.location = {
+      type: 'Point',
+      coordinates: [parseFloat(coordinates[0]), parseFloat(coordinates[1])],
+    };
+  } else {
+    console.log('address.location is null for address: ', address);
+    addressDto.location = {
+      type: 'Point',
+      coordinates: [0, 0],
+    };
+  }
 
   return addressDto;
 }

@@ -12,24 +12,14 @@ import {
 } from 'src/contract/version1/response/user-response.dto';
 import { User } from './entities/user.entity';
 import { Mobile } from '../mobile/mobile.entity';
-import {
-  AddressListRespDto,
-  AddressRespDto,
-} from 'src/contract/version1/response/address-response.dto';
-import {
-  BusinessListRespDto,
-  BusinessRespDto,
-} from 'src/contract/version1/response/business-response.dto';
-import {
-  CountryListRespDto,
-  CountryRespDto,
-} from 'src/contract/version1/response/country-response.dto';
+import { AddressListRespDto } from 'src/contract/version1/response/address-response.dto';
+import { BusinessListRespDto } from 'src/contract/version1/response/business-response.dto';
+import { CountryRespDto } from 'src/contract/version1/response/country-response.dto';
 import { AddressProcessor } from '../address/address.processor';
 import { BusinessProcessor } from '../business/business.process';
 import { Favourite } from '../favourite/entities/favourite.entity';
 import { Business } from '../business/entities/business.entity';
 import { CountryProcessor } from '../country/country.process';
-import { MobileDto } from 'src/common/dto/mobile.dto';
 import { MobileProcessor } from '../mobile/mobile.processor';
 
 export class UserProcessor {
