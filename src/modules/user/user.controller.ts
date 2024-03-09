@@ -67,13 +67,13 @@ export class UserController {
       );
 
       // perform necessary mapping
-      const clearResp = UserProcessor.processUserRelationInfo(user, mobile);
+      const result = UserProcessor.processUserRelationInfo(user, mobile);
 
       this.logger.debug('successfully retrieved user information');
 
       if (crypto === 'true') {
         const encryptedResp = await encryptPayload(
-          createResponse('successfully retrieved user information', clearResp),
+          createResponse('successfully retrieved user information', result),
         );
         return res
           .status(HttpStatus.OK)
@@ -82,10 +82,7 @@ export class UserController {
         return res
           .status(HttpStatus.OK)
           .json(
-            createResponse(
-              'successfully retrieved user information',
-              clearResp,
-            ),
+            createResponse('successfully retrieved user information', result),
           );
       }
     } catch (error) {
@@ -110,24 +107,24 @@ export class UserController {
       const userId: number = res.locals.id;
       const cryptoresp = res.locals.cryptoresp;
 
-      const resp: UserRespDto = await this.authService.updateUserInfo(
+      const respResult: UserRespDto = await this.authService.updateUserInfo(
         body,
         userId,
       );
 
-      const clearResponse = createResponse(
+      const result = createResponse(
         'successfully updated user information',
-        resp,
+        respResult,
       );
 
       if (cryptoresp === 'true') {
-        const encryptedResp = await encryptPayload(clearResponse);
+        const encryptedResp = await encryptPayload(result);
         return res
           .status(HttpStatus.OK)
           .json(createEncryptedResponse(encryptedResp));
       }
 
-      return res.status(HttpStatus.OK).json(clearResponse);
+      return res.status(HttpStatus.OK).json(result);
     } catch (error) {
       this.logger.error(
         'Error thrown in user.controller.ts, updateUser method: ' + error,

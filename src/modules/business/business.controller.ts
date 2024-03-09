@@ -86,13 +86,13 @@ export class BusinessController {
   ): Promise<any> {
     try {
       this.logger.debug('Nearby business endpoint hit');
-      const businessList: BusinessListRespDto =
+      const result: BusinessListRespDto =
         await this.businessService.findStoresNearby(
           body.latitude,
           body.longitude,
         );
       return createResponse('Nearby businesses fetched successfully', {
-        businessList,
+        result,
       });
     } catch (error) {
       this.logger.debug(error);
@@ -110,11 +110,10 @@ export class BusinessController {
   async findAll(): Promise<any> {
     try {
       this.logger.debug('Get all businesses endpoint hit');
-      const businessResp: BusinessListRespDto =
-        await this.businessService.findAll();
+      const result: BusinessListRespDto = await this.businessService.findAll();
 
       return createResponse('businesses fetched successfully', {
-        businessResp,
+        result,
       });
     } catch (error) {
       this.logger.debug(error);

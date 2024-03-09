@@ -64,16 +64,16 @@ export class AuthService {
     let response: OtpRespDto;
 
     // TOOD: undo
-    if (email) response = await this.sendgridService.sendOTPEmail(email);
-    else if (mobile)
-      response = await this.twilioService.sendSms(mobile.phoneNumber);
+    // if (email) response = await this.sendgridService.sendOTPEmail(email);
+    // else if (mobile)
+    //   response = await this.twilioService.sendSms(mobile.phoneNumber);
 
     //TODO: remove
-    // response = {
-    //   message: 'OTP sent',
-    //   code: '1234',
-    //   expiryTime: getCurrentEpochTime() + 300000000000,
-    // };
+    response = {
+      message: 'OTP sent',
+      code: '1234',
+      expiryTime: getCurrentEpochTime() + 300000000000,
+    };
 
     return response;
   }
@@ -347,6 +347,8 @@ export class AuthService {
       }
 
       userDto.auth = registeredMobile.auth;
+
+      console.log('registering: ', userDto);
 
       const user: User = await this.userSerivce.register(userDto);
 

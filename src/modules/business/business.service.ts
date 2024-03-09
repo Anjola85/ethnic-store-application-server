@@ -43,26 +43,28 @@ export class BusinessService extends PageService {
    * @param reqBody
    * @returns
    */
-  async register(reqBody: CreateBusinessDto): Promise<BusinessRespDto> {
+  async register(businessDto: CreateBusinessDto): Promise<BusinessRespDto> {
     try {
-      console.log('register business api received: ', reqBody);
+      console.log('register business api received: ', businessDto);
 
-      await this.businessExist(reqBody);
+      await this.businessExist(businessDto);
 
       // map request object of DTO
-      const businessDto: CreateBusinessDto = Object.assign(
-        new CreateBusinessDto(),
-        reqBody,
-      );
+      // const businessDto: CreateBusinessDto = Object.assign(
+      //   new CreateBusinessDto(),
+      //   reqBody,
+      // );
+
+      // console.log('businessDto: ', businessDto);
 
       // save to mobile table
       const mobileEntity = await this.mobileService.registerMobile(
-        reqBody.mobile,
+        businessDto.mobile,
       );
 
       // save to address table
       const addressEntity = await this.addressService.addAddress(
-        reqBody.address,
+        businessDto.address,
       );
 
       const businessEntity: Business =
@@ -83,7 +85,7 @@ export class BusinessService extends PageService {
 
       return resp;
     } catch (error) {
-      this.logger.debug(
+      this.logger.error(
         'From register in business.service.ts with error:',
         error,
       );
@@ -96,6 +98,13 @@ export class BusinessService extends PageService {
       }
 
       if (error instanceof HttpException) throw error;
+
+      if (error.message.includes('duplicate key value')) {
+        throw new HttpException(
+          `Business with name or email already exists`,
+          HttpStatus.CONFLICT,
+        );
+      }
 
       throw new HttpException(
         "We're working on it",
