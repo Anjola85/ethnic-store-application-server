@@ -17,6 +17,7 @@ import {
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import * as fs from 'fs';
+import { EnvConfigService } from 'src/modules/config/env-config.';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -70,8 +71,8 @@ export class AuthMiddleware implements NestMiddleware {
     res: Response,
     token: string,
   ): Promise<{ authId: number; userId: number }> {
-    const privateKey = fs.readFileSync('./secrets/private_key.pem');
-
+    // const privateKey = fs.readFileSync('./secrets/private_key.pem');
+    const privateKey = EnvConfigService.get('JWT_SECRET_KEY');
     const decoded: any = await jsonwebtoken.verify(
       token,
       privateKey.toString(),
