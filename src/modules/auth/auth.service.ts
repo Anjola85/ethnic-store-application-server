@@ -343,13 +343,10 @@ export class AuthService {
           'Inomplete registration process! Mobile is not registered',
         );
 
-      if (registeredMobile.auth.user !== null) {
+      if (registeredMobile.auth.user !== null)
         throw new ConflictException('User already exists');
-      }
 
       userDto.auth = registeredMobile.auth;
-
-      console.log('registering: ', userDto);
 
       const user: User = await this.userSerivce.register(userDto);
 
