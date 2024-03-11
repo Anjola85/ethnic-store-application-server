@@ -1,15 +1,12 @@
-import {
-  AddressListRespDto,
-  AddressRespDto,
-} from 'src/contract/version1/response/address-response.dto';
-import { Address } from './entities/address.entity';
+import { AddressListRespDto, AddressRespDto } from "src/contract/version1/response/address-response.dto";
+import { Address } from "./entities/address.entity";
 
 export class AddressProcessor {
   public static mapEntityToResp(address: Address): AddressRespDto {
     const location = address.location as any; // as GeoJSONPoint;
     const longitude: number = location?.coordinates[0];
     const latitude: number = location?.coordinates[1];
-    const resp: AddressRespDto = {
+    return {
       id: address.id,
       isPrimary: address.isPrimary,
       unit: address.unit,
@@ -21,7 +18,6 @@ export class AddressProcessor {
       latitude,
       longitude,
     };
-    return resp;
   }
 
   public static mapEntityListToResp(addresses: Address[]): AddressListRespDto {
@@ -34,11 +30,10 @@ export class AddressProcessor {
         (addressResp) => addressResp !== null && addressResp !== undefined,
       );
 
-    const payload: AddressListRespDto = {
+    return {
       addressList: addressList,
       size: addressList.length,
     };
-    return payload;
   }
 }
 

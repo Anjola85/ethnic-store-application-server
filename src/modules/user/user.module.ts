@@ -8,6 +8,7 @@ import { UserRepository } from './user.repository';
 import { Favourite } from '../favourite/entities/favourite.entity';
 
 import { AwsS3Service } from '../files/aws-s3.service';
+import { AddressService } from "../address/address.service";
 
 @Global()
 @Module({

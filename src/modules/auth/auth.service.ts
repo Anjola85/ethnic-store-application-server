@@ -2,51 +2,42 @@ import {
   BadRequestException,
   ConflictException,
   HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import * as fs from 'fs';
-import * as jsonwebtoken from 'jsonwebtoken';
-import { Auth, AuthParams } from './entities/auth.entity';
-import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
-import TwilioService from 'src/providers/otp/twilio/twilio.service';
-import { User } from '../user/entities/user.entity';
-import { MobileDto } from 'src/common/dto/mobile.dto';
-import { AuthRepository } from './auth.repository';
-import { UserDto } from '../user/dto/user.dto';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { Mobile } from '../mobile/mobile.entity';
-import { MobileService } from '../mobile/mobile.service';
-import { SecureLoginDto } from './dto/secure-login.dto';
-import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
-import {
-  AuthOtppRespDto,
-  OtpRespDto,
-} from 'src/contract/version1/response/otp-response.dto';
-import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
-import { UserService } from '../user/user.service';
-import { UpdateUserDto } from '../user/dto/update-user.dto';
-import { AddressService } from '../address/address.service';
-import { SignupOtpRespDto } from 'src/contract/version1/response/signup-otp-response.dto';
-import { getCurrentEpochTime } from 'src/common/util/functions';
-import { LoginOtpRespDto } from 'src/contract/version1/response/login-otp-response.dto';
-import { CreateUserDto } from '../user/dto/create-user.dto';
-import { UserProcessor } from '../user/user.processor';
-import { SignupRespDto } from 'src/contract/version1/response/signup-response.dto';
-import {
-  UserInformationRespDto,
-  UserRespDto,
-} from 'src/contract/version1/response/user-response.dto';
-import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
-import { AddressRespDto } from 'src/contract/version1/response/address-response.dto';
-import { Address } from '../address/entities/address.entity';
-import { AddressProcessor } from '../address/address.processor';
-import { MobileProcessor } from '../mobile/mobile.processor';
-import { UpdateAuthDto } from './dto/update-auth.dto';
-import { EnvConfigService } from '../config/env-config.';
+  UnauthorizedException
+} from "@nestjs/common";
+import * as jsonwebtoken from "jsonwebtoken";
+import { Auth, AuthParams } from "./entities/auth.entity";
+import { SendgridService } from "src/providers/otp/sendgrid/sendgrid.service";
+import TwilioService from "src/providers/otp/twilio/twilio.service";
+import { User } from "../user/entities/user.entity";
+import { MobileDto } from "src/common/dto/mobile.dto";
+import { AuthRepository } from "./auth.repository";
+import { UserDto } from "../user/dto/user.dto";
+import { CreateAuthDto } from "./dto/create-auth.dto";
+import { Mobile } from "../mobile/mobile.entity";
+import { MobileService } from "../mobile/mobile.service";
+import { SecureLoginDto } from "./dto/secure-login.dto";
+import { LoginOtpRequest } from "src/contract/version1/request/auth/loginOtp.request";
+import { OtpRespDto } from "src/contract/version1/response/otp-response.dto";
+import { SignupOtpRequest } from "src/contract/version1/request/auth/signupOtp.request";
+import { UserService } from "../user/user.service";
+import { UpdateUserDto } from "../user/dto/update-user.dto";
+import { AddressService } from "../address/address.service";
+import { SignupOtpRespDto } from "src/contract/version1/response/signup-otp-response.dto";
+import { getCurrentEpochTime } from "src/common/util/functions";
+import { LoginOtpRespDto } from "src/contract/version1/response/login-otp-response.dto";
+import { CreateUserDto } from "../user/dto/create-user.dto";
+import { UserProcessor } from "../user/user.processor";
+import { SignupRespDto } from "src/contract/version1/response/signup-response.dto";
+import { UserInformationRespDto, UserRespDto } from "src/contract/version1/response/user-response.dto";
+import { LoginRespDto } from "src/contract/version1/response/login-response.dto";
+import { Address } from "../address/entities/address.entity";
+import { AddressProcessor } from "../address/address.processor";
+import { MobileProcessor } from "../mobile/mobile.processor";
+import { UpdateAuthDto } from "./dto/update-auth.dto";
+import { EnvConfigService } from "../config/env-config.";
 
 @Injectable()
 export class AuthService {
@@ -631,27 +622,23 @@ export class AuthService {
    * @returns
    */
   public generateJwt(obj: Auth | User): string {
-    console.log('reached');
     const privateKey = EnvConfigService.get('JWT_SECRET_KEY');
-    console.log('privateKey: ', privateKey);
     if (obj instanceof Auth) {
-      const token = jsonwebtoken.sign(
+      return jsonwebtoken.sign(
         { authId: obj.id as number },
         privateKey.toString(),
         {
           expiresIn: '1d',
         },
       );
-      return token;
     } else if (obj instanceof User) {
-      const token = jsonwebtoken.sign(
+      return jsonwebtoken.sign(
         { userId: obj.id as number },
         privateKey.toString(),
         {
           expiresIn: '1d',
         },
       );
-      return token;
     }
   }
 

@@ -7,6 +7,7 @@ import { User } from '../user/entities/user.entity';
 import { Business } from '../business/entities/business.entity';
 import { AddressRepository } from './address.respository';
 import { GeocodingService } from '../geocoding/geocoding.service';
+import { UserService } from "../user/user.service";
 
 @Global()
 @Module({

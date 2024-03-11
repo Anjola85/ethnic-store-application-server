@@ -33,7 +33,7 @@ import { SignupRespDto } from 'src/contract/version1/response/signup-response.dt
 
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthService.name);
+  private readonly logger = new Logger(AuthController.name);
 
   constructor(
     private readonly authService: AuthService,

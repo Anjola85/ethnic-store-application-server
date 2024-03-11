@@ -1,9 +1,9 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { Address } from './entities/address.entity';
-import { AddressParams } from './address.service';
-import { getCurrentEpochTime } from 'src/common/util/functions';
-import { AddressDto } from './dto/address.dto';
+import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { DataSource, Repository } from "typeorm";
+import { Address } from "./entities/address.entity";
+import { AddressParams } from "./address.service";
+import { getCurrentEpochTime } from "src/common/util/functions";
+import { AddressDto } from "./dto/address.dto";
 
 @Injectable()
 export class AddressRepository extends Repository<Address> {
@@ -54,8 +54,7 @@ export class AddressRepository extends Repository<Address> {
         .execute();
 
       const insertedAddressId = newAddress.generatedMaps[0].id;
-      const address = await this.getAddressWithLongLat(insertedAddressId);
-      return address;
+      return await this.getAddressWithLongLat(insertedAddressId);
     } catch (error) {
       this.logger.error(
         `Error thrown in address.repository.ts, addAddress method: ${error}`,
@@ -91,13 +90,15 @@ export class AddressRepository extends Repository<Address> {
 
   async getAddress(params: AddressParams): Promise<Address[]> {
     try {
-      const addresses = await this.createQueryBuilder('address')
-        .where('address.id = :id', { id: params.id })
-        .orWhere('address.user.id = :id', { id: params.userId })
-        .orWhere('address.business.id = :id', { id: params.businessId })
-        .getMany();
+      let addressList: Address[];
+      if (params.id)
+        addressList = await this.createQueryBuilder('address').where('address.id = :id', { id: params.id }).getMany();
+       else if (params.businessId)
+        addressList = await this.createQueryBuilder('address').where('address.business.id = :businessId', { id: params.businessId }).getMany();
+       else if (params.userId)
+        addressList = await this.createQueryBuilder('address').where('address.user.id = :userId', { userId: params.userId }).getMany();
 
-      return addresses;
+      return addressList;
     } catch (error) {
       this.logger.error(
         `Error thrown in address.repository.ts, getAddress method: ${error.message}`,
@@ -112,12 +113,11 @@ export class AddressRepository extends Repository<Address> {
   // update current address for Business
   async updateBusinessAddress(address: Address, businessId: string) {
     try {
-      const updatedAddress = await this.createQueryBuilder('address')
+      return await this.createQueryBuilder('address')
         .update(Address)
         .set(address)
         .where('business.id = :businessId', { businessId })
         .execute();
-      return updatedAddress;
     } catch (error) {
       this.logger.error(
         `Error thrown in address.repository.ts, updateBusinessAddress method: ${error.message}`,
@@ -163,27 +163,18 @@ export class AddressRepository extends Repository<Address> {
     address: Address,
   ): Promise<Address | undefined> {
     try {
-      await this.createQueryBuilder('address')
-        .update(Address)
-        .set(address)
-        .where('address.id = :addressId', { addressId })
-        .execute();
+      const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId}).getOne();
 
-      const updatedAddress = await this.findOneById(addressId);
+      if(!currentAddress) throw new NotFoundException("Address to be updated not found");
 
-      if (!updatedAddress) {
-        throw new Error('Address not found');
-      }
+      Object.assign(currentAddress, address);
 
-      return updatedAddress;
+      return await currentAddress.save();
     } catch (error) {
       this.logger.error(
         `Error thrown in address.repository.ts, updateUserAddressById method: ${error.message}`,
-      );
-      throw new HttpException(
-        "Unable to update user's address in the database",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      )
+      throw error;
     }
   }
 
