@@ -33,9 +33,6 @@ export class AuthMiddleware implements NestMiddleware {
       );
     }
 
-    // TODO: check if crypto or cryptoReq, add resp to crypto, dont make it a magic variable.
-    // call the update user, and make sure the right data is being encrypted and decrypted
-
     try {
       const { authId, userId } = await this.validateToken(res, token);
 

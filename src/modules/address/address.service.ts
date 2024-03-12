@@ -1,10 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AddressDto } from "./dto/address.dto";
-import { addressDtoToEntity, entityToAddressDto } from "./address-mapper";
+import { entityToAddressDto } from "./address-mapper";
 import { AddressRepository } from "./address.respository";
 import { Address } from "./entities/address.entity";
 import { GeocodingService } from "../geocoding/geocoding.service";
-import { AddressListRespDto } from "../../contract/version1/response/address-response.dto";
+import { AddressListRespDto, AddressRespDto } from "../../contract/version1/response/address-response.dto";
 import { AddressProcessor } from "./address.processor";
 import { UpdateAddressDto } from "./dto/update-address.dto";
 
@@ -27,17 +27,15 @@ export class AddressService {
    * @param addressDto
    * @returns the newly added address
    */
-  async addAddress(addressDto: AddressDto): Promise<any> {
+  async addAddress(addressDto: AddressDto): Promise<AddressRespDto> {
     try {
       await this.geoCodingService.setCoordinates(addressDto);
       const addressEntity: Address = Object.assign(new Address(), addressDto);
-
-      const newAddress = await this.addressRepository.addAddress(
+      const newAddress: Address = await this.addressRepository.addAddress(
         addressEntity,
         addressDto,
       );
-
-      return newAddress;
+      return AddressProcessor.mapEntityToResp(newAddress);
     } catch (error) {
       this.logger.debug('Error in addAddress method: ' + error);
       throw error;
@@ -88,6 +86,17 @@ export class AddressService {
       const addressList: Address[] = await this.addressRepository.getAddress({ userId });
       return AddressProcessor.mapEntityListToResp(addressList);
     } catch(error) {
+      throw error;
+    }
+  }
+
+  async deleteAddress(addressId: number): Promise<void> {
+    try {
+      await this.addressRepository.removeFromAddress(addressId);
+    } catch(error) {
+      this.logger.error(
+        "Error thrown in deletedAddress method of address.service.ts with error: "
+        + error.message);
       throw error;
     }
   }

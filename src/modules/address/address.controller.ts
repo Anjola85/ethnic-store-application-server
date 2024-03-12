@@ -15,70 +15,44 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { createResponse } from "../../common/util/response";
 import { encryptPayload } from "../../common/util/crypto";
 import { EncryptedDTO } from "../../common/dto/encrypted.dto";
+import { UpdateFavouriteDto } from "../favourite/dto/update-favourite.dto";
 
 @Controller('address')
 export class AddressController {
   private readonly logger = new Logger(AddressController.name);
   constructor(private readonly addressService: AddressService) {}
 
-  /**
-   * This endpoint returns the registered address
-   * @param body
-   * @param res
-   */
-  // @Post('add-address')
-  // async addAddress(@Body() body: AddressDto, @Res() res: Response) {
-  //   try {
-  //     this.logger.debug("add address endpoint called");
-  //     const userId = res.locals.userId;
-  //     const cryptoresp = res.locals.cryptoresp
-  //     const resp = this.addressService.addUserAddress(body, userId);
-  //     const clearResp = createResponse('address registration successful', resp);
-  //
-  //     if(cryptoresp === 'false')
-  //       return res.status(HttpStatus.CREATED).json(clearResp);
-  //
-  //     const encryptedData = await encryptPayload(clearResp);
-  //
-  //     const encryptedResp: EncryptedDTO = {
-  //       payload: encryptedData
-  //     };
-  //
-  //     return res.status(HttpStatus.OK).json(encryptedResp);
-  //   } catch (error) {
-  //     if (error instanceof HttpException) {
-  //       throw new HttpException(error.message, error.getStatus());
-  //     }
-  //
-  //     throw new HttpException(
-  //       'address registration failed', HttpStatus.INTERNAL_SERVER_ERROR
-  //     );
-  //   }
-  // }
+  @Post('remove')
+  async removeFromAddress(@Body() addressId: number) {
+    try {
+      this.logger.log('remove from address endpoint called');
 
+      if (!addressId) {
+        throw new HttpException(
+          'Address not provided',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
-  // @Post()
-  // create(@Body() createAddressDto: AddressDto) {
-  //   return this.addressService.create(createAddressDto);
-  // }
+      await this.addressService.deleteAddress(
+        addressId
+      );
 
-  // @Get()
-  // findAll() {
-  //   return this.addressService.findAll();
-  // }
+      return createResponse('Address successfully removed');
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in address.controller.ts, removeFromAddress method: ' +
+        error +
+        ' with error message: ' +
+        error.message,
+      );
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.addressService.findOne(+id);
-  // }
+      if (error instanceof HttpException) throw error;
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateAddressDto: UpdateAddressDto) {
-  //   return this.addressService.update(+id, updateAddressDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.addressService.remove(+id);
-  // }
+      throw new HttpException(
+        'Somthing went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

@@ -1,20 +1,11 @@
-import { UpdateCategoryDto } from './../category/dto/update-category.dto';
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { Country } from './entities/country.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CreateCountryDto } from './dto/create-country.dto';
-import {
-  CountryListRespDto,
-  CountryRespDto,
-} from 'src/contract/version1/response/country-response.dto';
-import { CountryProcessor } from './country.process';
-import { CountryRepository } from './country.repository';
+import { UpdateCategoryDto } from "./../category/dto/update-category.dto";
+import { ConflictException, Injectable, Logger } from "@nestjs/common";
+import { Country } from "./entities/country.entity";
+import { CreateCountryDto } from "./dto/create-country.dto";
+import { CountryListRespDto, CountryRespDto } from "src/contract/version1/response/country-response.dto";
+import { CountryProcessor } from "./country.process";
+import { CountryRepository } from "./country.repository";
+import { CountryRegionContinentProcessor } from "../../contract/version1/response/country-region-continent.response";
 
 @Injectable()
 export class CountryService {
@@ -138,38 +129,32 @@ export class CountryService {
   }
 
   async findBusinessByCountry(country: string): Promise<any> {
-    const businesses = await this.countryRepository.findOne({
+    return await this.countryRepository.findOne({
       where: { name: country },
       relations: ['countries'],
     });
-    return businesses;
   }
 
-  // TODO: finish region, country continent mapping
-  // async findAllWithRegion(): Promise<any> {
-  //   try {
-  //     const countries =
-  //       await this.countryRepository.getAllCountriesWithRegionWithContinent();
+  async findAllWithRegion(): Promise<any> {
+    try {
+      const countries =
+        await this.countryRepository.getAllCountriesWithRegionWithContinent();
 
-  //     if (!countries) throw new NotFoundException('No countries found');
-
-  //     const respList: CountryRegionContinentListRespDto =
-  //       CountryRegionContinentProcessor.mapEntityListToResp(
-  //         countries.map((country) => {
-  //           return CountryRegionContinentProcessor.mapEntityToResp(
-  //             country,
-  //             country.regionId,
-  //             country.regionId.continentId,
-  //           );
-  //         }),
-  //       );
-  //     return respList;
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Error retrieving all country from mongo
-  //       \nfrom findAll method in country.service.ts.
-  //       \nWith error message: ${error.message}`,
-  //     );
-  //   }
-  // }
+      return CountryRegionContinentProcessor.mapToCountryRegionContinentInfoList(
+        countries.map((country: Country) => {
+          return CountryRegionContinentProcessor.mapToCountryRegionContinentInfo(
+            country,
+            country.regionId,
+            country.regionId.continentId,
+          );
+        }),
+      );
+    } catch (error) {
+      throw new Error(
+        `Error retrieving all country from mongo
+        \nfrom findAll method in country.service.ts.
+        \nWith error message: ${error.message}`,
+      );
+    }
+  }
 }
