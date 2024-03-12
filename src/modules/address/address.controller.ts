@@ -12,15 +12,28 @@ import { AddressService } from './address.service';
 import { AddressDto } from './dto/address.dto';
 import { Response } from 'express';
 import { UpdateAddressDto } from './dto/update-address.dto';
-import { createResponse } from "../../common/util/response";
+import { createResponse, handleCustomResponse } from "../../common/util/response";
 import { encryptPayload } from "../../common/util/crypto";
 import { EncryptedDTO } from "../../common/dto/encrypted.dto";
 import { UpdateFavouriteDto } from "../favourite/dto/update-favourite.dto";
+import { AddressRespDto } from "../../contract/version1/response/address-response.dto";
 
 @Controller('address')
 export class AddressController {
   private readonly logger = new Logger(AddressController.name);
   constructor(private readonly addressService: AddressService) {}
+
+
+  @Post('update-unit')
+  async updateUnit(@Body() addressDtoRequest: AddressDto, @Res() res: Response) {
+    try {
+      const userId = res.locals.userId;
+      const addressRespDto: AddressRespDto = await this.addressService.updateUnit(addressDtoRequest, userId);
+      return handleCustomResponse(res, createResponse(null, addressRespDto));
+    } catch(error) {
+
+    }
+  }
 
   @Post('remove')
   async removeFromAddress(@Body() addressId: number) {

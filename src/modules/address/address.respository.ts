@@ -5,6 +5,8 @@ import { AddressParams } from "./address.service";
 import { getCurrentEpochTime } from "src/common/util/functions";
 import { AddressDto } from "./dto/address.dto";
 
+
+//TODO: sort the address basedon updatedAt
 @Injectable()
 export class AddressRepository extends Repository<Address> {
   private readonly logger = new Logger(AddressRepository.name);
@@ -14,10 +16,10 @@ export class AddressRepository extends Repository<Address> {
   }
 
   /**
-   * REPLACE THIS FUNCTION WITH CREATE(provided by typeORM)
    * This inserts a new address into the database
-   * @param address
    * @returns
+   * @param addressEntity
+   * @param addressDto
    */
   async addAddress(
     addressEntity: Address,
@@ -88,15 +90,23 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
+  /**
+   *
+   * @param params
+   * @returns Address[]
+   */
   async getAddress(params: AddressParams): Promise<Address[]> {
     try {
       let addressList: Address[];
       if (params.id)
-        addressList = await this.createQueryBuilder('address').where('address.id = :id', { id: params.id }).andWhere('address.deleted = false').getMany();
+        addressList = await this.createQueryBuilder('address').where('address.id = :id', { id: params.id }).andWhere('address.deleted = false').orderBy('address.updatedAt', 'DESC').getMany();
        else if (params.businessId)
-        addressList = await this.createQueryBuilder('address').where('address.business.id = :businessId', { id: params.businessId }).andWhere('address.deleted = false').getMany();
+        addressList = await this.createQueryBuilder('address').where('address.business.id = :businessId', { id: params.businessId }).andWhere('address.deleted = false').orderBy('address.updatedAt', 'DESC').getMany();
        else if (params.userId)
-        addressList = await this.createQueryBuilder('address').where('address.user.id = :userId', { userId: params.userId }).andWhere('address.deleted = false').getMany();
+        addressList = await this.createQueryBuilder('address').where('address.user.id = :userId', { userId: params.userId }).andWhere('address.deleted = false').orderBy('address.updatedAt', 'DESC').getMany();
+
+       // set primary to the first
+      addressList[0].isPrimary = true;
 
       return addressList;
     } catch (error) {
@@ -219,33 +229,17 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  // async function createAddressWithTransaction(addressEntity, addressDto) {
-  //   const queryRunner = getManager().connection.createQueryRunner();
-  //
-  //   await queryRunner.connect();
-  //   await queryRunner.startTransaction();
-  //
-  //   try {
-  //     const currentEpochTime = getCurrentEpochTime();
-  //
-  //     const newAddress = await queryRunner.manager.createQueryBuilder(Address, 'address')
-  //       .insert()
-  //       .values({
-  //         createdAt: currentEpochTime, // ...
-  //         // other values
-  //       })
-  //       .execute();
-  //
-  //     await queryRunner.commitTransaction();
-  //
-  //     return newAddress;
-  //   } catch (err) {
-  //     // if we have errors we rollback changes
-  //     await queryRunner.rollbackTransaction();
-  //     throw err;
-  //   } finally {
-  //     // you need to release a queryRunner which was manually instantiated
-  //     await queryRunner.release();
-  //   }
-  // }
+  async updateAddressUnit(addressEntity: Address) {
+    const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId: addressEntity.id})
+      .andWhere('address.deleted = false').getOne();
+
+    if(!currentAddress) throw new NotFoundException("Address to be updated not found");
+
+    currentAddress.unit = addressEntity.unit;
+
+    return await currentAddress.save();
+  }
+
+  // TODO: implement transactions for dependent read/writes to DB
+  // TODO: Improve logging
 }

@@ -55,7 +55,7 @@ export class AuthService {
   async genrateOtp(email?: string, mobile?: MobileDto): Promise<OtpRespDto> {
     let response: OtpRespDto;
 
-    // TOOD: undo
+    // TODO: undo
     // if (email) response = await this.sendgridService.sendOTPEmail(email);
     // else if (mobile)
     //   response = await this.twilioService.sendSms(mobile.phoneNumber);
@@ -341,15 +341,15 @@ export class AuthService {
 
       const user: User = await this.userSerivce.register(userDto);
 
+      const userInfo: UserInformationRespDto = await this.getUserInfoByUserId(user.id);
+
       // generate jwt token with userId
       const token = this.generateJwt(user);
 
-      const response: SignupRespDto = {
+      return {
         token,
-        userInfo: UserProcessor.processUserRelationInfo(user, registeredMobile),
+        userInfo
       };
-
-      return response;
     } catch (error) {
       this.logger.debug(
         'Error thrown in auth.service.ts, registerUser method: ' + error,
@@ -406,34 +406,11 @@ export class AuthService {
     try {
       if (!loginDto.email && !loginDto.mobile)
         throw new Error('email or mobile is required');
-
-      // let authId: number;
-
-      // if (loginDto.mobile) {
-      //   const mobileEntity: Mobile =
-      //     await this.mobileService.getMobileByPhoneNumber(loginDto.mobile);
-
-      //   if (!mobileEntity)
-      //     throw new HttpException('User not registered', HttpStatus.NOT_FOUND);
-      //   else if (!mobileEntity.auth)
-      //     throw new Error('Mobile is not registered to a user');
-
-      //   authId = mobileEntity.auth.id;
-      // }
-
-      // const input: AuthParams = {
-      //   email: loginDto.email,
-      //   authId,
-      // };
-
-      // get all user info from the database
       const authAcct: Auth = await this.authRepository.getUserByAuthId(authId);
-
       if (!authAcct) {
         this.logger.debug('Unable to retrieve auth account: ', authAcct);
         throw new Error('Unable to retrieve auth accoun');
       }
-
       if (!authAcct.user) {
         this.logger.debug(
           'User has incomplete registeration with user: ',
@@ -443,22 +420,14 @@ export class AuthService {
           'User has incomplete registeration, please complete registeration',
         );
       }
-
-      const userInfo: UserInformationRespDto = await this.getUserInfoByUser(
+      const userInfo: UserInformationRespDto = await this.getUserInfoByUserId(
         authAcct.user.id,
       );
-
-      // generate token with userID
       const token = this.generateJwt(authAcct.user);
-
-      // const user: UserDto = new UserDto();
-      // Object.assign(user, authAcct.user);
-
       const response: LoginRespDto = {
         token,
         userInfo,
       };
-
       return response;
     } catch (e) {
       this.logger.debug(`Error thrown in auth.service.ts, loginUser: ${e}`);
@@ -577,22 +546,11 @@ export class AuthService {
   }
 
   /**
-   * TODO: modify this method
-   * Sends all the information pertaining to a user - user information
-   * @param input
-   * @returns
-   */
-  async getAllUserInfo(input: AuthParams): Promise<Auth> {
-    const auth = await this.authRepository.getUserWithAuth(input);
-    return auth || null;
-  }
-
-  /**
    * This method retrieves a user's information by user id
    * @param userId
    * @returns User Information including FAVOURITES, ADDRESSES, MOBILE
    */
-  async getUserInfoByUser(userId: number): Promise<UserInformationRespDto> {
+  async getUserInfoByUserId(userId: number): Promise<UserInformationRespDto> {
     try {
       if (!userId) throw new Error('userId is required to get info');
 
@@ -711,5 +669,9 @@ export class AuthService {
     }
 
     return updatedUserResp;
+  }
+
+  async deleteAuthAndRelations(authId: number) {
+
   }
 }

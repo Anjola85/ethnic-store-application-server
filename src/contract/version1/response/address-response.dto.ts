@@ -6,6 +6,7 @@ export interface AddressRespDto {
   city: string;
   province: string;
   postalCode: string;
+  updatedAt: number;
   country: string;
   latitude: number;
   longitude: number;
