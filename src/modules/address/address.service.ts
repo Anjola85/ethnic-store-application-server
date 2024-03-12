@@ -111,4 +111,18 @@ export class AddressService {
       throw error;
     }
   }
+
+  async updateUnit(addressDtoRequest: AddressDto, userId: any): Promise<AddressRespDto> {
+    if (!addressDtoRequest || !addressDtoRequest.id)
+      throw new Error('Address id is required');
+
+    let addressEntity: Address = new Address();
+    Object.assign(addressEntity, addressDtoRequest);
+
+    const updatedAddress: Address = await this.addressRepository.updateAddressUnit(
+      addressEntity,
+    );
+
+    return AddressProcessor.mapEntityToResp(updatedAddress);
+  }
 }

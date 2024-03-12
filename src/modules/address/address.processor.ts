@@ -14,6 +14,7 @@ export class AddressProcessor {
       city: address.city,
       province: address.province,
       postalCode: address.postalCode,
+      updatedAt: address.updatedAt,
       country: address.country,
       latitude,
       longitude,
