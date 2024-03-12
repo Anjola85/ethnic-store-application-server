@@ -17,6 +17,9 @@ import { FeedbackProcessor } from './feedback.processor';
 
 @Injectable()
 export class FeedbackService {
+  deleteFeedbackByUserId(userId: number) {
+    throw new Error('Method not implemented.');
+  }
   private logger = new Logger('FeedbackService');
 
   constructor(

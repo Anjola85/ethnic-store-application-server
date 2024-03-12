@@ -1,12 +1,15 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { AddressDto } from "./dto/address.dto";
-import { entityToAddressDto } from "./address-mapper";
-import { AddressRepository } from "./address.respository";
-import { Address } from "./entities/address.entity";
-import { GeocodingService } from "../geocoding/geocoding.service";
-import { AddressListRespDto, AddressRespDto } from "../../contract/version1/response/address-response.dto";
-import { AddressProcessor } from "./address.processor";
-import { UpdateAddressDto } from "./dto/update-address.dto";
+import { Injectable, Logger } from '@nestjs/common';
+import { AddressDto } from './dto/address.dto';
+import { entityToAddressDto } from './address-mapper';
+import { AddressRepository } from './address.respository';
+import { Address } from './entities/address.entity';
+import { GeocodingService } from '../geocoding/geocoding.service';
+import {
+  AddressListRespDto,
+  AddressRespDto,
+} from '../../contract/version1/response/address-response.dto';
+import { AddressProcessor } from './address.processor';
+import { UpdateAddressDto } from './dto/update-address.dto';
 
 export interface AddressParams {
   id?: number;
@@ -16,6 +19,9 @@ export interface AddressParams {
 
 @Injectable()
 export class AddressService {
+  deleteAddressByUserId(userId: number) {
+    throw new Error('Method not implemented.');
+  }
   private readonly logger = new Logger(AddressService.name);
   constructor(
     private readonly addressRepository: AddressRepository,
@@ -27,7 +33,7 @@ export class AddressService {
    * @param addressDto
    * @returns the newly added address
    */
-  async addAddress(addressDto: AddressDto): Promise<AddressRespDto> {
+  async addAddress(addressDto: AddressDto): Promise<Address> {
     try {
       await this.geoCodingService.setCoordinates(addressDto);
       const addressEntity: Address = Object.assign(new Address(), addressDto);
@@ -35,7 +41,7 @@ export class AddressService {
         addressEntity,
         addressDto,
       );
-      return AddressProcessor.mapEntityToResp(newAddress);
+      return newAddress;
     } catch (error) {
       this.logger.debug('Error in addAddress method: ' + error);
       throw error;
@@ -63,12 +69,14 @@ export class AddressService {
    * @param addressDto
    * @returns updated AddressDto
    */
-  async updateAddress(addressDto: AddressDto | UpdateAddressDto): Promise<Address> {
+  async updateAddress(
+    addressDto: AddressDto | UpdateAddressDto,
+  ): Promise<Address> {
     if (!addressDto || !addressDto.id)
       throw new Error('Address id is required');
 
     // const addressEntity: Address = addressDtoToEntity(addressDto);
-    let addressEntity : Address = new Address();
+    let addressEntity: Address = new Address();
     Object.assign(addressEntity, addressDto);
 
     return await this.addressRepository.updateAddressById(
@@ -83,9 +91,11 @@ export class AddressService {
    */
   async getAddress(userId: number): Promise<AddressListRespDto> {
     try {
-      const addressList: Address[] = await this.addressRepository.getAddress({ userId });
+      const addressList: Address[] = await this.addressRepository.getAddress({
+        userId,
+      });
       return AddressProcessor.mapEntityListToResp(addressList);
-    } catch(error) {
+    } catch (error) {
       throw error;
     }
   }
@@ -93,10 +103,11 @@ export class AddressService {
   async deleteAddress(addressId: number): Promise<void> {
     try {
       await this.addressRepository.removeFromAddress(addressId);
-    } catch(error) {
+    } catch (error) {
       this.logger.error(
-        "Error thrown in deletedAddress method of address.service.ts with error: "
-        + error.message);
+        'Error thrown in deletedAddress method of address.service.ts with error: ' +
+          error.message,
+      );
       throw error;
     }
   }
