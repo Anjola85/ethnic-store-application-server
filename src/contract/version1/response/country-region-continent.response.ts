@@ -1,60 +1,70 @@
-//TODO:  include flags here
+import { ContinentRespDto } from './continent-response.dto';
+import { CountryRespDto } from './country-response.dto';
+import { RegionRespDto } from './region-response.dto';
+import { Country } from "../../../modules/country/entities/country.entity";
+import { Region } from "../../../modules/region/entities/region.entity";
+import { Continent } from "../../../modules/continent/entities/continent.entity";
 
-// import { ContinentRespDto } from './continent-response.dto';
-// import { CountryListRespDto, CountryRespDto } from './country-response.dto';
-// import { RegionListRespDto, RegionRespDto } from './region-response.dto';
+// Define interfaces for the structured data that will be sent to the frontend.
+export interface CountryInfo {
+  id: number;
+  name: string;
+}
 
-// export interface RegionInfo {
-//   id: number;
-//   name: string;
-//   countryList: CountryListRespDto;
-// }
+export interface RegionInfo {
+  id: number;
+  name: string;
+}
 
-// export interface RegionInfoList {
-//   regionList: RegionInfo[];
-//   size: number;
-// }
+export interface ContinentInfo {
+  id: number;
+  name: string;
+}
 
-// export interface CountryInfo {
-//   id: number;
-//   name: string;
-//   region: RegionRespDto;
-// }
+// Define the interface for the combined data structure.
+export interface CountryRegionContinentInfo {
+  countryInfo: CountryInfo;
+  regionInfo: RegionInfo;
+  continentInfo: ContinentInfo;
+}
 
-// export interface ContinentInfo {
-//   id: number;
-//   name: string;
-//   regionList: RegionInfoList;
-// }
+// Define the list structure for the combined data.
+export interface CountryRegionContinentInfoList {
+  data: CountryRegionContinentInfo[];
+  size: number;
+}
 
-// export interface ContinentInfoList {
-//   continentList: ContinentInfo[];
-//   size: number;
-// }
+// Processor class to map entities to the response DTOs.
+export class CountryRegionContinentProcessor {
+  // Map a single set of entities to the combined DTO.
+  public static mapToCountryRegionContinentInfo(
+    country: Country,
+    region: Region,
+    continent: Continent
+  ): CountryRegionContinentInfo {
+    return {
+      countryInfo: {
+        id: country.id,
+        name: country.name,
+      },
+      regionInfo: {
+        id: region.id,
+        name: region.name,
+      },
+      continentInfo: {
+        id: continent.id,
+        name: continent.name,
+      },
+    };
+  }
 
-// export class CountryRegionContinentProcessor {
-//   public static mapEntityToResp(
-//     country: CountryRespDto,
-//     region: RegionInfo,
-//     continent: ContinentRespDto,
-//   ): CountryRegionContinentRespDto {
-//     return {
-//       country: {
-//         data: country,
-//         region: {
-//           data: region,
-//           continent,
-//         },
-//       },
-//     };
-//   }
-
-//   public static mapEntityListToResp(
-//     countryList: CountryRegionContinentRespDto[],
-//   ): CountryRegionContinentListRespDto {
-//     return {
-//       countryList,
-//       size: countryList.length,
-//     };
-//   }
-// }
+  // Map a list of combined entities to the list DTO.
+  public static mapToCountryRegionContinentInfoList(
+    dataList: CountryRegionContinentInfo[]
+  ): CountryRegionContinentInfoList {
+    return {
+      data: dataList,
+      size: dataList.length,
+    };
+  }
+}

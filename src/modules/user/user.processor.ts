@@ -1,26 +1,23 @@
-import { MobileRespDto } from 'src/contract/version1/response/mobile-response.dto';
+import { MobileRespDto } from "src/contract/version1/response/mobile-response.dto";
 /**
  * @see
  * This class handles the conversion of the user contract dto to the user entity or dto class needed for processing
  */
-import { Logger } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserDto } from './dto/user.dto';
-import {
-  UserInformationRespDto,
-  UserRespDto,
-} from 'src/contract/version1/response/user-response.dto';
-import { User } from './entities/user.entity';
-import { Mobile } from '../mobile/mobile.entity';
-import { AddressListRespDto } from 'src/contract/version1/response/address-response.dto';
-import { BusinessListRespDto } from 'src/contract/version1/response/business-response.dto';
-import { CountryRespDto } from 'src/contract/version1/response/country-response.dto';
-import { AddressProcessor } from '../address/address.processor';
-import { BusinessProcessor } from '../business/business.process';
-import { Favourite } from '../favourite/entities/favourite.entity';
-import { Business } from '../business/entities/business.entity';
-import { CountryProcessor } from '../country/country.process';
-import { MobileProcessor } from '../mobile/mobile.processor';
+import { Logger } from "@nestjs/common";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UserDto } from "./dto/user.dto";
+import { UserInformationRespDto, UserRespDto } from "src/contract/version1/response/user-response.dto";
+import { User } from "./entities/user.entity";
+import { Mobile } from "../mobile/mobile.entity";
+import { AddressListRespDto } from "src/contract/version1/response/address-response.dto";
+import { BusinessListRespDto } from "src/contract/version1/response/business-response.dto";
+import { CountryRespDto } from "src/contract/version1/response/country-response.dto";
+import { AddressProcessor } from "../address/address.processor";
+import { BusinessProcessor } from "../business/business.process";
+import { Favourite } from "../favourite/entities/favourite.entity";
+import { Business } from "../business/entities/business.entity";
+import { CountryProcessor } from "../country/country.process";
+import { MobileProcessor } from "../mobile/mobile.processor";
 
 export class UserProcessor {
   private static readonly logger = new Logger(UserProcessor.name);
@@ -31,8 +28,7 @@ export class UserProcessor {
    * @returns
    */
   public static processSignupRequest(body: CreateUserDto): UserDto {
-    const userDto = Object.assign(new UserDto(), body);
-    return userDto;
+    return Object.assign(new UserDto(), body);
   }
 
   /**
@@ -74,7 +70,7 @@ export class UserProcessor {
       user.countryOfOrigin,
     );
 
-    const userInfo: UserInformationRespDto = {
+    return {
       id: user.id,
       firstname: user.firstname,
       lastname: user.lastname,
@@ -88,8 +84,6 @@ export class UserProcessor {
       countryOfOrigin: countryDto,
       accountVerified: user.auth?.accountVerified || false,
     };
-
-    return userInfo;
   }
 
   /**

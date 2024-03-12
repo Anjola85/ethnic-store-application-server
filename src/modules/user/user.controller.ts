@@ -183,7 +183,7 @@ export class UserController {
     }
   }
 
-  @Get('user-address')
+  @Get('get-address')
   async getUserAddress(@Res() res: Response){
     try {
       const userId = res.locals.userId;
@@ -202,4 +202,6 @@ export class UserController {
       throw new InternalServerErrorException("QuiikMart Server Error");
     }
   }
+
+  // TODO: DELETE USER
 }

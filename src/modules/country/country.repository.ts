@@ -24,10 +24,7 @@ export class CountryRepository extends Repository<Country> {
       this.logger.error(
         `Error thrown in country.repository.ts, getAllCountriesWithRegionWithContinent method: ${error.message}`,
       );
-      throw new HttpException(
-        `Error fetching countries`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw error;
     }
   }
 }

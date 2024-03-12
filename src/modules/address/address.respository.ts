@@ -92,11 +92,11 @@ export class AddressRepository extends Repository<Address> {
     try {
       let addressList: Address[];
       if (params.id)
-        addressList = await this.createQueryBuilder('address').where('address.id = :id', { id: params.id }).getMany();
+        addressList = await this.createQueryBuilder('address').where('address.id = :id', { id: params.id }).andWhere('address.deleted = false').getMany();
        else if (params.businessId)
-        addressList = await this.createQueryBuilder('address').where('address.business.id = :businessId', { id: params.businessId }).getMany();
+        addressList = await this.createQueryBuilder('address').where('address.business.id = :businessId', { id: params.businessId }).andWhere('address.deleted = false').getMany();
        else if (params.userId)
-        addressList = await this.createQueryBuilder('address').where('address.user.id = :userId', { userId: params.userId }).getMany();
+        addressList = await this.createQueryBuilder('address').where('address.user.id = :userId', { userId: params.userId }).andWhere('address.deleted = false').getMany();
 
       return addressList;
     } catch (error) {
@@ -163,7 +163,7 @@ export class AddressRepository extends Repository<Address> {
     address: Address,
   ): Promise<Address | undefined> {
     try {
-      const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId}).getOne();
+      const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId}).andWhere('address.deleted = false').getOne();
 
       if(!currentAddress) throw new NotFoundException("Address to be updated not found");
 
@@ -204,4 +204,48 @@ export class AddressRepository extends Repository<Address> {
       );
     }
   }
+
+  async removeFromAddress(addressId: number): Promise<void> {
+    try {
+      const address: Address = await this.createQueryBuilder('address')
+        .where('address.id = :addressId', {addressId})
+        .andWhere('address.deleted = false')
+        .getOne();
+
+      address.deleted = true;
+      await this.save(address);
+    } catch(error) {
+      this.logger.error("Unable to add address to API");
+    }
+  }
+
+  // async function createAddressWithTransaction(addressEntity, addressDto) {
+  //   const queryRunner = getManager().connection.createQueryRunner();
+  //
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+  //
+  //   try {
+  //     const currentEpochTime = getCurrentEpochTime();
+  //
+  //     const newAddress = await queryRunner.manager.createQueryBuilder(Address, 'address')
+  //       .insert()
+  //       .values({
+  //         createdAt: currentEpochTime, // ...
+  //         // other values
+  //       })
+  //       .execute();
+  //
+  //     await queryRunner.commitTransaction();
+  //
+  //     return newAddress;
+  //   } catch (err) {
+  //     // if we have errors we rollback changes
+  //     await queryRunner.rollbackTransaction();
+  //     throw err;
+  //   } finally {
+  //     // you need to release a queryRunner which was manually instantiated
+  //     await queryRunner.release();
+  //   }
+  // }
 }

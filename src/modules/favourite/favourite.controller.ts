@@ -48,17 +48,9 @@ export class FavouriteController {
 
       this.logger.log('Favourite successfully added');
 
-      if (crypto === 'true') {
-        const encryptedResponse = await encryptPayload(
-          createResponse('Favourite successfully added', favourite),
-        );
-
-        return res.status(HttpStatus.OK).json(encryptedResponse);
-      } else {
-        return res
-          .status(HttpStatus.OK)
-          .json(createResponse('Favourite successfully added', favourite));
-      }
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('Favourite successfully added', favourite));
     } catch (error) {
       this.logger.error(
         'Error thrown in favourite.controller.ts, create method: ' +
@@ -137,7 +129,7 @@ export class FavouriteController {
     try {
       this.logger.log('remove from favourite endpoint called');
 
-      if (!updateFavourite.favourite) {
+      if (!updateFavourite && !updateFavourite.favourite) {
         throw new HttpException(
           'Favourite id not provided',
           HttpStatus.BAD_REQUEST,

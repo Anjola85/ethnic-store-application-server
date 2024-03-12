@@ -145,7 +145,7 @@ export class AppModule implements NestModule {
         'region/all',
         'category/register',
         'category/all',
-        'country/all-with-region',
+        'country/all-info',
         'waitlist/join-customer',
         'waitlist/join-shopper',
         'waitlist/join-business',
