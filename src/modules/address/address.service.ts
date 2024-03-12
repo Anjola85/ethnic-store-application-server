@@ -1,13 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { AddressDto } from './dto/address.dto';
-import { addressDtoToEntity, entityToAddressDto } from './address-mapper';
-import { AddressRepository } from './address.respository';
-import { Address } from './entities/address.entity';
-import { GeocodingService } from '../geocoding/geocoding.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { AddressDto } from "./dto/address.dto";
+import { addressDtoToEntity, entityToAddressDto } from "./address-mapper";
+import { AddressRepository } from "./address.respository";
+import { Address } from "./entities/address.entity";
+import { GeocodingService } from "../geocoding/geocoding.service";
+import { AddressListRespDto } from "../../contract/version1/response/address-response.dto";
+import { AddressProcessor } from "./address.processor";
+import { UpdateAddressDto } from "./dto/update-address.dto";
 
 export interface AddressParams {
-  id?: string;
-  userId?: string;
+  id?: number;
+  userId?: number;
   businessId?: string;
 }
 
@@ -46,7 +49,7 @@ export class AddressService {
    * @param params
    * @returns
    */
-  async getAddress(params: AddressParams): Promise<AddressDto[]> {
+  async getAllAddress(params: AddressParams): Promise<AddressDto[]> {
     const addressEntity: Address[] = await this.addressRepository.getAddress(
       params,
     );
@@ -62,16 +65,30 @@ export class AddressService {
    * @param addressDto
    * @returns updated AddressDto
    */
-  async updateAddress(addressDto: AddressDto): Promise<Address> {
+  async updateAddress(addressDto: AddressDto | UpdateAddressDto): Promise<Address> {
     if (!addressDto || !addressDto.id)
       throw new Error('Address id is required');
 
-    const addressEntity: Address = addressDtoToEntity(addressDto);
-    const updatedAddressEntity = await this.addressRepository.updateAddressById(
+    // const addressEntity: Address = addressDtoToEntity(addressDto);
+    let addressEntity : Address = new Address();
+    Object.assign(addressEntity, addressDto);
+
+    return await this.addressRepository.updateAddressById(
       addressDto.id,
       addressEntity,
     );
+  }
 
-    return updatedAddressEntity;
+  /**
+   * Gets the address for the specific user
+   * @param userId
+   */
+  async getAddress(userId: number): Promise<AddressListRespDto> {
+    try {
+      const addressList: Address[] = await this.addressRepository.getAddress({ userId });
+      return AddressProcessor.mapEntityListToResp(addressList);
+    } catch(error) {
+      throw error;
+    }
   }
 }

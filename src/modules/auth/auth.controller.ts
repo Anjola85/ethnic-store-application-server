@@ -33,7 +33,7 @@ import { SignupRespDto } from 'src/contract/version1/response/signup-response.dt
 
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthService.name);
+  private readonly logger = new Logger(AuthController.name);
 
   constructor(
     private readonly authService: AuthService,
@@ -180,7 +180,7 @@ export class AuthController {
     try {
       this.logger.debug('Login endpoint called');
 
-      console.log('recievd objcet: ', loginDto);
+      console.log('received objcet: ', loginDto);
 
       const authId = res.locals.authId;
       const cryptoresp = res.locals.cryptoresp;

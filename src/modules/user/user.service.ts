@@ -1,25 +1,19 @@
 /**
  * This class contains business logic related to the user database
  */
-import { AddressService } from './../address/address.service';
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { UserDto } from './dto/user.dto';
-import { User } from './entities/user.entity';
-import { UserFileService } from '../files/user-files.service';
-import { UserRepository } from './user.repository';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { Address } from '../address/entities/address.entity';
-import { UserRespDto } from 'src/contract/version1/response/user-response.dto';
-import { UserProcessor } from './user.processor';
-import { AuthService } from '../auth/auth.service';
-import { Auth } from 'aws-sdk/clients/docdbelastic';
-import { Mobile } from 'aws-sdk';
-import { AddressProcessor } from '../address/address.processor';
+import { AddressService } from "./../address/address.service";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { UserDto } from "./dto/user.dto";
+import { User } from "./entities/user.entity";
+import { UserFileService } from "../files/user-files.service";
+import { UserRepository } from "./user.repository";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { Address } from "../address/entities/address.entity";
+import { UserRespDto } from "src/contract/version1/response/user-response.dto";
+import { UserProcessor } from "./user.processor";
+import { AddressProcessor } from "../address/address.processor";
+import { AddressDto } from "../address/dto/address.dto";
+import { AddressListRespDto, AddressRespDto } from "../../contract/version1/response/address-response.dto";
 
 @Injectable()
 export class UserService {
@@ -76,8 +70,7 @@ export class UserService {
    * @returns
    */
   async getUserById(id: number): Promise<User> {
-    const user = await this.userRepository.getUserById(id);
-    return user;
+    return await this.userRepository.getUserById(id);
   }
 
   /**
@@ -154,5 +147,21 @@ export class UserService {
 
     const resp: UserRespDto = UserProcessor.mapEntityToResp(updatedUser);
     return resp;
+  }
+
+  /**
+   * This endpoint updates an address
+   * @param addressDto
+   * @param userId
+   */
+  async addUserAddress(addressDto: AddressDto, userId: number): Promise<AddressRespDto>{
+    const user: User = await this.getUserById(userId);
+
+    if (!user)
+      throw new NotFoundException("User does not exist");
+
+    addressDto.user = user;
+    const newAddress = await this.addressService.addAddress(addressDto);
+    return AddressProcessor.mapEntityToResp(newAddress);
   }
 }

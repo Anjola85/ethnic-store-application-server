@@ -1,35 +1,34 @@
 import {
-  Controller,
-  Post,
+  BadRequestException,
   Body,
-  Res,
-  HttpStatus,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus, InternalServerErrorException,
   Logger,
   Patch,
-  UnauthorizedException,
-  UploadedFiles,
-  UseInterceptors,
-  Get,
-  ConflictException,
-  HttpException,
-} from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserDto } from './dto/user.dto';
-import { Response } from 'express';
-import { AuthService } from '../auth/auth.service';
-import {
-  createError,
-  createResponse,
-  createEncryptedResponse,
-} from '../../common/util/response';
-import { encryptPayload } from 'src/common/util/crypto';
-import { InternalServerError } from '@aws-sdk/client-dynamodb';
-import { UserRespDto } from 'src/contract/version1/response/user-response.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserProcessor } from './user.processor';
-import { User } from './entities/user.entity';
-import { MobileService } from '../mobile/mobile.service';
-import { Mobile } from '../mobile/mobile.entity';
+  Post,
+  Res,
+  UnauthorizedException
+} from "@nestjs/common";
+import { UserService } from "./user.service";
+import { Response } from "express";
+import { AuthService } from "../auth/auth.service";
+import { createEncryptedResponse, createError, createResponse, handleCustomResponse } from "../../common/util/response";
+import { encryptPayload } from "src/common/util/crypto";
+import { InternalServerError } from "@aws-sdk/client-dynamodb";
+import { UserRespDto } from "src/contract/version1/response/user-response.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { UserProcessor } from "./user.processor";
+import { User } from "./entities/user.entity";
+import { MobileService } from "../mobile/mobile.service";
+import { Mobile } from "../mobile/mobile.entity";
+import { AddressDto } from "../address/dto/address.dto";
+import { AddressService } from "../address/address.service";
+import { AddressListRespDto, AddressRespDto } from "../../contract/version1/response/address-response.dto";
+import { AddressProcessor } from "../address/address.processor";
+import { Address } from "../address/entities/address.entity";
+import { UpdateAddressDto } from "../address/dto/update-address.dto";
 
 @Controller('user')
 export class UserController {
@@ -39,6 +38,7 @@ export class UserController {
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly mobileService: MobileService,
+    private readonly addressService: AddressService
   ) {}
 
   /**
@@ -66,7 +66,6 @@ export class UserController {
         user.auth,
       );
 
-      // perform necessary mapping
       const result = UserProcessor.processUserRelationInfo(user, mobile);
 
       this.logger.debug('successfully retrieved user information');
@@ -146,6 +145,61 @@ export class UserController {
         "Something went wrong, we're working on it",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  @Post('add-address')
+  async addUserAddress(@Body() body: AddressDto, @Res() res: Response) {
+    try {
+      this.logger.debug("add address endpoint called");
+      const userId = res.locals.userId;
+      body.user = await this.userService.getUserById(userId);
+      const addressResp: AddressRespDto = await this.addressService.addAddress(body);
+      const result = createResponse(null, addressResp);
+      return handleCustomResponse(res, result);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw new HttpException(error.message, error.getStatus());
+      }
+      throw new HttpException(
+        'address registration failed', HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Patch('update-address')
+  async updateUserAddress(@Body() body: UpdateAddressDto){
+    try {
+      const resp: Address = await this.addressService.updateAddress(body);
+      const userAddress: AddressRespDto = AddressProcessor.mapEntityToResp(resp);
+      return createResponse(null, userAddress);
+    } catch(error) {
+      this.logger.error("Error thrown in updateUserAddress method in user.controller.ts, with error: ", error);
+
+      if(error instanceof  HttpException)
+        throw error;
+
+      throw new InternalServerErrorException("QuiikMart Server Error");
+    }
+  }
+
+  @Get('user-address')
+  async getUserAddress(@Res() res: Response){
+    try {
+      const userId = res.locals.userId;
+
+      if(!userId)
+        throw new BadRequestException("Token required in header!")
+
+      const userAddressList = await this.addressService.getAddress(userId);
+      const clearResponse = createResponse(null, userAddressList);
+
+      return handleCustomResponse(res, clearResponse);
+    } catch(error) {
+      if(error instanceof HttpException)
+        throw error;
+
+      throw new InternalServerErrorException("QuiikMart Server Error");
     }
   }
 }

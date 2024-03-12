@@ -1,4 +1,7 @@
 import { EncryptedDTO } from '../dto/encrypted.dto';
+import { Response } from 'express';
+import { HttpStatus } from "@nestjs/common";
+import { encryptPayload } from "./crypto";
 
 export function createResponse(
   message?: string,
@@ -24,4 +27,17 @@ export function createEncryptedResponse(encryptedData: string): EncryptedDTO {
     payload: encryptedData,
   };
   return resp;
+}
+
+export async function handleCustomResponse(res: Response, result: any) {
+  const cryptoresp = res.locals.cryptresp;
+
+  if (cryptoresp !== "false") {
+    return res.status(HttpStatus.OK).json(result);
+  }
+
+  const encryptedResp: string = await encryptPayload(result);
+  return res
+    .status(HttpStatus.OK)
+    .json(createEncryptedResponse(encryptedResp));
 }
