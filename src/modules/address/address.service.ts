@@ -10,6 +10,8 @@ import {
 } from '../../contract/version1/response/address-response.dto';
 import { AddressProcessor } from './address.processor';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { UserRepository } from "../user/user.repository";
+import { User } from "../user/entities/user.entity";
 
 export interface AddressParams {
   id?: number;
@@ -112,15 +114,17 @@ export class AddressService {
     }
   }
 
-  async updateUnit(addressDtoRequest: AddressDto, userId: any): Promise<AddressRespDto> {
+  async updateUnit(addressDtoRequest: UpdateAddressDto, user: User): Promise<AddressRespDto> {
     if (!addressDtoRequest || !addressDtoRequest.id)
       throw new Error('Address id is required');
 
+
     let addressEntity: Address = new Address();
     Object.assign(addressEntity, addressDtoRequest);
+    addressEntity.user = user;
 
     const updatedAddress: Address = await this.addressRepository.updateAddressUnit(
-      addressEntity,
+      addressEntity
     );
 
     return AddressProcessor.mapEntityToResp(updatedAddress);

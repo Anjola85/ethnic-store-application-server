@@ -148,7 +148,7 @@ export class AppModule implements NestModule {
         'country/all-info',
         'waitlist/join-customer',
         'waitlist/join-shopper',
-        'waitlist/join-business',
+        'waitlist/join-business'
       )
       .forRoutes('*');
 

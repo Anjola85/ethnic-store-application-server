@@ -4,6 +4,7 @@ import { Address } from "./entities/address.entity";
 import { AddressParams } from "./address.service";
 import { getCurrentEpochTime } from "src/common/util/functions";
 import { AddressDto } from "./dto/address.dto";
+import { User } from "../user/entities/user.entity";
 
 
 //TODO: sort the address basedon updatedAt
@@ -229,13 +230,14 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  async updateAddressUnit(addressEntity: Address) {
+  async updateAddressUnit(addressEntity: Address): Promise<Address> {
     const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId: addressEntity.id})
       .andWhere('address.deleted = false').getOne();
 
     if(!currentAddress) throw new NotFoundException("Address to be updated not found");
 
     currentAddress.unit = addressEntity.unit;
+    currentAddress.user = addressEntity.user
 
     return await currentAddress.save();
   }

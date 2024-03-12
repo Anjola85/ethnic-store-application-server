@@ -26,18 +26,11 @@ export class UserRepository extends Repository<User> {
   }
 
   async getUserById(id: number): Promise<User> {
-    try {
-      const user = await this.createQueryBuilder('user')
-        .leftJoinAndSelect('user.addresses', 'address')
-        .where('user.id = :id', { id })
-        .getMany();
-      return user[0] || null;
-    } catch (error) {
-      throw new HttpException(
-        `Error thrown in user.repository.ts, getUserById method: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const user = await this.createQueryBuilder('user')
+      .leftJoinAndSelect('user.addresses', 'address')
+      .where('user.id = :id', { id })
+      .getMany();
+    return user[0] || null;
   }
 
   async addUser(user: User) {
