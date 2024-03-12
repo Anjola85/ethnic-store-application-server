@@ -1,5 +1,5 @@
-import { EncryptedDTO } from '../dto/encrypted.dto';
-import { Response } from 'express';
+import { EncryptedDTO } from "../dto/encrypted.dto";
+import { Response } from "express";
 import { HttpStatus } from "@nestjs/common";
 import { encryptPayload } from "./crypto";
 
@@ -23,10 +23,9 @@ export function createError(message: string, error?: any) {
 }
 
 export function createEncryptedResponse(encryptedData: string): EncryptedDTO {
-  const resp: EncryptedDTO = {
+  return {
     payload: encryptedData,
   };
-  return resp;
 }
 
 export async function handleCustomResponse(res: Response, result: any) {
@@ -40,4 +39,23 @@ export async function handleCustomResponse(res: Response, result: any) {
   return res
     .status(HttpStatus.OK)
     .json(createEncryptedResponse(encryptedResp));
+}
+
+
+export enum TokenIdType {
+  authId,
+  userId
+}
+
+export function extractIdFromRequest(res: Response, tokenIdType: TokenIdType): number {
+  let id: number;
+  if(tokenIdType === TokenIdType.userId)
+    id = res.locals.userId;
+  else if(tokenIdType === TokenIdType.authId)
+    id = res.locals.authId;
+
+  if(id == undefined || id == null)
+    throw new Error("Unable to extract id from token")
+
+  return id;
 }

@@ -74,7 +74,15 @@ export class UserService {
    * @returns
    */
   async getUserById(id: number): Promise<User> {
-    return await this.userRepository.getUserById(id);
+    try {
+      const user: User =  await this.userRepository.getUserById(id);
+      if(!user)
+        throw new NotFoundException("User not found!");
+      return user;
+    } catch(error) {
+      this.logger.error("Error encountered in getUserById in user.service.ts with errror: " + error);
+      throw error;
+    }
   }
 
   /**

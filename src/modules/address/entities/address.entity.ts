@@ -24,7 +24,7 @@ export class Address extends CommonEntity {
   @JoinColumn()
   user: User;
 
-  @Column({ default: true, nullable: false, type: 'boolean' })
+  @Column({ default: false, nullable: false, type: 'boolean' })
   isPrimary: boolean;
 
   @Column({ type: 'varchar', default: '' })
