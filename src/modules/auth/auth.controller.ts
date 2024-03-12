@@ -180,7 +180,7 @@ export class AuthController {
     try {
       this.logger.debug('Login endpoint called');
 
-      console.log('recievd objcet: ', loginDto);
+      console.log('received objcet: ', loginDto);
 
       const authId = res.locals.authId;
       const cryptoresp = res.locals.cryptoresp;
