@@ -79,7 +79,7 @@ export class FavouriteService {
       const favouriteList: Favourite[] =
         await this.favouriteRepository.getFavouritesWithBusinessDetails(id);
 
-      console.log('got back: ', favouriteList);
+      // console.log('got back: ', favouriteList);
 
       const favouriteListRespDto: FavouriteListRespDto =
         FavouriteProcessor.mapEntityListToResp(favouriteList);
