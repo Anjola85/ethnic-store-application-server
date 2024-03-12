@@ -1,19 +1,23 @@
 /**
  * This class contains business logic related to the user database
  */
-import { AddressService } from "./../address/address.service";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { UserDto } from "./dto/user.dto";
-import { User } from "./entities/user.entity";
-import { UserFileService } from "../files/user-files.service";
-import { UserRepository } from "./user.repository";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { Address } from "../address/entities/address.entity";
-import { UserRespDto } from "src/contract/version1/response/user-response.dto";
-import { UserProcessor } from "./user.processor";
-import { AddressProcessor } from "../address/address.processor";
-import { AddressDto } from "../address/dto/address.dto";
-import { AddressListRespDto, AddressRespDto } from "../../contract/version1/response/address-response.dto";
+import { AddressService } from './../address/address.service';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { UserDto } from './dto/user.dto';
+import { User } from './entities/user.entity';
+import { UserFileService } from '../files/user-files.service';
+import { UserRepository } from './user.repository';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Address } from '../address/entities/address.entity';
+import { UserRespDto } from 'src/contract/version1/response/user-response.dto';
+import { UserProcessor } from './user.processor';
+import { AddressProcessor } from '../address/address.processor';
+import { AddressDto } from '../address/dto/address.dto';
+import {
+  AddressListRespDto,
+  AddressRespDto,
+} from '../../contract/version1/response/address-response.dto';
+import { FeedbackService } from '../feedback/feedback.service';
 
 @Injectable()
 export class UserService {
@@ -154,14 +158,28 @@ export class UserService {
    * @param addressDto
    * @param userId
    */
-  async addUserAddress(addressDto: AddressDto, userId: number): Promise<AddressRespDto>{
+  async addUserAddress(
+    addressDto: AddressDto,
+    userId: number,
+  ): Promise<AddressRespDto> {
     const user: User = await this.getUserById(userId);
 
-    if (!user)
-      throw new NotFoundException("User does not exist");
+    if (!user) throw new NotFoundException('User does not exist');
 
     addressDto.user = user;
     const newAddress = await this.addressService.addAddress(addressDto);
     return AddressProcessor.mapEntityToResp(newAddress);
+  }
+
+  async deleteUser(userId: number) {
+    // const user = await this.getUserById(userId);
+    // // get auth with userId
+    // //get mobile with authId and set delete to true
+    // // get address with userId and set delete to true
+    // // get favourites with userId and set delete to true
+    // // get feedback with userId and set delete to true
+    // // delete user
+    // this.addressService.deleteAddressByUserId(userId);
+    // this.feedbackService.deleteFeedbackByUserId(userId);
   }
 }
