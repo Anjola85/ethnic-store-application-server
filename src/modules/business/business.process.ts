@@ -1,22 +1,19 @@
-import { CreateBusinessDto } from './dto/create-business.dto';
-import {
-  BusinessListRespDto,
-  BusinessRespDto,
-} from 'src/contract/version1/response/business-response.dto';
-import { AddressProcessor } from '../address/address.processor';
-import { CountryProcessor } from '../country/country.process';
-import { MobileProcessor } from '../mobile/mobile.processor';
-import { RegionProcessor } from '../region/region.process';
+import { CreateBusinessDto } from "./dto/create-business.dto";
+import { BusinessListRespDto, BusinessRespDto } from "src/contract/version1/response/business-response.dto";
+import { AddressProcessor } from "../address/address.processor";
+import { CountryProcessor } from "../country/country.process";
+import { MobileProcessor } from "../mobile/mobile.processor";
+import { RegionProcessor } from "../region/region.process";
 
-import { Business } from './entities/business.entity';
-import { Logger } from '@nestjs/common';
+import { Business } from "./entities/business.entity";
+import { Logger } from "@nestjs/common";
 
 export class BusinessProcessor {
   private static logger = new Logger(BusinessProcessor.name);
   public static mapEntityToResp(business: Business): BusinessRespDto {
     if (!business) return;
     try {
-      const resp: BusinessRespDto = {
+      return {
         id: business.id,
         name: business.name,
         description: business.description || '',
@@ -33,7 +30,6 @@ export class BusinessProcessor {
         profileImage: business.profileImage || '',
         createdAt: business.createdAt,
       };
-      return resp;
     } catch (error) {
       this.logger.error(`Error mapping business entity to response: ${error}`);
       // throw new Error(

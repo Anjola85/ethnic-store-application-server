@@ -111,7 +111,6 @@ export class BusinessController {
     try {
       this.logger.debug('Get all businesses endpoint hit');
       const result: BusinessListRespDto = await this.businessService.findAll();
-
       return createResponse('businesses fetched successfully', {
         result,
       });

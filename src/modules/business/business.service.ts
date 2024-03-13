@@ -1,27 +1,17 @@
-import { CountryService } from './../country/country.service';
-import { MobileService } from './../mobile/mobile.service';
-import { BusinessRepository } from './business.repository';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import {
-  S3BusinessImagesRequest,
-  S3BusinessImagesResponse,
-} from './dto/image.dto';
-import { GeoLocationDto } from './dto/geolocation.dto';
-import { AddressService } from '../address/address.service';
-import { Business, BusinessParam } from './entities/business.entity';
-import { BusinessFilesService } from '../files/business-files.service';
-import { CreateBusinessDto } from './dto/create-business.dto';
-import { AwsS3Service } from '../files/aws-s3.service';
-import { AddressProcessor } from '../address/address.processor';
-import { Country } from '../country/entities/country.entity';
-import { Region } from '../region/entities/region.entity';
-import { BusinessProcessor } from './business.process';
-import {
-  BusinessListRespDto,
-  BusinessRespDto,
-} from 'src/contract/version1/response/business-response.dto';
-import { PageService } from '../common/page.service';
-import { GenericFilter } from '../common/generic-filter';
+import { CountryService } from "./../country/country.service";
+import { MobileService } from "./../mobile/mobile.service";
+import { BusinessRepository } from "./business.repository";
+import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { S3BusinessImagesRequest, S3BusinessImagesResponse } from "./dto/image.dto";
+import { AddressService } from "../address/address.service";
+import { Business } from "./entities/business.entity";
+import { BusinessFilesService } from "../files/business-files.service";
+import { CreateBusinessDto } from "./dto/create-business.dto";
+import { AwsS3Service } from "../files/aws-s3.service";
+import { BusinessProcessor } from "./business.process";
+import { BusinessListRespDto, BusinessRespDto } from "src/contract/version1/response/business-response.dto";
+import { PageService } from "../common/page.service";
+import { GenericFilter } from "../common/generic-filter";
 
 @Injectable()
 export class BusinessService extends PageService {
@@ -268,34 +258,15 @@ export class BusinessService extends PageService {
     return resp;
   }
 
-  async getBusinessByUnique(params: BusinessParam): Promise<any> {
-    try {
-      const business = await this.businessRepository.findByUniq(params);
-      return business;
-    } catch (error) {
-      this.logger.error(
-        `Error thrown in business.service.ts, getBusinessByUnique method: ${error.message}`,
-      );
-
-      throw new Error(
-        `Error fetching business from DB
-        \nfrom getBusinessByUnique method in business.service.ts.
-        \nWith error message: ${error.message}`,
-      );
-    }
-  }
-
   async getBusinessByName(name: string): Promise<BusinessRespDto> {
     try {
       const business = await this.businessRepository.findByName(name);
 
-      if (!business) {
+      if (!business)
         throw new HttpException('Business not found', HttpStatus.NOT_FOUND);
-      }
 
-      const resp: BusinessRespDto = BusinessProcessor.mapEntityToResp(business);
 
-      return resp;
+      return BusinessProcessor.mapEntityToResp(business);
     } catch (error) {
       this.logger.error(
         `Error thrown in business.service.ts, getBusinessByName method: ${error.message}`,
@@ -306,6 +277,18 @@ export class BusinessService extends PageService {
         \nfrom getBusinessByName method in business.service.ts.
         \nWith error message: ${error.message}`,
       );
+    }
+  }
+
+  async getBusinessById(id: number): Promise<Business> {
+    try {
+      const business: Business = (await this.businessRepository.findByUniq({businessId: id})).businessExist;
+      if(!business)
+        throw new NotFoundException("Business not found");
+      return business;
+    } catch(error) {
+      this.logger.error("Error encountered in getBusinessById in business.service.ts with error: " + error);
+      throw error;
     }
   }
 }

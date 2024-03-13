@@ -3,6 +3,10 @@ import { Address } from "./entities/address.entity";
 
 export class AddressProcessor {
   public static mapEntityToResp(address: Address): AddressRespDto {
+    if (!address || !address.id)
+      return null;
+
+    console.log("location: ",  JSON.stringify(address.location, null, 2))
     const location = address.location as any; // as GeoJSONPoint;
     const longitude: number = location?.coordinates[0];
     const latitude: number = location?.coordinates[1];

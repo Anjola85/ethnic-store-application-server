@@ -1,18 +1,13 @@
-import {
-  FavouriteListRespDto,
-  FavouriteRespDto,
-} from 'src/contract/version1/response/favourite-response.dto';
-import { BusinessProcessor } from '../business/business.process';
-import { UserProcessor } from '../user/user.processor';
-import { Favourite } from './entities/favourite.entity';
+import { FavouriteListRespDto, FavouriteRespDto } from "src/contract/version1/response/favourite-response.dto";
+import { BusinessProcessor } from "../business/business.process";
+import { Favourite } from "./entities/favourite.entity";
 
 export class FavouriteProcessor {
   public static mapEntityToResp(favourite: Favourite): FavouriteRespDto {
-    const { id, business, user, updatedAt } = favourite;
+    const { id, business, updatedAt } = favourite;
     return {
       id,
       business: BusinessProcessor.mapEntityToResp(business),
-      // user: UserProcessor.mapEntityToResp(user),
       time: updatedAt,
     };
   }
@@ -21,17 +16,15 @@ export class FavouriteProcessor {
     favourites: Favourite[],
   ): FavouriteListRespDto {
     const favouriteList: FavouriteRespDto[] = favourites
-      .map((favourite) => FavouriteProcessor.mapEntityToResp(favourite))
+      .map((favourite: Favourite) => FavouriteProcessor.mapEntityToResp(favourite))
       .filter(
         (favouriteResp) =>
           favouriteResp !== null && favouriteResp !== undefined,
       );
 
-    const payload = {
+    return {
       favouriteList: favouriteList,
       size: favouriteList.length,
     };
-
-    return payload;
   }
 }

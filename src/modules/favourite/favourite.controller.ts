@@ -1,22 +1,17 @@
+import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Res } from "@nestjs/common";
+import { FavouriteService } from "./favourite.service";
+import { CreateFavouriteDto } from "./dto/create-favourite.dto";
+import { Response } from "express";
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Res,
-  HttpStatus,
-  Logger,
-  HttpException,
-} from '@nestjs/common';
-import { FavouriteService } from './favourite.service';
-import { CreateFavouriteDto } from './dto/create-favourite.dto';
-import { Response } from 'express';
-import { Types } from 'mongoose';
-import { createResponse } from 'src/common/util/response';
-import { encryptPayload } from 'src/common/util/crypto';
-import { FavouriteListRespDto } from 'src/contract/version1/response/favourite-response.dto';
-import { UpdateFavouriteDto } from './dto/update-favourite.dto';
+  ApiResponse,
+  createResponse,
+  extractIdFromRequest,
+  handleCustomResponse,
+  TokenIdType
+} from "src/common/util/response";
+import { encryptPayload } from "src/common/util/crypto";
+import { FavouriteListRespDto, FavouriteRespDto } from "src/contract/version1/response/favourite-response.dto";
+import { UpdateFavouriteDto } from "./dto/update-favourite.dto";
 
 @Controller('favourite')
 export class FavouriteController {
@@ -24,33 +19,20 @@ export class FavouriteController {
   constructor(private readonly favouriteService: FavouriteService) {}
 
   @Post('add')
-  async create(
+  async addFavourite(
     @Body() createFavouriteDto: CreateFavouriteDto,
     @Res() res: Response,
   ) {
     try {
-      this.logger.log('create favourite endpoint called');
-
-      const userId: number = res.locals.userId;
-      const crypto = res.locals.cryptoresp;
-
-      if (!userId) {
-        throw new HttpException(
-          'Unable to perform operation, user not found',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const favourite = await this.favouriteService.addToFavourites(
+      this.logger.log('add favourite endpoint called');
+      const userId: number = extractIdFromRequest(res, TokenIdType.userId);
+      const favourite: FavouriteRespDto = await this.favouriteService.addToFavourites(
         userId,
         createFavouriteDto.business,
       );
-
       this.logger.log('Favourite successfully added');
-
-      return res
-        .status(HttpStatus.OK)
-        .json(createResponse('Favourite successfully added', favourite));
+      const apiResp: ApiResponse = createResponse('Favourite successfully added', favourite)
+      return handleCustomResponse(res, apiResp);
     } catch (error) {
       this.logger.error(
         'Error thrown in favourite.controller.ts, create method: ' +
