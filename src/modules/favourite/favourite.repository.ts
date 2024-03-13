@@ -47,6 +47,17 @@ export class FavouriteRepository extends Repository<Favourite> {
         },
       )
       .leftJoinAndSelect('favourite.business', 'business')
+      .leftJoinAndSelect('business.address', 'address')
+      .leftJoinAndSelect('business.mobile', 'mobile')
+      .leftJoinAndSelect('business.countries', 'countries')
+      .leftJoinAndSelect('business.regions', 'regions')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+          .from('address', 'address')
+          .where('address.id = business.addressId');
+      }, 'locationGeoJSON')
+      .andWhere('business.id = :id', { id: businessId })
       .getOne();
   }
 

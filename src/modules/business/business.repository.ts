@@ -16,7 +16,7 @@ export class BusinessRepository extends Repository<Business> {
    * Retrieve all businesses
    * @returns businesses - an array of businesses
    */
-  async findByUniq(params: BusinessParam): Promise<any> {
+  async findByUniq(params: BusinessParam): Promise<{ businessExist:Business, type: string }> {
     this.logger.debug(
       `findByUniq called with params: ${JSON.stringify(params)}`,
     );
@@ -32,17 +32,51 @@ export class BusinessRepository extends Repository<Business> {
         businessExist = await this.createQueryBuilder('business')
           .where('business.name = :name', { name })
           .getOne();
+
+        businessExist = await this.createQueryBuilder('business')
+          .leftJoinAndSelect('business.address', 'address')
+          .leftJoinAndSelect('business.mobile', 'mobile')
+          .leftJoinAndSelect('business.countries', 'countries')
+          .leftJoinAndSelect('business.regions', 'regions')
+          .addSelect((subQuery) => {
+            return subQuery
+              .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+              .from('address', 'address')
+              .where('address.id = business.addressId');
+          }, 'locationGeoJSON')
+          .where('business.name = :name', { name })
+          .getOne();
       }
 
       if (email) {
         type = 'email';
         businessExist = await this.createQueryBuilder('business')
+          .leftJoinAndSelect('business.address', 'address')
+          .leftJoinAndSelect('business.mobile', 'mobile')
+          .leftJoinAndSelect('business.countries', 'countries')
+          .leftJoinAndSelect('business.regions', 'regions')
+          .addSelect((subQuery) => {
+            return subQuery
+              .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+              .from('address', 'address')
+              .where('address.id = business.addressId');
+          }, 'locationGeoJSON')
           .where('business.email = :email', { email })
           .getOne();
       }
       if (businessId && !type) {
         type = 'businessId';
         businessExist = await this.createQueryBuilder('business')
+          .leftJoinAndSelect('business.address', 'address')
+          .leftJoinAndSelect('business.mobile', 'mobile')
+          .leftJoinAndSelect('business.countries', 'countries')
+          .leftJoinAndSelect('business.regions', 'regions')
+          .addSelect((subQuery) => {
+            return subQuery
+              .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+              .from('address', 'address')
+              .where('address.id = business.addressId');
+          }, 'locationGeoJSON')
           .where('business.id = :id', { id: businessId })
           .getOne();
       }
@@ -54,10 +88,7 @@ export class BusinessRepository extends Repository<Business> {
       this.logger.error(
         `Error thrown in business.repository.ts, findByName method: ${error.message}`,
       );
-      throw new HttpException(
-        `Error fetching business with name ${name}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw error;
     }
   }
 

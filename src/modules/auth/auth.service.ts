@@ -196,7 +196,6 @@ export class AuthService {
 
       // check if mobile was provided
       if (mobile) {
-        console.log('mobile provided');
         // get mobile if it exists
         const registeredMobile =
           await this.mobileService.getMobileByPhoneNumber(mobile);
@@ -206,7 +205,6 @@ export class AuthService {
           registeredMobile.auth &&
           registeredMobile.auth.id
         ) {
-          console.log('mobile exists');
           // get auth account if mobile is registered
           // authAccount = await this.authRepository.findOneBy({
           //   id: registeredMobile.auth.id,
@@ -216,7 +214,6 @@ export class AuthService {
             registeredMobile.auth.id,
           );
         } else {
-          console.log('mobile does not exist');
           // create auth account if mobile does not exist
           const auth = new Auth();
           auth.email = email;
@@ -241,18 +238,15 @@ export class AuthService {
           // await this.mobileService.updateMobile(mobile);
         }
       } else if (email) {
-        console.log('email provided');
         // get email if it exists
         authAccount = await this.findByEmail(body.email);
 
         // create new auth account if email does not exist
         if (!authAccount) {
-          console.log('email does not exist');
           const auth = new Auth();
           auth.email = email;
           authAccount = await this.registerAuthAccount(auth);
         } else {
-          console.log('email exists');
           // get auth account with it id
           authAccount = await this.authRepository.getUserByAuthId(
             authAccount.id,
@@ -271,17 +265,14 @@ export class AuthService {
         throw new ConflictException('User already exists, please login');
       }
 
-      console.log('generating otp adn jwt');
       const otpResp: OtpRespDto = await this.genrateOtp(email, mobile);
       const token = this.generateJwt(authAccount);
 
-      console.log('expiry: ', otpResp.expiryTime);
       await this.authRepository.updateOtp(
         authAccount.id,
         otpResp.code,
         otpResp.expiryTime,
       );
-      console.log('updating auth account with otp code and expiry time');
 
       const signupOtpResp = {
         ...otpResp,
@@ -368,6 +359,10 @@ export class AuthService {
     try {
       // get auth record with authId
       const auth = await this.authRepository.findOneBy({ id: authId });
+
+      if(auth.email == email)
+        return;
+
       auth.email = email;
       await this.authRepository.update(authId, auth);
     } catch (error) {

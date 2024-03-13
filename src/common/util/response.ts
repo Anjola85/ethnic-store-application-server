@@ -3,6 +3,12 @@ import { Response } from "express";
 import { HttpStatus } from "@nestjs/common";
 import { encryptPayload } from "./crypto";
 
+export interface  ApiResponse {
+  message?: string,
+  payload: any,
+  status: boolean
+}
+
 export function createResponse(
   message?: string,
   payload = null,
@@ -28,6 +34,11 @@ export function createEncryptedResponse(encryptedData: string): EncryptedDTO {
   };
 }
 
+/**
+ * Encrypts the payload based on if cryptoresp is set to true
+ * @param res
+ * @param result
+ */
 export async function handleCustomResponse(res: Response, result: any) {
   const cryptoresp = res.locals.cryptresp;
 

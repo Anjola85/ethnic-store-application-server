@@ -23,7 +23,7 @@ import { Region } from 'src/modules/region/entities/region.entity';
 export interface BusinessParam {
   name?: string;
   email?: string;
-  businessId?: string;
+  businessId?: number;
 }
 
 @Entity('business')
