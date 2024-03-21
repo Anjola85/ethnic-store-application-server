@@ -1,12 +1,15 @@
-import { CreateBusinessDto } from "./dto/create-business.dto";
-import { BusinessListRespDto, BusinessRespDto } from "src/contract/version1/response/business-response.dto";
-import { AddressProcessor } from "../address/address.processor";
-import { CountryProcessor } from "../country/country.process";
-import { MobileProcessor } from "../mobile/mobile.processor";
-import { RegionProcessor } from "../region/region.process";
+import { CreateBusinessDto } from './dto/create-business.dto';
+import {
+  BusinessListRespDto,
+  BusinessRespDto,
+} from 'src/contract/version1/response/business-response.dto';
+import { AddressProcessor } from '../address/address.processor';
+import { CountryProcessor } from '../country/country.process';
+import { MobileProcessor } from '../mobile/mobile.processor';
+import { RegionProcessor } from '../region/region.process';
 
-import { Business } from "./entities/business.entity";
-import { Logger } from "@nestjs/common";
+import { Business } from './entities/business.entity';
+import { Logger } from '@nestjs/common';
 
 export class BusinessProcessor {
   private static logger = new Logger(BusinessProcessor.name);
@@ -79,7 +82,7 @@ export class BusinessProcessor {
     businessDto: CreateBusinessDto,
   ): Business {
     const businessEntity: Business = new Business();
-    businessEntity.owner = businessDto?.owner;
+    businessEntity.user = businessDto?.user;
     businessEntity.name = businessDto.name;
     businessEntity.description = businessDto.description;
     businessEntity.email = businessDto.email;
