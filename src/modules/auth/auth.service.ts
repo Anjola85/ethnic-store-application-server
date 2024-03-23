@@ -5,39 +5,42 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  UnauthorizedException
-} from "@nestjs/common";
-import * as jsonwebtoken from "jsonwebtoken";
-import { Auth, AuthParams } from "./entities/auth.entity";
-import { SendgridService } from "src/providers/otp/sendgrid/sendgrid.service";
-import TwilioService from "src/providers/otp/twilio/twilio.service";
-import { User } from "../user/entities/user.entity";
-import { MobileDto } from "src/common/dto/mobile.dto";
-import { AuthRepository } from "./auth.repository";
-import { UserDto } from "../user/dto/user.dto";
-import { CreateAuthDto } from "./dto/create-auth.dto";
-import { Mobile } from "../mobile/mobile.entity";
-import { MobileService } from "../mobile/mobile.service";
-import { SecureLoginDto } from "./dto/secure-login.dto";
-import { LoginOtpRequest } from "src/contract/version1/request/auth/loginOtp.request";
-import { OtpRespDto } from "src/contract/version1/response/otp-response.dto";
-import { SignupOtpRequest } from "src/contract/version1/request/auth/signupOtp.request";
-import { UserService } from "../user/user.service";
-import { UpdateUserDto } from "../user/dto/update-user.dto";
-import { AddressService } from "../address/address.service";
-import { SignupOtpRespDto } from "src/contract/version1/response/signup-otp-response.dto";
-import { getCurrentEpochTime } from "src/common/util/functions";
-import { LoginOtpRespDto } from "src/contract/version1/response/login-otp-response.dto";
-import { CreateUserDto } from "../user/dto/create-user.dto";
-import { UserProcessor } from "../user/user.processor";
-import { SignupRespDto } from "src/contract/version1/response/signup-response.dto";
-import { UserInformationRespDto, UserRespDto } from "src/contract/version1/response/user-response.dto";
-import { LoginRespDto } from "src/contract/version1/response/login-response.dto";
-import { Address } from "../address/entities/address.entity";
-import { AddressProcessor } from "../address/address.processor";
-import { MobileProcessor } from "../mobile/mobile.processor";
-import { UpdateAuthDto } from "./dto/update-auth.dto";
-import { EnvConfigService } from "../config/env-config.";
+  UnauthorizedException,
+} from '@nestjs/common';
+import * as jsonwebtoken from 'jsonwebtoken';
+import { Auth, AuthParams } from './entities/auth.entity';
+import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
+import TwilioService from 'src/providers/otp/twilio/twilio.service';
+import { User } from '../user/entities/user.entity';
+import { MobileDto } from 'src/common/dto/mobile.dto';
+import { AuthRepository } from './auth.repository';
+import { UserDto } from '../user/dto/user.dto';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import { Mobile } from '../mobile/mobile.entity';
+import { MobileService } from '../mobile/mobile.service';
+import { SecureLoginDto } from './dto/secure-login.dto';
+import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.request';
+import { OtpRespDto } from 'src/contract/version1/response/otp-response.dto';
+import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
+import { UserService } from '../user/user.service';
+import { UpdateUserDto } from '../user/dto/update-user.dto';
+import { AddressService } from '../address/address.service';
+import { SignupOtpRespDto } from 'src/contract/version1/response/signup-otp-response.dto';
+import { getCurrentEpochTime } from 'src/common/util/functions';
+import { LoginOtpRespDto } from 'src/contract/version1/response/login-otp-response.dto';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { UserProcessor } from '../user/user.processor';
+import { SignupRespDto } from 'src/contract/version1/response/signup-response.dto';
+import {
+  UserInformationRespDto,
+  UserRespDto,
+} from 'src/contract/version1/response/user-response.dto';
+import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
+import { Address } from '../address/entities/address.entity';
+import { AddressProcessor } from '../address/address.processor';
+import { MobileProcessor } from '../mobile/mobile.processor';
+import { UpdateAuthDto } from './dto/update-auth.dto';
+import { EnvConfigService } from '../config/env-config.';
 
 @Injectable()
 export class AuthService {
@@ -55,17 +58,19 @@ export class AuthService {
   async genrateOtp(email?: string, mobile?: MobileDto): Promise<OtpRespDto> {
     let response: OtpRespDto;
 
-    // TODO: undo
-    // if (email) response = await this.sendgridService.sendOTPEmail(email);
+    if (email) {
+      response = await this.sendgridService.sendOTPEmail(email);
+    }
     // else if (mobile)
     //   response = await this.twilioService.sendSms(mobile.phoneNumber);
-
-    //TODO: remove
-    response = {
-      message: 'OTP sent',
-      code: '1234',
-      expiryTime: getCurrentEpochTime() + 300000000000,
-    };
+    else {
+      // TODO: remove
+      response = {
+        message: 'OTP sent',
+        code: '1234',
+        expiryTime: getCurrentEpochTime() + 300000000000,
+      };
+    }
 
     return response;
   }
@@ -332,14 +337,16 @@ export class AuthService {
 
       const user: User = await this.userSerivce.register(userDto);
 
-      const userInfo: UserInformationRespDto = await this.getUserInfoByUserId(user.id);
+      const userInfo: UserInformationRespDto = await this.getUserInfoByUserId(
+        user.id,
+      );
 
       // generate jwt token with userId
       const token = this.generateJwt(user);
 
       return {
         token,
-        userInfo
+        userInfo,
       };
     } catch (error) {
       this.logger.debug(
@@ -360,8 +367,7 @@ export class AuthService {
       // get auth record with authId
       const auth = await this.authRepository.findOneBy({ id: authId });
 
-      if(auth.email == email)
-        return;
+      if (auth.email == email) return;
 
       auth.email = email;
       await this.authRepository.update(authId, auth);
@@ -666,7 +672,5 @@ export class AuthService {
     return updatedUserResp;
   }
 
-  async deleteAuthAndRelations(authId: number) {
-
-  }
+  async deleteAuthAndRelations(authId: number) {}
 }

@@ -121,16 +121,16 @@ NOTE: make sure docker desktop is running
 
 2. Build your Docker image using the following command.
    For information on building a Docker file from scratch see the instructions here . You can skip this step if your image is already built:
-   `docker build -t quickmart-server .`
+   `docker build -t monolith-ecr .`
 
 3. After the build completes, tag your image so you can push the image to this repository:
-   `docker tag quickmart-server:latest 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
+   `docker tag monolith-ecr:latest 376620901748.dkr.ecr.ca-central-1.amazonaws.com/monolith-ecr:latest`
 
 Optional:
 To run: `docker run -p 7080:7080 image_name`
 
 4. Run the following command to push this image to your newly created AWS repository:
-   `docker push 932400219699.dkr.ecr.ca-central-1.amazonaws.com/quickmart-server:latest`
+   `docker push 376620901748.dkr.ecr.ca-central-1.amazonaws.com/monolith-ecr:latest`
 
 ## Steps to make the docker image available on AWS EC2
 

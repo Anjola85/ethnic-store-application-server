@@ -25,6 +25,7 @@ export class AuthRepository extends Repository<Auth> {
       const auth = await this.createQueryBuilder('auth')
         .where('auth.id = :id', { id: authId })
         .orWhere('auth.email = :email', { email })
+        .leftJoinAndSelect('auth.user', 'user')
         .getOne();
       return auth || null;
     } catch (error) {
