@@ -50,8 +50,8 @@ export class User extends CommonEntity {
   @JoinColumn()
   auth: Auth;
 
-  @OneToOne(() => Business, (business) => business.owner)
-  business: Auth;
+  @OneToOne(() => Business, (business) => business.user)
+  business: Business;
 
   @OneToMany(() => Address, (address) => address.user, { nullable: true })
   addresses: Address[];
