@@ -68,7 +68,7 @@ export class Business extends CommonEntity {
 
   @ManyToOne(() => User, (user) => user.business)
   @JoinColumn()
-  owner: User;
+  user: User;
 
   @Column({ name: 'business_type', type: 'varchar', default: 'grocery' })
   businessType: string;

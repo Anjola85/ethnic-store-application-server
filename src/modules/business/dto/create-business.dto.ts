@@ -31,7 +31,7 @@ export class CreateBusinessDto extends BaseDto {
   @IsOptional()
   @ApiProperty()
   @IsObject()
-  owner?: User;
+  user?: User;
 
   @ApiProperty()
   @IsArray()

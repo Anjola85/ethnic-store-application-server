@@ -2,9 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as AWS from 'aws-sdk';
 import * as dotenv from 'dotenv';
-import { Connection } from 'typeorm';
 import { AppModule } from './app.module';
 import { EnvConfigService } from './modules/config/env-config.';
 import { UserDto } from './modules/user/dto/user.dto';
@@ -16,15 +14,6 @@ async function bootstrap() {
   await envConfigService.loadConfig();
 
   const app = await NestFactory.create(AppModule);
-
-  // const connection = app.get(Connection);
-  // try {
-  //   await connection.query('CREATE EXTENSION IF NOT EXISTS postgis;');
-  //   console.log('PostGIS extension has been created if it did not exist.');
-  // } catch (error) {
-  //   console.error('Error creating PostGIS extension:', error);
-  //   process.exit(1); // Exit if the database setup fails
-  // }
 
   // validation pipe
   app.useGlobalPipes(
