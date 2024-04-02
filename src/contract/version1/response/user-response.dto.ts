@@ -2,6 +2,7 @@ import { AddressListRespDto } from './address-response.dto';
 import { BusinessListRespDto } from './business-response.dto';
 import { CountryRespDto } from './country-response.dto';
 import { MobileRespDto } from './mobile-response.dto';
+import { FavouriteListRespDto } from "./favourite-response.dto";
 
 /**
  * Response class that deals with the user entity
@@ -39,6 +40,6 @@ export interface UserInformationRespDto {
   email: string;
   mobile: MobileRespDto;
   addressList: AddressListRespDto;
-  favouriteList: BusinessListRespDto;
+  favouriteList: FavouriteListRespDto;
   accountVerified: boolean;
 }

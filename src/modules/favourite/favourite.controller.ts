@@ -32,6 +32,7 @@ export class FavouriteController {
       );
       this.logger.log('Favourite successfully added');
       const apiResp: ApiResponse = createResponse('Favourite successfully added', favourite)
+      console.log("response to client: " + apiResp);
       return handleCustomResponse(res, apiResp);
     } catch (error) {
       this.logger.error(

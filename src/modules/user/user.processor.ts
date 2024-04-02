@@ -18,6 +18,8 @@ import { Favourite } from "../favourite/entities/favourite.entity";
 import { Business } from "../business/entities/business.entity";
 import { CountryProcessor } from "../country/country.process";
 import { MobileProcessor } from "../mobile/mobile.processor";
+import { FavouriteProcessor } from "../favourite/favourite.process";
+import { FavouriteListRespDto } from "../../contract/version1/response/favourite-response.dto";
 
 export class UserProcessor {
   private static readonly logger = new Logger(UserProcessor.name);
@@ -43,6 +45,7 @@ export class UserProcessor {
     user: User,
     mobile: Mobile,
   ): UserInformationRespDto {
+
     if (!user || !mobile) {
       this.logger.error(
         'User and mobile cannot be null in method processUserRelationInfo and file user.processor.ts',
@@ -57,13 +60,10 @@ export class UserProcessor {
     const addressList: AddressListRespDto =
       AddressProcessor.mapEntityListToResp(user.addresses);
 
-    let favouriteBusinessList: BusinessListRespDto;
-    if (user.favourites) {
-      const favouritedBusinessEntities: Business[] = user.favourites.map(
-        (favourite: Favourite) => favourite.business,
-      );
-      favouriteBusinessList = BusinessProcessor.mapEntityListToResp(favouritedBusinessEntities);
-    }
+    let favouriteBusinessList: FavouriteListRespDto;
+    if (user.favourites)
+      favouriteBusinessList = FavouriteProcessor.mapEntityListToResp(user.favourites);
+
 
 
     const countryDto: CountryRespDto = CountryProcessor.mapEntityToResp(

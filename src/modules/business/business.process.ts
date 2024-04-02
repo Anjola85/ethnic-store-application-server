@@ -47,15 +47,11 @@ export class BusinessProcessor {
    * @param businesses
    * @returns
    */
-  public static mapEntityListToResp(
-    businesses: Business[],
-  ): BusinessListRespDto {
-    if (
-      businesses === undefined ||
-      businesses === null ||
-      businesses.length == 0
-    )
+  public static mapEntityListToResp(businesses: Business[]): BusinessListRespDto {
+
+    if (businesses === undefined || businesses === null || businesses.length == 0) {
       return { size: 0, businessList: [] };
+    }
 
     const businessList: BusinessRespDto[] = businesses
       .map((business) => BusinessProcessor.mapEntityToResp(business))
