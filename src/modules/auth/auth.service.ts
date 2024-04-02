@@ -58,19 +58,21 @@ export class AuthService {
   async genrateOtp(email?: string, mobile?: MobileDto): Promise<OtpRespDto> {
     let response: OtpRespDto;
 
-    if (email) {
-      response = await this.sendgridService.sendOTPEmail(email);
-    }
+    response = await this.twilioService.sendSms(mobile.phoneNumber);
+
+    // if (email) {
+    //   response = await this.sendgridService.sendOTPEmail(email);
+    // }
     // else if (mobile)
     //   response = await this.twilioService.sendSms(mobile.phoneNumber);
-    else {
-      // TODO: remove
-      response = {
-        message: 'OTP sent',
-        code: '1234',
-        expiryTime: getCurrentEpochTime() + 300000000000,
-      };
-    }
+    // else {
+    //   // TODO: remove
+    //   response = {
+    //     message: 'OTP sent',
+    //     code: '1234',
+    //     expiryTime: getCurrentEpochTime() + 300000000000,
+    //   };
+    // }
 
     return response;
   }
@@ -562,7 +564,7 @@ export class AuthService {
       const mobile: Mobile = await this.mobileService.getMobileByAuth(
         user.auth,
       );
-      return  UserProcessor.processUserRelationInfo(user, mobile);
+      return UserProcessor.processUserRelationInfo(user, mobile);
     } catch (error) {
       this.logger.error(
         `Error from getUserInfoByUser method in auth.service.ts.
