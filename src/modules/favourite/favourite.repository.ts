@@ -131,9 +131,9 @@ export class FavouriteRepository extends Repository<Favourite> {
    * @returns
    */
   async getFavouritesWithBusinessDetails(userId: number): Promise<Favourite[]> {
-    const favourites = await this.findFavouritesByUser(userId);
+    const favourites: Favourite[] = await this.findFavouritesByUser(userId);
 
-    // fetch the the business id for each favourite
+    // fetch the business id for each favourite
     const businessIdList: number[] = favourites.map(
       (favourite) => favourite.business.id,
     );

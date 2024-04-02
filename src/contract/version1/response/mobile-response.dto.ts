@@ -7,6 +7,6 @@ export interface MobileRespDto {
 }
 
 export interface MobileListRespDto {
-  mobileList: MobileRespDto[];
   size: number;
+  mobileList: MobileRespDto[];
 }

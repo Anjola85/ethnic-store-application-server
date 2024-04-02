@@ -11,13 +11,16 @@ export class RegionProcessor {
   }
 
   public static mapEntityListToResp(regions: Region[]): RegionListRespDto {
+    if (regions === undefined || regions === null || regions.length === 0)
+      return {size: 0, regionList: []}
+
     const regionList: RegionRespDto[] = regions.map((region) =>
       RegionProcessor.mapEntityToResp(region),
     );
-    const payload = {
+
+    return {
       regionList: regionList,
       size: regionList.length,
     };
-    return payload;
   }
 }

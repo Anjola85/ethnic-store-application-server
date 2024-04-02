@@ -407,11 +407,13 @@ export class AuthService {
     try {
       if (!loginDto.email && !loginDto.mobile)
         throw new Error('email or mobile is required');
+
       const authAcct: Auth = await this.authRepository.getUserByAuthId(authId);
       if (!authAcct) {
         this.logger.debug('Unable to retrieve auth account: ', authAcct);
         throw new Error('Unable to retrieve auth accoun');
       }
+
       if (!authAcct.user) {
         this.logger.debug(
           'User has incomplete registeration with user: ',
@@ -421,9 +423,11 @@ export class AuthService {
           'User has incomplete registeration, please complete registeration',
         );
       }
+
       const userInfo: UserInformationRespDto = await this.getUserInfoByUserId(
         authAcct.user.id,
       );
+
       const token = this.generateJwt(authAcct.user);
       const response: LoginRespDto = {
         token,
@@ -554,15 +558,11 @@ export class AuthService {
   async getUserInfoByUserId(userId: number): Promise<UserInformationRespDto> {
     try {
       if (!userId) throw new Error('userId is required to get info');
-
       const user: User = await this.userSerivce.getUserRelationsById(userId);
-
       const mobile: Mobile = await this.mobileService.getMobileByAuth(
         user.auth,
       );
-      const userInfo: UserInformationRespDto =
-        await UserProcessor.processUserRelationInfo(user, mobile);
-      return userInfo;
+      return  UserProcessor.processUserRelationInfo(user, mobile);
     } catch (error) {
       this.logger.error(
         `Error from getUserInfoByUser method in auth.service.ts.

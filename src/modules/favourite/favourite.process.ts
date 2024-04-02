@@ -8,7 +8,7 @@ export class FavouriteProcessor {
     return {
       id,
       business: BusinessProcessor.mapEntityToResp(business),
-      time: updatedAt,
+      updatedAt: updatedAt,
     };
   }
 
@@ -23,7 +23,7 @@ export class FavouriteProcessor {
       );
 
     return {
-      favouriteList: favouriteList,
+      result: favouriteList,
       size: favouriteList.length,
     };
   }

@@ -95,17 +95,17 @@ export class UserRepository extends Repository<User> {
    * @returns - user
    */
   async getUserWithRelations(userId: number): Promise<User> {
-    return this.findOne({
+    const userInfortmation: User = await this.findOne({
       where: { id: userId },
       relations: [
         'addresses',
-        'favourites',
+        "favourites.business",
         'countryOfOrigin',
         'business',
-        'countryOfOrigin',
         'auth',
       ],
     });
+    return userInfortmation;
   }
 
   /**
