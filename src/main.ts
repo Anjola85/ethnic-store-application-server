@@ -15,8 +15,8 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // const expressApp = app.getHttpAdapter().getInstance();
-  // expressApp.set('trust proxy', 1);
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
 
   // validation pipe
   app.useGlobalPipes(
@@ -31,6 +31,14 @@ async function bootstrap() {
     const cors: CorsOptions = {
       origin: '*', // Allow requests from all origins
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      credentials: true,
+    };
+    app.enableCors(cors);
+  } else {
+    // prod setting
+    const cors: CorsOptions = {
+      origin: '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST',
       credentials: true,
     };
     app.enableCors(cors);
