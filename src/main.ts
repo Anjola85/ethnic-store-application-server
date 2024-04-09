@@ -15,6 +15,9 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   // validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
