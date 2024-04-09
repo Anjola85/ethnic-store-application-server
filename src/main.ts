@@ -31,7 +31,16 @@ async function bootstrap() {
       credentials: true,
     };
     app.enableCors(cors);
+  } else {
+    // prod setting
+    const cors: CorsOptions = {
+      origin: '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST',
+      credentials: true,
+    };
+    app.enableCors(cors);
   }
+
 
   // swagger setup
   const config = new DocumentBuilder()
