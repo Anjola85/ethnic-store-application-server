@@ -34,6 +34,7 @@ export class Auth extends CommonEntity {
   })
   otpExpiry: number;
 
+  // TODO: change this to be one-to-one
   @OneToMany(() => Mobile, (mobile) => mobile.auth, { nullable: true })
   mobile: Mobile;
 
