@@ -1,17 +1,29 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Res } from "@nestjs/common";
-import { FavouriteService } from "./favourite.service";
-import { CreateFavouriteDto } from "./dto/create-favourite.dto";
-import { Response } from "express";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Post,
+  Res,
+} from '@nestjs/common';
+import { FavouriteService } from './favourite.service';
+import { CreateFavouriteDto } from './dto/create-favourite.dto';
+import { Response } from 'express';
 import {
   ApiResponse,
   createResponse,
   extractIdFromRequest,
   handleCustomResponse,
-  TokenIdType
-} from "src/common/util/response";
-import { encryptPayload } from "src/common/util/crypto";
-import { FavouriteListRespDto, FavouriteRespDto } from "src/contract/version1/response/favourite-response.dto";
-import { UpdateFavouriteDto } from "./dto/update-favourite.dto";
+  TokenIdType,
+} from 'src/common/util/response';
+import { encryptPayload } from 'src/common/util/crypto';
+import {
+  FavouriteListRespDto,
+  FavouriteRespDto,
+} from 'src/contract/version1/response/favourite-response.dto';
+import { UpdateFavouriteDto } from './dto/update-favourite.dto';
 
 @Controller('favourite')
 export class FavouriteController {
@@ -26,13 +38,17 @@ export class FavouriteController {
     try {
       this.logger.log('add favourite endpoint called');
       const userId: number = extractIdFromRequest(res, TokenIdType.userId);
-      const favourite: FavouriteRespDto = await this.favouriteService.addToFavourites(
-        userId,
-        createFavouriteDto.business,
-      );
+      const favourite: FavouriteRespDto =
+        await this.favouriteService.addToFavourites(
+          userId,
+          createFavouriteDto.business,
+        );
       this.logger.log('Favourite successfully added');
-      const apiResp: ApiResponse = createResponse('Favourite successfully added', favourite)
-      console.log("response to client: " + apiResp);
+      const apiResp: ApiResponse = createResponse(
+        'Favourite successfully added',
+        favourite,
+      );
+      console.log('response to client: ' + apiResp);
       return handleCustomResponse(res, apiResp);
     } catch (error) {
       this.logger.error(

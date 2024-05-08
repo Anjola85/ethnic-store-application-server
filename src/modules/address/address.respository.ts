@@ -1,11 +1,16 @@
-import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { DataSource, Repository } from "typeorm";
-import { Address } from "./entities/address.entity";
-import { AddressParams } from "./address.service";
-import { getCurrentEpochTime } from "src/common/util/functions";
-import { AddressDto } from "./dto/address.dto";
-import { User } from "../user/entities/user.entity";
-
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { DataSource, Repository } from 'typeorm';
+import { Address } from './entities/address.entity';
+import { AddressParams } from './address.service';
+import { getCurrentEpochTime } from 'src/common/util/functions';
+import { AddressDto } from './dto/address.dto';
+import { User } from '../user/entities/user.entity';
 
 //TODO: sort the address basedon updatedAt
 @Injectable()
@@ -42,7 +47,7 @@ export class AddressRepository extends Repository<Address> {
           country: addressEntity.country,
           user: addressEntity.user,
           business: addressEntity.business,
-          isPrimary: addressEntity.isPrimary,
+          isPrimary: addressEntity.isPrimary || true,
           unit: addressEntity.unit,
           location: () =>
             `ST_SetSRID(ST_GeomFromGeoJSON('${JSON.stringify({
@@ -100,13 +105,25 @@ export class AddressRepository extends Repository<Address> {
     try {
       let addressList: Address[];
       if (params.id)
-        addressList = await this.createQueryBuilder('address').where('address.id = :id', { id: params.id }).andWhere('address.deleted = false').orderBy('address.updatedAt', 'DESC').getMany();
-       else if (params.businessId)
-        addressList = await this.createQueryBuilder('address').where('address.business.id = :businessId', { id: params.businessId }).andWhere('address.deleted = false').orderBy('address.updatedAt', 'DESC').getMany();
-       else if (params.userId)
-        addressList = await this.createQueryBuilder('address').where('address.user.id = :userId', { userId: params.userId }).andWhere('address.deleted = false').orderBy('address.updatedAt', 'DESC').getMany();
+        addressList = await this.createQueryBuilder('address')
+          .where('address.id = :id', { id: params.id })
+          .andWhere('address.deleted = false')
+          .orderBy('address.updatedAt', 'DESC')
+          .getMany();
+      else if (params.businessId)
+        addressList = await this.createQueryBuilder('address')
+          .where('address.business.id = :businessId', { id: params.businessId })
+          .andWhere('address.deleted = false')
+          .orderBy('address.updatedAt', 'DESC')
+          .getMany();
+      else if (params.userId)
+        addressList = await this.createQueryBuilder('address')
+          .where('address.user.id = :userId', { userId: params.userId })
+          .andWhere('address.deleted = false')
+          .orderBy('address.updatedAt', 'DESC')
+          .getMany();
 
-       // set primary to the first
+      // set primary to the first
       addressList[0].isPrimary = true;
 
       return addressList;
@@ -174,9 +191,13 @@ export class AddressRepository extends Repository<Address> {
     address: Address,
   ): Promise<Address | undefined> {
     try {
-      const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId}).andWhere('address.deleted = false').getOne();
+      const currentAddress: Address = await this.createQueryBuilder('address')
+        .where('address.id = :addressId', { addressId })
+        .andWhere('address.deleted = false')
+        .getOne();
 
-      if(!currentAddress) throw new NotFoundException("Address to be updated not found");
+      if (!currentAddress)
+        throw new NotFoundException('Address to be updated not found');
 
       Object.assign(currentAddress, address);
 
@@ -184,7 +205,7 @@ export class AddressRepository extends Repository<Address> {
     } catch (error) {
       this.logger.error(
         `Error thrown in address.repository.ts, updateUserAddressById method: ${error.message}`,
-      )
+      );
       throw error;
     }
   }
@@ -219,25 +240,28 @@ export class AddressRepository extends Repository<Address> {
   async removeFromAddress(addressId: number): Promise<void> {
     try {
       const address: Address = await this.createQueryBuilder('address')
-        .where('address.id = :addressId', {addressId})
+        .where('address.id = :addressId', { addressId })
         .andWhere('address.deleted = false')
         .getOne();
 
       address.deleted = true;
       await this.save(address);
-    } catch(error) {
-      this.logger.error("Unable to add address to API");
+    } catch (error) {
+      this.logger.error('Unable to add address to API');
     }
   }
 
   async updateAddressUnit(addressEntity: Address): Promise<Address> {
-    const currentAddress: Address = await this.createQueryBuilder('address').where('address.id = :addressId', {addressId: addressEntity.id})
-      .andWhere('address.deleted = false').getOne();
+    const currentAddress: Address = await this.createQueryBuilder('address')
+      .where('address.id = :addressId', { addressId: addressEntity.id })
+      .andWhere('address.deleted = false')
+      .getOne();
 
-    if(!currentAddress) throw new NotFoundException("Address to be updated not found");
+    if (!currentAddress)
+      throw new NotFoundException('Address to be updated not found');
 
     currentAddress.unit = addressEntity.unit;
-    currentAddress.user = addressEntity.user
+    currentAddress.user = addressEntity.user;
 
     return await currentAddress.save();
   }
