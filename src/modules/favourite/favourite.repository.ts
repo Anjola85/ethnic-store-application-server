@@ -70,7 +70,7 @@ export class FavouriteRepository extends Repository<Favourite> {
         .andWhere('favourite.deleted = false') // Exclude records marked as deleted
         .getOne();
 
-      favourite.deleted = true;
+      if (favourite.deleted) favourite.deleted = true;
       await this.save(favourite);
     } catch (error) {
       this.logger.debug(
