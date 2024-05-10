@@ -38,40 +38,45 @@ export class FavouriteRepository extends Repository<Favourite> {
   }
 
   async favouriteExist(userId: number, businessId: number) {
-    return await this.createQueryBuilder('favourite')
-      .where(
-        'favourite.userId = :userId AND favourite.businessId = :businessId',
-        {
-          userId: userId,
-          businessId: businessId,
-        },
-      )
-      .leftJoinAndSelect('favourite.business', 'business')
-      .leftJoinAndSelect('business.address', 'address')
-      .leftJoinAndSelect('business.mobile', 'mobile')
-      .leftJoinAndSelect('business.countries', 'countries')
-      .leftJoinAndSelect('business.regions', 'regions')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
-          .from('address', 'address')
-          .where('address.id = business.addressId');
-      }, 'locationGeoJSON')
-      .andWhere('business.id = :id', { id: businessId })
-      .getOne();
+    try {
+      return await this.createQueryBuilder('favourite')
+        .where(
+          'favourite.user = :userId AND favourite.business = :businessId',
+          {
+            userId: userId,
+            businessId: businessId,
+          },
+        )
+        .leftJoinAndSelect('favourite.business', 'business')
+        .leftJoinAndSelect('business.address', 'address')
+        .leftJoinAndSelect('business.mobile', 'mobile')
+        .leftJoinAndSelect('business.countries', 'countries')
+        .leftJoinAndSelect('business.regions', 'regions')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+            .from('address', 'address')
+            .where('address.id = business.address_id');
+        }, 'locationGeoJSON')
+        .andWhere('business.id = :id', { id: businessId })
+        .getOne();
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
   }
 
-  async removeFromFavourites(favouriteId: number): Promise<void> {
+  async removeFromFavourites(favourite: Favourite): Promise<void> {
     try {
       // check if favourite exists for user
 
-      const favourite = await this.createQueryBuilder('favourite')
-        .where('favourite.id = :favouriteId', { favouriteId })
-        .andWhere('favourite.deleted = false') // Exclude records marked as deleted
-        .getOne();
+      const favouriteQuery = await this.createQueryBuilder()
+        .delete()
+        .from('favourite')
+        .where('favourite.business_id = :businessId', { businessId: favourite.business.id })
+        .andWhere('favourite.user_id = :userId', {userId: favourite.user.id})
+        .execute();
 
-      favourite.deleted = true;
-      await this.save(favourite);
     } catch (error) {
       this.logger.debug(
         'Error thrown in favourite.repository.ts, removeFromFavourites method with error: ' +
@@ -91,7 +96,7 @@ export class FavouriteRepository extends Repository<Favourite> {
       const favourites = await this.createQueryBuilder('favourite')
         .leftJoinAndSelect('favourite.business', 'business')
         .leftJoinAndSelect('favourite.user', 'user')
-        .where('userId = :userId', { id })
+        .where('user_id = :userId', { id })
         .andWhere('favourite.deleted = false') // Exclude records marked as deleted
         .getMany();
       return favourites || null;
@@ -118,7 +123,7 @@ export class FavouriteRepository extends Repository<Favourite> {
     const favourites = await this.createQueryBuilder('favourite')
       .leftJoinAndSelect('favourite.business', 'business')
       .leftJoinAndSelect('favourite.user', 'user')
-      .where('favourite.userId = :userId', { userId })
+      .where('favourite.user_id = :userId', { userId })
       .andWhere('favourite.deleted = false')
       .getMany();
 
@@ -163,7 +168,7 @@ export class FavouriteRepository extends Repository<Favourite> {
       const favourites = await this.createQueryBuilder('favourite')
         .leftJoinAndSelect('favourite.business', 'business')
         .leftJoinAndSelect('favourite.user', 'user')
-        .where('userId = :userId', { userId })
+        .where('user_id = :userId', { userId })
         .getMany();
       return favourites;
     } catch (error) {

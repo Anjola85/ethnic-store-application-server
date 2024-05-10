@@ -22,6 +22,6 @@ export class Feedback extends CommonEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn({name: 'user_id'})
   user: User;
 }

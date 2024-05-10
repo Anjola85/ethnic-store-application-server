@@ -12,6 +12,7 @@ import {
 import { encryptPayload } from "src/common/util/crypto";
 import { FavouriteListRespDto, FavouriteRespDto } from "src/contract/version1/response/favourite-response.dto";
 import { UpdateFavouriteDto } from "./dto/update-favourite.dto";
+import { User } from "../user/entities/user.entity";
 
 @Controller('favourite')
 export class FavouriteController {
@@ -26,13 +27,16 @@ export class FavouriteController {
     try {
       this.logger.log('add favourite endpoint called');
       const userId: number = extractIdFromRequest(res, TokenIdType.userId);
-      const favourite: FavouriteRespDto = await this.favouriteService.addToFavourites(
-        userId,
-        createFavouriteDto.business,
-      );
+      const favourite: FavouriteRespDto =
+        await this.favouriteService.addToFavourites(
+          userId,
+          createFavouriteDto.business,
+        );
       this.logger.log('Favourite successfully added');
-      const apiResp: ApiResponse = createResponse('Favourite successfully added', favourite)
-      console.log("response to client: " + apiResp);
+      const apiResp: ApiResponse = createResponse(
+        'Favourite successfully added',
+        favourite,
+      );
       return handleCustomResponse(res, apiResp);
     } catch (error) {
       this.logger.error(
@@ -108,9 +112,11 @@ export class FavouriteController {
   }
 
   @Post('remove')
-  async removeFromFavourites(@Body() updateFavourite: UpdateFavouriteDto) {
+  async removeFromFavourites(@Body() updateFavourite: UpdateFavouriteDto, @Res() res: Response) {
     try {
       this.logger.log('remove from favourite endpoint called');
+      updateFavourite.favourite.user = (new User());
+      updateFavourite.favourite.user.id = res.locals.userId;
 
       if (!updateFavourite && !updateFavourite.favourite) {
         throw new HttpException(
@@ -123,7 +129,13 @@ export class FavouriteController {
         updateFavourite.favourite,
       );
 
-      return createResponse('Favourite successfully removed');
+      return res
+        .status(HttpStatus.OK)
+        .json(
+          createResponse(
+            'Favourite successfully removed',
+          ),
+        );
     } catch (error) {
       this.logger.error(
         'Error thrown in favourite.controller.ts, removeFromFavourites method: ' +
