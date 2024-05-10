@@ -14,7 +14,7 @@ export class UserRepository extends Repository<User> {
     try {
       const user = await this.createQueryBuilder('user')
         .leftJoinAndSelect('user.addresses', 'address')
-        .where('user.authId = :authId', { authId })
+        .where('user.auth_id = :auth_id', { authId })
         .getOne();
       return user || null;
     } catch (error) {

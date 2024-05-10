@@ -197,6 +197,7 @@ export class UserController {
     }
   }
 
+  // TODO: investigate why this get-address method is here
   @Get('get-address')
   async getUserAddress(@Res() res: Response) {
     try {

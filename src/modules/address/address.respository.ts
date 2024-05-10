@@ -124,7 +124,8 @@ export class AddressRepository extends Repository<Address> {
           .getMany();
 
       // set primary to the first
-      addressList[0].isPrimary = true;
+      if(addressList[0])
+        addressList[0].isPrimary = true;
 
       return addressList;
     } catch (error) {

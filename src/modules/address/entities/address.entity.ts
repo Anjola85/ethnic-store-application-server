@@ -21,7 +21,7 @@ export class Address extends CommonEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn({name: 'user_id'})
   user: User;
 
   @Column({ default: false, nullable: false, type: 'boolean' })

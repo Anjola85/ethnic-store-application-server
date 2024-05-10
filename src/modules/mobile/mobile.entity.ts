@@ -17,7 +17,7 @@ export class Mobile extends CommonEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn({name: 'auth_id'})
   auth: Auth;
 
   @OneToOne(() => Business, (business) => business.mobile)

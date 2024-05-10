@@ -186,7 +186,7 @@ export class MobileRepository extends Repository<Mobile> {
     try {
       const authId = auth.id;
       const mobile = await this.createQueryBuilder('mobile')
-        .where('mobile.authId = :authId', { authId })
+        .where('mobile.auth_id = :authId', { authId })
         .getOne();
       return mobile;
     } catch (error) {
