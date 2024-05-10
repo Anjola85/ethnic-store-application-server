@@ -16,11 +16,6 @@ export class EnvConfigService {
   private readonly ssmCLient: AWS.SSM;
   private currentEnv: string;
 
-  // async onModuleInit() {
-  //   this.logger.log('onModuleInit - Loading environment variables from SSM');
-  //   await this.loadConfig();
-  // }
-
   constructor() {
     const isProd = isProduction();
     if (!isProd) {
@@ -35,8 +30,8 @@ export class EnvConfigService {
       });
     }
 
-    // this.currentEnv = isProd ? 'prod' : 'dev';
-    this.currentEnv = 'prod'; // TODO: comment when staging has been added
+    this.currentEnv = isProd ? 'prod' : 'dev';
+    // this.currentEnv = 'prod'; // TODO: comment when staging has been added
   }
 
   /**

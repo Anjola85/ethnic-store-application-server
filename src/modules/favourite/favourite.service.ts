@@ -31,11 +31,13 @@ export class FavouriteService {
       if (!userExists) throw new NotFoundException('User not found');
       if (!businessExists) throw new NotFoundException('Business not found');
 
+      // TODO: fix issue here
       const favouriteExist: Favourite =
         await this.favouriteRepository.favouriteExist(
           userId,
           businessExists.id,
         );
+      // const favouriteExist: Favourite = null;
 
       if (
         favouriteExist &&
@@ -89,8 +91,8 @@ export class FavouriteService {
 
   async removeFromFavourites(favourite: Favourite): Promise<void> {
     try {
-      const favouriteId: number = favourite.id;
-      await this.favouriteRepository.removeFromFavourites(favouriteId);
+      console.log(favourite);
+      await this.favouriteRepository.removeFromFavourites(favourite);
     } catch (error) {
       this.logger.error(
         'Error thrown in favourite.service.ts, removeFromFavourites method: ' +

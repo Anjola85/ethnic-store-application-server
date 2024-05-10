@@ -1,8 +1,7 @@
-import { DataSource, Repository } from 'typeorm';
-import { Business, BusinessParam } from './entities/business.entity';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { GeoLocationDto } from './dto/geolocation.dto';
-import { GenericFilter } from '../common/generic-filter';
+import { DataSource, Repository } from "typeorm";
+import { Business, BusinessParam } from "./entities/business.entity";
+import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
+import { GenericFilter } from "../common/generic-filter";
 
 @Injectable()
 export class BusinessRepository extends Repository<Business> {
@@ -42,7 +41,7 @@ export class BusinessRepository extends Repository<Business> {
             return subQuery
               .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
               .from('address', 'address')
-              .where('address.id = business.addressId');
+              .where('address.id = business.address_id');
           }, 'locationGeoJSON')
           .where('business.name = :name', { name })
           .getOne();
@@ -59,7 +58,7 @@ export class BusinessRepository extends Repository<Business> {
             return subQuery
               .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
               .from('address', 'address')
-              .where('address.id = business.addressId');
+              .where('address.id = business.address_id');
           }, 'locationGeoJSON')
           .where('business.email = :email', { email })
           .getOne();
@@ -75,7 +74,7 @@ export class BusinessRepository extends Repository<Business> {
             return subQuery
               .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
               .from('address', 'address')
-              .where('address.id = business.addressId');
+              .where('address.id = business.address_id');
           }, 'locationGeoJSON')
           .where('business.id = :id', { id: businessId })
           .getOne();
@@ -101,12 +100,10 @@ export class BusinessRepository extends Repository<Business> {
     try {
       this.logger.debug(`findByCountry called with country: ${country}`);
 
-      const businesses = await this.createQueryBuilder('business')
+      return await this.createQueryBuilder('business')
         .innerJoinAndSelect('business.countries', 'country')
-        .where('country.name = :countryId', { country })
+        .where('country.name = :country_id', { country })
         .getMany();
-
-      return businesses;
     } catch (error) {
       this.logger.error(
         `Error thrown in business.repository.ts, findByCountry method: ${error.message}`,
@@ -141,9 +138,7 @@ export class BusinessRepository extends Repository<Business> {
       //   .innerJoinAndSelect('business.regions', 'region')
       //   .where('region.name = :regionId', { region })
       //   .getMany();
-      const businesses = null;
-
-      return businesses;
+      return null;
     } catch (error) {
       this.logger.error(
         `Error thrown in business.repository.ts, findByRegion method: ${error.message}`,
@@ -166,7 +161,7 @@ export class BusinessRepository extends Repository<Business> {
   }
 
   async getAllRelation(): Promise<Business[]> {
-    const businessRelations = await this.createQueryBuilder('business')
+    return await this.createQueryBuilder('business')
       .leftJoinAndSelect('business.address', 'address')
       .leftJoinAndSelect('business.mobile', 'mobile')
       .leftJoinAndSelect('business.countries', 'countries')
@@ -175,12 +170,10 @@ export class BusinessRepository extends Repository<Business> {
         return subQuery
           .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
           .from('address', 'address')
-          .where('address.id = business.addressId');
+          .where('address.id = business.address_id');
       }, 'locationGeoJSON')
       .orderBy('business.id', 'ASC')
       .getMany();
-
-    return businessRelations;
   }
 
   /**
@@ -192,7 +185,7 @@ export class BusinessRepository extends Repository<Business> {
   async getClosestBusinesses(lat: number, lon: number): Promise<Business[]> {
     const pointOfInterest = `SRID=4326;POINT(${lon} ${lat})`; // Create a POINT for the provided lat & lon
 
-    const businessRelations = await this.createQueryBuilder('business')
+    return await this.createQueryBuilder('business')
       .leftJoinAndSelect('business.address', 'address')
       .leftJoinAndSelect('business.mobile', 'mobile')
       .leftJoinAndSelect('business.countries', 'countries')
@@ -201,15 +194,13 @@ export class BusinessRepository extends Repository<Business> {
         return subQuery
           .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
           .from('address', 'address')
-          .where('address.id = business.addressId');
+          .where('address.id = business.address_id');
       }, 'locationGeoJSON')
       .orderBy(
         `ST_Distance(address.location, ST_GeomFromText('${pointOfInterest}', 4326))`,
         'ASC',
       ) // Order by distance to the point of interest
       .getMany();
-
-    return businessRelations;
   }
 
   /**
@@ -233,7 +224,7 @@ export class BusinessRepository extends Repository<Business> {
         return subQuery
           .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
           .from('address', 'address')
-          .where('address.id = business.addressId');
+          .where('address.id = business.address_id');
       }, 'locationGeoJSON')
       .skip(skip)
       .take(pageSize);
@@ -255,21 +246,40 @@ export class BusinessRepository extends Repository<Business> {
    * @returns
    */
   async getRelationsByBusinessId(businesses: number[]): Promise<Business[]> {
-    const businessRelations = await this.createQueryBuilder('business')
-      .leftJoinAndSelect('business.address', 'address')
-      .leftJoinAndSelect('business.mobile', 'mobile')
-      .leftJoinAndSelect('business.countries', 'countries')
-      .leftJoinAndSelect('business.regions', 'regions')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
-          .from('address', 'address')
-          .where('address.id = business.addressId');
-      }, 'locationGeoJSON')
-      .where('business.id IN (:...businesses)', { businesses })
-      .getMany();
+    try {
+      const businessRelations = await this.createQueryBuilder('business')
+        .leftJoinAndSelect('business.address', 'address')
+        .leftJoinAndSelect('business.mobile', 'mobile')
+        .leftJoinAndSelect('business.countries', 'countries')
+        .leftJoinAndSelect('business.regions', 'regions')
+        .addSelect((subQuery) => {
+          return subQuery
+            .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+            .from('address', 'address')
+            .where('address.id = business.address_id');
+        }, 'locationGeoJSON')
+        .where('business.id IN (:...businesses)', { businesses })
+        .getMany();
 
-    return businessRelations;
+      return businessRelations;
+      // const resp= await this.createQueryBuilder('business_table')
+      //   .leftJoinAndSelect('business_table.address', 'address_table')
+      //   .leftJoinAndSelect('business_table.mobile', 'mobile_table')
+      //   .leftJoinAndSelect('business_table.countries', 'countries_table')
+      //   .leftJoinAndSelect('business_table.regions', 'regions_table')
+      //   .addSelect((subQuery) => {
+      //     return subQuery
+      //       .select('ST_AsGeoJSON(address.location)', 'locationGeoJSON')
+      //       .from('address', 'a')
+      //       .where('a.id = address_table.id');
+      //   }, 'locationGeoJSON')
+      //   .where('business_table.id IN (:...businesses)', { businesses })
+      //   .getMany();
+      // return resp;
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
   }
 
   /**
@@ -278,10 +288,8 @@ export class BusinessRepository extends Repository<Business> {
    * @returns
    */
   async findByName(name: string): Promise<Business> {
-    const business = await this.createQueryBuilder('business')
+    return await this.createQueryBuilder('business')
       .where('business.name = :name', { name })
       .getOne();
-
-    return business;
   }
 }

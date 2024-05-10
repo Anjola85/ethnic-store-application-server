@@ -24,7 +24,7 @@ export class Country extends CommonEntity {
   regionId: Region;
 
   @ManyToMany(() => Business, (business) => business.countries)
-  @JoinTable() // This decorator is used to specify the owner side of the relationship.
+  @JoinTable({name: 'business_id'}) // This decorator is used to specify the owner side of the relationship.
   businesses: Business[];
 
   @BeforeInsert()

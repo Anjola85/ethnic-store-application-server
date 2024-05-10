@@ -47,7 +47,7 @@ export class User extends CommonEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn({name: 'auth_id'})
   auth: Auth;
 
   @OneToOne(() => Business, (business) => business.user)
@@ -60,7 +60,7 @@ export class User extends CommonEntity {
   favourites: Favourite[];
 
   @ManyToOne(() => Country, (country) => country.name, { nullable: true })
-  @JoinColumn()
+  @JoinColumn({name: 'country_id'})
   countryOfOrigin: Country;
 
   @OneToMany(() => Feedback, (feedback) => feedback.user)

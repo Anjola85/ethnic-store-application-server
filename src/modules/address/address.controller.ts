@@ -29,6 +29,7 @@ export class AddressController {
   @Patch('update-unit')
   async updateUnit(@Body() addressDtoRequest: UpdateAddressDto, @Res() res: Response) {
     try {
+      this.logger.debug("Update unit endpoint called in address.controller.ts")
       const userId = extractIdFromRequest(res, TokenIdType.userId);
       const user: User = await this.userService.getUserById(userId);
       const addressRespDto: AddressRespDto = await this.addressService.updateUnit(addressDtoRequest, user);
@@ -48,7 +49,7 @@ export class AddressController {
   @Post('remove')
   async removeFromAddress(@Body() addressId: number) {
     try {
-      this.logger.log('remove from address endpoint called');
+      this.logger.debug('remove from address endpoint called');
 
       if (!addressId) {
         throw new HttpException(

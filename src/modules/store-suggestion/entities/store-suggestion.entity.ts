@@ -17,7 +17,7 @@ export class StoreSuggestion extends CommonEntity {
   name: string;
 
   @OneToOne(() => Address)
-  @JoinColumn()
+  @JoinColumn({name: 'address_id'})
   address: Address;
 
   @ManyToOne(() => User, (user) => user.feedbacks, {
@@ -25,6 +25,6 @@ export class StoreSuggestion extends CommonEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn({name: 'user_id'})
   user: User;
 }
