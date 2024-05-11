@@ -75,12 +75,14 @@ export class UserService {
    */
   async getUserById(id: number): Promise<User> {
     try {
-      const user: User =  await this.userRepository.getUserById(id);
-      if(!user)
-        throw new NotFoundException("User not found!");
+      const user: User = await this.userRepository.getUserById(id);
+      if (!user) throw new NotFoundException('User not found!');
       return user;
-    } catch(error) {
-      this.logger.error("Error encountered in getUserById in user.service.ts with errror: " + error);
+    } catch (error) {
+      this.logger.error(
+        'Error encountered in getUserById in user.service.ts with errror: ' +
+          error,
+      );
       throw error;
     }
   }
@@ -189,5 +191,16 @@ export class UserService {
     // // delete user
     // this.addressService.deleteAddressByUserId(userId);
     // this.feedbackService.deleteFeedbackByUserId(userId);
+  }
+
+  async deleteUserAddress(addressId: number, userId: number) {
+    try {
+      return await this.addressService.deleteUserAddress(addressId, userId);
+    } catch (e) {
+      this.logger.error(
+        'Error thrown in user.service.ts, deleteUserAddress method: ' + e,
+      );
+      throw e;
+    }
   }
 }

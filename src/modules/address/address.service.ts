@@ -10,8 +10,8 @@ import {
 } from '../../contract/version1/response/address-response.dto';
 import { AddressProcessor } from './address.processor';
 import { UpdateAddressDto } from './dto/update-address.dto';
-import { UserRepository } from "../user/user.repository";
-import { User } from "../user/entities/user.entity";
+import { UserRepository } from '../user/user.repository';
+import { User } from '../user/entities/user.entity';
 
 export interface AddressParams {
   id?: number;
@@ -78,7 +78,7 @@ export class AddressService {
       throw new Error('Address id is required');
 
     // const addressEntity: Address = addressDtoToEntity(addressDto);
-    let addressEntity: Address = new Address();
+    const addressEntity: Address = new Address();
     Object.assign(addressEntity, addressDto);
 
     return await this.addressRepository.updateAddressById(
@@ -107,25 +107,36 @@ export class AddressService {
       await this.addressRepository.removeFromAddress(addressId);
     } catch (error) {
       this.logger.error(
-        'Error thrown in deletedAddress method of address.service.ts with error: ' +
-          error.message,
+        'Error thrown in deletedAddress method of address.service.ts',
       );
       throw error;
     }
   }
 
-  async updateUnit(addressDtoRequest: UpdateAddressDto, user: User): Promise<AddressRespDto> {
+  async deleteUserAddress(addressId: number, userId: number): Promise<void> {
+    try {
+      await this.addressRepository.deleteUserAddress(addressId, userId);
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in deleteUserAddress method of address.service.ts',
+      );
+      throw error;
+    }
+  }
+
+  async updateUnit(
+    addressDtoRequest: UpdateAddressDto,
+    user: User,
+  ): Promise<AddressRespDto> {
     if (!addressDtoRequest || !addressDtoRequest.id)
       throw new Error('Address id is required');
 
-
-    let addressEntity: Address = new Address();
+    const addressEntity: Address = new Address();
     Object.assign(addressEntity, addressDtoRequest);
     addressEntity.user = user;
 
-    const updatedAddress: Address = await this.addressRepository.updateAddressUnit(
-      addressEntity
-    );
+    const updatedAddress: Address =
+      await this.addressRepository.updateAddressUnit(addressEntity);
 
     return AddressProcessor.mapEntityToResp(updatedAddress);
   }
