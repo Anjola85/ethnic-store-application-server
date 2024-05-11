@@ -28,7 +28,7 @@ export class WaitlistController {
   private readonly logger = new Logger(WaitlistController.name);
   constructor(private readonly waitlistService: WaitlistService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 10 } })
+  // @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-customer')
   async joinCustomerWaitlist(
     @Body() reqBody: WaitlistCustomerDto,
@@ -68,7 +68,7 @@ export class WaitlistController {
     }
   }
 
-  @Throttle({ default: { limit: 5, ttl: 10 } })
+  // @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-shopper')
   async joinShopperWaitlist(@Body() reqBody: any): Promise<any> {
     try {
@@ -116,7 +116,7 @@ export class WaitlistController {
     }
   }
 
-  @Throttle({ default: { limit: 5, ttl: 10 } })
+  // @Throttle({ default: { limit: 5, ttl: 10 } })
   @Post('join-business')
   async joinBusinessWaitlist(@Body() reqBody: any): Promise<any> {
     try {

@@ -31,21 +31,21 @@ import { StoreSuggestionModule } from './modules/store-suggestion/store-suggesti
 @Module({
   imports: [
     ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 10,
-        limit: 5,
-      },
-      {
-        name: 'medium',
-        ttl: 60,
-        limit: 20,
-      },
-      {
-        name: 'long',
-        ttl: 60,
-        limit: 10,
-      },
+      // {
+      //   name: 'short',
+      //   ttl: 10,
+      //   limit: 5,
+      // },
+      // {
+      //   name: 'medium',
+      //   ttl: 60,
+      //   limit: 20,
+      // },
+      // {
+      //   name: 'long',
+      //   ttl: 60,
+      //   limit: 10,
+      // },
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -148,7 +148,7 @@ export class AppModule implements NestModule {
         'country/all-info',
         'waitlist/join-customer',
         'waitlist/join-shopper',
-        'waitlist/join-business'
+        'waitlist/join-business',
       )
       .forRoutes('*');
 
