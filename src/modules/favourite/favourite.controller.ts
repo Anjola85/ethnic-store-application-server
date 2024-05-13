@@ -1,18 +1,30 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Res } from "@nestjs/common";
-import { FavouriteService } from "./favourite.service";
-import { CreateFavouriteDto } from "./dto/create-favourite.dto";
-import { Response } from "express";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Post,
+  Res,
+} from '@nestjs/common';
+import { FavouriteService } from './favourite.service';
+import { CreateFavouriteDto } from './dto/create-favourite.dto';
+import { Response } from 'express';
 import {
   ApiResponse,
   createResponse,
   extractIdFromRequest,
   handleCustomResponse,
-  TokenIdType
-} from "src/common/util/response";
-import { encryptPayload } from "src/common/util/crypto";
-import { FavouriteListRespDto, FavouriteRespDto } from "src/contract/version1/response/favourite-response.dto";
-import { UpdateFavouriteDto } from "./dto/update-favourite.dto";
-import { User } from "../user/entities/user.entity";
+  TokenIdType,
+} from 'src/common/util/response';
+import { encryptPayload } from 'src/common/util/crypto';
+import {
+  FavouriteListRespDto,
+  FavouriteRespDto,
+} from 'src/contract/version1/response/favourite-response.dto';
+import { UpdateFavouriteDto } from './dto/update-favourite.dto';
+import { User } from '../user/entities/user.entity';
 
 @Controller('favourite')
 export class FavouriteController {
@@ -63,13 +75,6 @@ export class FavouriteController {
       const userId: number = res.locals.userId;
       const crypto = res.locals.cryptoresp;
 
-      if (!userId) {
-        throw new HttpException(
-          'Unable to perform operation, user not found',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
       const favouriteList: FavouriteListRespDto =
         await this.favouriteService.getFavouriteByUserId(userId);
 
@@ -112,10 +117,13 @@ export class FavouriteController {
   }
 
   @Post('remove')
-  async removeFromFavourites(@Body() updateFavourite: UpdateFavouriteDto, @Res() res: Response) {
+  async removeFromFavourites(
+    @Body() updateFavourite: UpdateFavouriteDto,
+    @Res() res: Response,
+  ) {
     try {
       this.logger.log('remove from favourite endpoint called');
-      updateFavourite.favourite.user = (new User());
+      updateFavourite.favourite.user = new User();
       updateFavourite.favourite.user.id = res.locals.userId;
 
       if (!updateFavourite && !updateFavourite.favourite) {
@@ -131,11 +139,7 @@ export class FavouriteController {
 
       return res
         .status(HttpStatus.OK)
-        .json(
-          createResponse(
-            'Favourite successfully removed',
-          ),
-        );
+        .json(createResponse('Favourite successfully removed'));
     } catch (error) {
       this.logger.error(
         'Error thrown in favourite.controller.ts, removeFromFavourites method: ' +

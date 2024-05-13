@@ -75,10 +75,11 @@ export class FavouriteService {
     }
   }
 
-  async getFavouriteByUserId(id: number): Promise<FavouriteListRespDto> {
+  async getFavouriteByUserId(userId: number): Promise<FavouriteListRespDto> {
     try {
       const favouriteList: Favourite[] =
-        await this.favouriteRepository.getFavouritesWithBusinessDetails(id);
+        await this.favouriteRepository.getFavouritesWithBusinessDetails(userId);
+      console.log('returned favourite list: ', favouriteList);
       return FavouriteProcessor.mapEntityListToResp(favouriteList);
     } catch (error) {
       this.logger.error(
