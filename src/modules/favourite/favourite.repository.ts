@@ -73,10 +73,11 @@ export class FavouriteRepository extends Repository<Favourite> {
       const favouriteQuery = await this.createQueryBuilder()
         .delete()
         .from('favourite')
-        .where('favourite.business_id = :businessId', { businessId: favourite.business.id })
-        .andWhere('favourite.user_id = :userId', {userId: favourite.user.id})
+        .where('favourite.business_id = :businessId', {
+          businessId: favourite.business.id,
+        })
+        .andWhere('favourite.user_id = :userId', { userId: favourite.user.id })
         .execute();
-
     } catch (error) {
       this.logger.debug(
         'Error thrown in favourite.repository.ts, removeFromFavourites method with error: ' +
@@ -138,22 +139,24 @@ export class FavouriteRepository extends Repository<Favourite> {
   async getFavouritesWithBusinessDetails(userId: number): Promise<Favourite[]> {
     const favourites: Favourite[] = await this.findFavouritesByUser(userId);
 
-    // fetch the business id for each favourite
-    const businessIdList: number[] = favourites.map(
-      (favourite) => favourite.business.id,
-    );
+    if (favourites.length > 0) {
+      // fetch the business id for each favourite
+      const businessIdList: number[] = favourites.map(
+        (favourite) => favourite.business.id,
+      );
 
-    const businesses: Business[] =
-      await this.businessRepository.getRelationsByBusinessId(businessIdList);
+      const businesses: Business[] =
+        await this.businessRepository.getRelationsByBusinessId(businessIdList);
 
-    // for each business returned, attach it to the favourite
-    favourites.forEach((favourite) => {
-      businesses.forEach((business) => {
-        if (favourite.business.id === business.id) {
-          favourite.business = business;
-        }
+      // for each business returned, attach it to the favourite
+      favourites.forEach((favourite) => {
+        businesses.forEach((business) => {
+          if (favourite.business.id === business.id) {
+            favourite.business = business;
+          }
+        });
       });
-    });
+    }
 
     return favourites;
   }

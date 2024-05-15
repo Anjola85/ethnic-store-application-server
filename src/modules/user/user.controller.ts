@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -209,6 +210,28 @@ export class UserController {
       const clearResponse = createResponse(null, userAddressList);
 
       return handleCustomResponse(res, clearResponse);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new InternalServerErrorException('QuiikMart Server Error');
+    }
+  }
+
+  @Delete('delete-address')
+  async deleteUserAddress(@Body() body: any, @Res() res: Response) {
+    try {
+      // TODO: make this body standard
+      const userId = res.locals.userId;
+      const addressId = body.addressId;
+
+      if (!userId) throw new BadRequestException('Token required in header!');
+      if (!addressId)
+        throw new BadRequestException('Address id required in body!');
+
+      await this.addressService.deleteUserAddress(addressId, userId);
+
+      // return createResponse(null, 'Address successfully deleted');
+      return handleCustomResponse(res, createResponse("successfully deleted address", null));
     } catch (error) {
       if (error instanceof HttpException) throw error;
 

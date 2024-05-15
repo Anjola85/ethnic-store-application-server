@@ -124,8 +124,7 @@ export class AddressRepository extends Repository<Address> {
           .getMany();
 
       // set primary to the first
-      if(addressList[0])
-        addressList[0].isPrimary = true;
+      if (addressList[0]) addressList[0].isPrimary = true;
 
       return addressList;
     } catch (error) {
@@ -159,21 +158,28 @@ export class AddressRepository extends Repository<Address> {
   }
 
   // delete user address
-  async deleteUserAddress(addressId: string, userId: string) {
+  async deleteUserAddress(addressId: number, userId: number) {
     try {
       const deletedAddress = await this.createQueryBuilder('address')
         .delete()
         .from(Address)
-        .where('address.id = :addressId AND address.user.id = :userId', {
+        .where('address.id = :addressId AND address.user_id = :userId', {
           addressId,
           userId,
         })
         .execute();
+      if(deletedAddress && deletedAddress.affected == 0)
+        throw new HttpException("Address does not exist", HttpStatus.NOT_FOUND);
+
       return deletedAddress;
     } catch (error) {
       this.logger.error(
         `Error thrown in address.repository.ts, deleteUserAddress method: ${error.message}`,
       );
+
+      if(error instanceof  HttpException)
+        throw error;
+
       throw new HttpException(
         "Unable to delete user's address from the database",
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -238,17 +244,20 @@ export class AddressRepository extends Repository<Address> {
     }
   }
 
-  async removeFromAddress(addressId: number): Promise<void> {
+  /**
+   *
+   * @param id - address id
+   */
+  async removeFromAddress(id: number): Promise<void> {
     try {
-      const address: Address = await this.createQueryBuilder('address')
-        .where('address.id = :addressId', { addressId })
-        .andWhere('address.deleted = false')
-        .getOne();
-
-      address.deleted = true;
-      await this.save(address);
+      await this.createQueryBuilder('address')
+        .delete()
+        .where('address.id = :id', { id })
+        .execute();
+      this.logger.debug(`Address with id: ${id} removed successfully`);
     } catch (error) {
-      this.logger.error('Unable to add address to API');
+      this.logger.error('Unable to remove address from the database');
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
