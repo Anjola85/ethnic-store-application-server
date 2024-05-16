@@ -40,7 +40,7 @@ import { Address } from '../address/entities/address.entity';
 import { AddressProcessor } from '../address/address.processor';
 import { MobileProcessor } from '../mobile/mobile.processor';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { EnvConfigService } from '../config/env-config.';
+import { EnvConfigService } from '../../config/env-config';
 
 @Injectable()
 export class AuthService {

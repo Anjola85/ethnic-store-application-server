@@ -21,6 +21,12 @@ export class CountryController {
   private readonly logger = new Logger(CountryController.name);
   constructor(private readonly countryService: CountryService) {}
 
+  /**
+   * TODO: add functionality to upload image
+   * Method to register a country with its image
+   * @param createCountryDto
+   * @returns
+   */
   @Post('register')
   async create(@Body() createCountryDto: CreateCountryDto): Promise<any> {
     try {
@@ -40,8 +46,6 @@ export class CountryController {
     }
   }
 
-  // controlle to get all countries and their respective region
-
   @Get('all')
   async findAll(): Promise<any> {
     try {
@@ -57,6 +61,10 @@ export class CountryController {
     }
   }
 
+  /**
+   * This method gets a country with its region and its continent
+   * @returns
+   */
   @Get('all-info')
   async getAllWithRegion(): Promise<any> {
     try {
@@ -66,8 +74,7 @@ export class CountryController {
     } catch (error) {
       this.logger.debug(error);
 
-      if(error instanceof  HttpException)
-        throw error
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         "We're working on it",

@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
 import { AppModule } from './app.module';
-import { EnvConfigService } from './modules/config/env-config.';
+import { EnvConfigService } from './config/env-config';
 import { UserDto } from './modules/user/dto/user.dto';
 
 dotenv.config(); // Load environment variables from .env file
@@ -43,7 +43,6 @@ async function bootstrap() {
     };
     app.enableCors(cors);
   }
-
 
   // swagger setup
   const config = new DocumentBuilder()

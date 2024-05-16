@@ -37,11 +37,11 @@ export class CryptoInterceptor implements NestInterceptor {
           request.headers['cryptoresp'] === 'true' ||
           request.headers['cryptoresp'] === undefined
         ) {
-          this.logger.debug('Encrypting response payload');
+          this.logger.debug('Encrypted response payload returned');
           const encryptedResp = await encryptPayload(data);
           return createEncryptedResponse(encryptedResp);
         }
-        this.logger.debug('Clear response payload');
+        this.logger.debug('Clear response payload returned');
         return data;
       }),
     );

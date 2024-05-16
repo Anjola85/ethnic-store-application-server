@@ -47,7 +47,7 @@ export class User extends CommonEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'auth_id'})
+  @JoinColumn({ name: 'auth_id' })
   auth: Auth;
 
   @OneToOne(() => Business, (business) => business.user)
@@ -60,11 +60,20 @@ export class User extends CommonEntity {
   favourites: Favourite[];
 
   @ManyToOne(() => Country, (country) => country.name, { nullable: true })
-  @JoinColumn({name: 'country_id'})
+  @JoinColumn({ name: 'country_id' })
   countryOfOrigin: Country;
 
   @OneToMany(() => Feedback, (feedback) => feedback.user)
   feedbacks: Feedback[];
+
+  @Column({ name: 'delete_reason', type: 'varchar', nullable: true })
+  deleteReason: string;
+
+  @Column({ name: 'delete_coment', type: 'text', nullable: true })
+  deleteComment: string;
+
+  @Column({ name: 'deleted_at', type: 'bigint', nullable: true })
+  deletedAt: number;
 
   @BeforeInsert()
   @BeforeUpdate()

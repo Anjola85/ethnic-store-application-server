@@ -1,4 +1,4 @@
-import { EnvConfigService } from 'src/modules/config/env-config.';
+import { EnvConfigService } from 'src/config/env-config';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AddressDto } from '../address/dto/address.dto';
 import axios from 'axios';

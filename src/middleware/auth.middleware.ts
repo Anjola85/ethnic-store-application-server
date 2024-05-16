@@ -17,7 +17,7 @@ import {
 import * as jsonwebtoken from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import * as fs from 'fs';
-import { EnvConfigService } from 'src/modules/config/env-config.';
+import { EnvConfigService } from 'src/config/env-config';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {

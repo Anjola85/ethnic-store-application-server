@@ -16,4 +16,12 @@ export class CreateCountryDto {
     description: 'The ID of the continent the country belongs to',
   })
   regionId: number;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: false,
+    description: 'The image of the country',
+  })
+  image?: Express.Multer.File;
 }

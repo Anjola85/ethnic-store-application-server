@@ -8,6 +8,11 @@ import {
 } from 'typeorm';
 
 export class CommonEntity extends BaseEntity {
+  // @PrimaryColumn({
+  //   type: 'uuid',
+  //   generated: 'uuid',
+  // })
+  // id: string;
   @PrimaryGeneratedColumn()
   id: number;
 

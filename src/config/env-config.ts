@@ -6,29 +6,40 @@
  * Improvement: default loading of variables to local .env file if not on AWS SSM
  *
  */
-import { Global, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import * as AWS from 'aws-sdk';
+import { Logger } from '@nestjs/common';
+import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import * as dotenv from 'dotenv';
+import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 
 export class EnvConfigService {
   private readonly logger = new Logger(EnvConfigService.name);
   private static appConfig: Record<string, string> = {};
   private static configLoaded = false;
-  private readonly ssmCLient: AWS.SSM;
+  private readonly ssmClient: SSMClient;
+  private readonly secretsManagerClient: SecretsManagerClient;
   private currentEnv: string;
 
   constructor() {
     const isProd = isProduction();
-    if (!isProd) {
-      this.ssmCLient = new AWS.SSM({
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        region: 'ca-central-1',
-      });
-    } else {
-      this.ssmCLient = new AWS.SSM({
-        region: 'ca-central-1',
-      });
-    }
+    this.secretsManagerClient = new SecretsManagerClient({
+      region: 'ca-central-1',
+      credentials: !isProd
+        ? {
+            accessKeyId: process.env.AWS_ACCESS_KEY,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          }
+        : undefined,
+    });
+
+    this.ssmClient = new SSMClient({
+      region: 'ca-central-1',
+      credentials: !isProd
+        ? {
+            accessKeyId: process.env.AWS_ACCESS_KEY,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          }
+        : undefined,
+    });
 
     this.currentEnv = isProd ? 'prod' : 'dev';
     // this.currentEnv = 'prod'; // TODO: comment when staging has been added
@@ -41,6 +52,8 @@ export class EnvConfigService {
     if (EnvConfigService.configLoaded) return;
 
     this.logger.debug('Loading environment variables');
+
+    dotenv.config();
 
     const parametersToLoad = [
       { name: 'DB_PORT', isSecure: false },
@@ -67,33 +80,37 @@ export class EnvConfigService {
     for (const params of parametersToLoad) {
       // if not in production and the variable is set in local .env file, load it from there
       if (!isProduction() && process.env[params.name]) {
-        this.logger.debug(`Loading ${params.name} from local .env file`);
+        this.logger.debug(
+          `Loading ${params.name} from local .env file with value: ${
+            process.env[params.name]
+          }`,
+        );
         EnvConfigService.appConfig[params.name] = process.env[params.name];
         continue;
       }
 
       this.logger.debug(`Loading ${params.name} from SSM`);
-      await this.ssmCLient
-        .getParameter({
-          Name: `/${this.currentEnv}/q1/config/${params.name}`,
-          WithDecryption: params.isSecure,
-        })
-        .promise()
-        .then((resp) => {
-          this.logger.debug(
-            `Loaded ${params.name} from SSM successfully with value: ${resp.Parameter.Value}`,
-          );
-          const Parameter = resp.Parameter;
-          EnvConfigService.appConfig[params.name] = Parameter.Value;
-        })
-        .catch((err) => {
-          this.logger.error(
-            `Error loading variable ${params.name} from SSM, with error: ${err}`,
-          );
-          throw new Error(
-            `Error loading variable ${params.name} from SSM with error: ${err}`,
-          );
-        });
+      const command = new GetParameterCommand({
+        Name: `/${this.currentEnv}/q1/config/${params.name}`,
+        WithDecryption: params.isSecure,
+      });
+
+      try {
+        // TODO: issue here
+        const resp = await this.ssmClient.send(command);
+        this.logger.debug(
+          `Loaded ${params.name} from SSM successfully with value: ${resp.Parameter?.Value}`,
+        );
+        const Parameter = resp.Parameter;
+        EnvConfigService.appConfig[params.name] = Parameter?.Value || '';
+      } catch (error) {
+        this.logger.error(
+          `Failed to load ${params.name} from SSM with error: ${error.message}`,
+        );
+        throw new Error(
+          `Failed to load ${params.name} from SSM with error: ${error.message}`,
+        );
+      }
     }
 
     // TODO: keep retying failed variables that didnt load in the background
@@ -141,7 +158,7 @@ export class EnvConfigService {
     if (missingConfig.length) {
       const missingConfigList = missingConfig.join(', ');
       this.logger.error(`Missing critical config in SSM: ${missingConfigList}`);
-      // Throw an error for critical missing configurations to halt the application startup.
+
       throw new Error(
         `Critical configurations are missing in SSM: ${missingConfigList}. Application cannot start.`,
       );
