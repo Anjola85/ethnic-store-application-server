@@ -28,7 +28,7 @@ export const initializeAppDataSource = async (
       console.log('Ensuring database exists');
       const client = new Client({
         ...dbConfig,
-        database: 'postgres',
+        database: EnvConfigService.get('DB_HOST'),
       });
 
       try {
