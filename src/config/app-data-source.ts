@@ -1,21 +1,13 @@
 import { DataSource } from 'typeorm';
 import { EnvConfigService } from './env-config';
 import { Client } from 'pg';
+import { convertToDataSourceOptions, getTypeOrmConfig } from './typeorm-config';
 
 const NUMBER_OF_RETRIES = 5;
 
-export const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: EnvConfigService.get('DB_HOST'),
-  port: Number(EnvConfigService.get('DB_PORT')),
-  username: EnvConfigService.get('DB_USER'),
-  password: EnvConfigService.get('DB_PASSWORD'),
-  database: EnvConfigService.get('DB_NAME'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  synchronize: process.env.NODE_ENV === 'dev',
-  logging: true,
-  ssl: process.env.NODE_ENV !== 'dev' ? { rejectUnauthorized: false } : false,
-});
+export const AppDataSource = new DataSource(
+  convertToDataSourceOptions(getTypeOrmConfig()),
+);
 
 export const initializeAppDataSource = async (
   retries = NUMBER_OF_RETRIES,
@@ -84,50 +76,3 @@ export const initializeAppDataSource = async (
 
   await initializeDataSource(retries);
 };
-
-// import { DataSource } from 'typeorm';
-// import { EnvConfigService } from './env-config';
-
-// await new EnvConfigService().loadConfig();
-
-// const dbConfig = {
-//   host: EnvConfigService.get('DB_HOST'),
-//   port: Number(EnvConfigService.get('DB_PORT')),
-//   user: EnvConfigService.get('DB_USER'),
-//   password: EnvConfigService.get('DB_PASSWORD'),
-//   database: EnvConfigService.get('DB_NAME'),
-// };
-
-// export const AppDataSource = new DataSource({
-//   type: 'postgres',
-//   host: EnvConfigService.get('DB_HOST'),
-//   port: Number(EnvConfigService.get('DB_PORT')),
-//   username: EnvConfigService.get('DB_USER'),
-//   password: EnvConfigService.get('DB_PASSWORD'),
-//   database: EnvConfigService.get('DB_NAME'),
-//   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-//   synchronize: process.env.NODE_ENV === 'dev',
-//   logging: true,
-//   ssl: process.env.NODE_ENV === 'dev' ? { rejectUnauthorized: false } : false,
-// });
-
-// const initializeDataSource = async (retries = 5) => {
-//   try {
-//     await AppDataSource.initialize();
-//     console.log('Database connection established');
-//   } catch (error) {
-//     if (retries === 0) {
-//       console.error(
-//         'Failed to connect to the database after multiple attempts',
-//         error,
-//       );
-//       throw error;
-//     } else {
-//       console.log(`Env config: ${EnvConfigService.get('DB_NAME')}`);
-//       console.warn(`Retrying database connection, attempts left: ${retries}`);
-//       setTimeout(() => initializeDataSource(retries - 1), 5000);
-//     }
-//   }
-// };
-
-// initializeDataSource();

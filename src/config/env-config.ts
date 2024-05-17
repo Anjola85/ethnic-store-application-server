@@ -75,6 +75,7 @@ export class EnvConfigService {
       { name: 'SENDGRID_API_KEY', isSecure: true },
       { name: 'WAITLIST_ID', isSecure: true },
       { name: 'JWT_SECRET_KEY', isSecure: true },
+      { name: 'ENV', isSecure: false },
     ];
 
     for (const params of parametersToLoad) {
@@ -171,6 +172,6 @@ export class EnvConfigService {
 }
 
 export const isProduction = (): boolean => {
-  if (process.env.NODE_ENV === 'dev') return false;
+  if (process.env.ENV === 'staging') return false;
   return true;
 };

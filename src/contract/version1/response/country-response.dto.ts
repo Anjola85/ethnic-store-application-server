@@ -1,6 +1,7 @@
 export interface CountryRespDto {
   id: number;
   name: string;
+  imageUrl: string;
 }
 
 export interface CountryListRespDto {

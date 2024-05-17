@@ -11,10 +11,13 @@ import {
   Logger,
   ConflictException,
   HttpException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CountryService } from './country.service';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { createResponse } from 'src/common/util/response';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('country')
 export class CountryController {
@@ -28,9 +31,14 @@ export class CountryController {
    * @returns
    */
   @Post('register')
-  async create(@Body() createCountryDto: CreateCountryDto): Promise<any> {
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() createCountryDto: CreateCountryDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ): Promise<any> {
     try {
       this.logger.debug('CountryController.create called');
+      if (image) createCountryDto.image = image;
       const resp = await this.countryService.create(createCountryDto);
       return createResponse('Country registered successfully', resp);
     } catch (err) {

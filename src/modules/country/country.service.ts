@@ -13,6 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AwsS3Service } from '../files/aws-s3.service';
 import { DataSource } from 'typeorm';
 import { AppDataSource } from 'src/config/app-data-source';
+import * as path from 'path';
 
 @Injectable()
 export class CountryService {
@@ -34,16 +35,31 @@ export class CountryService {
       const country = new Country();
       Object.assign(country, createCountryDto);
 
-      if (createCountryDto.image) {
-        const imageUrl = await this.awsS3Service.uploadImgToFolder(
-          `countries/${createCountryDto.name}`,
-          createCountryDto.image.buffer,
-        );
-        country.imageUrl = imageUrl;
-      }
       const newCountry = await queryRunner.manager.save(country);
       await queryRunner.commitTransaction();
-      return newCountry;
+
+      // process response
+      const countryRespDto: CountryRespDto =
+        CountryProcessor.mapEntityToResp(newCountry);
+
+      if (createCountryDto.image) {
+        const extension = path.extname(createCountryDto.image.originalname);
+        const imageUrl = await this.awsS3Service.uploadImgToFolder(
+          `server/geographic_images/countries/${createCountryDto.name}${extension}`,
+          createCountryDto.image.buffer,
+        );
+
+        // Start a new transaction to update the image URL
+        await queryRunner.startTransaction();
+        newCountry.imageUrl = imageUrl;
+
+        const updatedCountry = await queryRunner.manager.save(newCountry);
+        await queryRunner.commitTransaction();
+
+        countryRespDto.imageUrl = updatedCountry.imageUrl;
+      }
+
+      return countryRespDto;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.debug(error);
@@ -81,7 +97,7 @@ export class CountryService {
   async findAll(): Promise<CountryListRespDto> {
     try {
       const country = await this.countryRepository.find({
-        select: ['name', 'id'],
+        select: ['name', 'id', 'imageUrl'],
         order: {
           id: 'ASC',
         },

@@ -8,19 +8,22 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
+import { EnvConfigService } from 'src/config/env-config';
 
 @Injectable()
 export class AwsS3Service {
   private readonly s3Client: S3Client;
   private readonly BUCKET_NAME =
-    process.env.AWS_BUCKET_NAME || 'quiikmart-version1-app';
+    EnvConfigService.get('AWS_BUCKET_NAME') || 'quiikmart-version1-app';
+  private readonly AWS_REGION =
+    EnvConfigService.get('AWS_REGION') || 'ca-central-1';
 
   constructor() {
     this.s3Client = new S3Client({
-      region: process.env.AWS_S3_REGION || 'ca-centra-1',
+      region: this.AWS_REGION,
       credentials: {
-        accessKeyId: process.env.AWS_S3_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_S3_KEY_SECRET,
+        accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
+        secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
       },
     });
   }
@@ -45,7 +48,7 @@ export class AwsS3Service {
     const command = new PutObjectCommand(params);
     const s3Response = await this.s3Client.send(command);
     // return s3Response.Location;
-    return `https://${this.BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPath}`;
+    return `https://${this.BUCKET_NAME}.s3.${this.AWS_REGION}.amazonaws.com/${folderPath}`;
   }
 
   /**

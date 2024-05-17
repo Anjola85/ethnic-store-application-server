@@ -19,7 +19,7 @@ export class Country extends CommonEntity {
   @Column({ type: 'varchar', length: 15, unique: true })
   name: string;
 
-  @Column({ type: 'varchar', length: 15, nullable: true, name: 'image_url' })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'image_url' })
   imageUrl: string;
 
   @ManyToOne(() => Region, (region) => region.name)

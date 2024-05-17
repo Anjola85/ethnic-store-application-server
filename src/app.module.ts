@@ -27,7 +27,6 @@ import { WaitlistModule } from './modules/waitlist/waitlist.module';
 import { SendgridModule } from './providers/otp/sendgrid/sendgrid.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { StoreSuggestionModule } from './modules/store-suggestion/store-suggestion.module';
-import { AppDataSource } from './config/app-data-source';
 
 @Module({
   imports: [

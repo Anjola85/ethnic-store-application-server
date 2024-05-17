@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateCountryDto {
@@ -10,8 +11,9 @@ export class CreateCountryDto {
   })
   name: string;
 
+  @IsInt()
+  @Type(() => Number)
   @IsNotEmpty()
-  @IsNumber()
   @ApiProperty({
     description: 'The ID of the continent the country belongs to',
   })
