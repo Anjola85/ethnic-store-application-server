@@ -11,12 +11,12 @@ export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
     password: EnvConfigService.get('DB_PASSWORD'),
     database: EnvConfigService.get('DB_NAME'),
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: !isProduction(),
+    synchronize: isProduction() ? false : true,
     logging: true,
   };
 
-  if (EnvConfigService.get('ENV') == 'production') {
-    console.log('ENV not set. Defaulting to development');
+  if (isProduction()) {
+    console.log('ENV not set. Defaulting to prod env');
     typeOrmConfig = {
       ...typeOrmConfig,
       ssl: { rejectUnauthorized: false },
