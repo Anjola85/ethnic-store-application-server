@@ -3,7 +3,7 @@ import * as SendGrid from '@sendgrid/mail';
 import { generateOtpCode } from 'src/providers/util/otp-code-util';
 import { FaFacebookSquare, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
-import { EnvConfigService } from 'src/modules/config/env-config.';
+import { EnvConfigService } from 'src/config/env-config';
 
 @Injectable()
 export class SendgridService {

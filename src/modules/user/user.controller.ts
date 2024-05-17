@@ -23,7 +23,6 @@ import {
   handleCustomResponse,
 } from '../../common/util/response';
 import { encryptPayload } from 'src/common/util/crypto';
-import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { UserRespDto } from 'src/contract/version1/response/user-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProcessor } from './user.processor';
@@ -39,6 +38,8 @@ import {
 import { AddressProcessor } from '../address/address.processor';
 import { Address } from '../address/entities/address.entity';
 import { UpdateAddressDto } from '../address/dto/update-address.dto';
+import { DeleteUserDto } from './dto/delete-user.dto';
+import { ApiInternalServerErrorResponse } from '@nestjs/swagger';
 
 @Controller('user')
 export class UserController {
@@ -139,7 +140,7 @@ export class UserController {
         'Error thrown in user.controller.ts, updateUser method: ' + error,
       );
 
-      if (error instanceof InternalServerError) {
+      if (error instanceof ApiInternalServerErrorResponse) {
         throw new HttpException(
           'Error ocurred from user repository with updating user information',
           HttpStatus.INTERNAL_SERVER_ERROR,
@@ -198,7 +199,6 @@ export class UserController {
     }
   }
 
-  // TODO: investigate why this get-address method is here
   @Get('get-address')
   async getUserAddress(@Res() res: Response) {
     try {
@@ -231,7 +231,10 @@ export class UserController {
       await this.addressService.deleteUserAddress(addressId, userId);
 
       // return createResponse(null, 'Address successfully deleted');
-      return handleCustomResponse(res, createResponse("successfully deleted address", null));
+      return handleCustomResponse(
+        res,
+        createResponse('successfully deleted address', null),
+      );
     } catch (error) {
       if (error instanceof HttpException) throw error;
 
@@ -239,12 +242,18 @@ export class UserController {
     }
   }
 
-  @Get('delete')
-  async deleteUser(@Res() res: Response) {
+  /**
+   * This method deletes a user account(soft delete)
+   */
+  @Post('delete')
+  async deleteUser(@Body() body: DeleteUserDto, @Res() res: Response) {
     try {
       const userId = res.locals.userId;
       if (!userId) throw new BadRequestException('Token required in header');
-      const deletedUser = await this.userService.deleteUser(userId);
+
+      const requestBody: DeleteUserDto = new DeleteUserDto(body, userId);
+
+      const deletedUser = await this.userService.deleteUser(requestBody);
 
       // const user = await this.deleteUser(userId);
 

@@ -8,6 +8,7 @@ import {
   HttpStatus,
   ConflictException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { WaitlistService } from './waitlist.service';
 import { Response } from 'express';
@@ -21,7 +22,6 @@ import {
   customerValidation,
   shopperValidation,
 } from './validation/validation';
-import { InternalServerError } from '@aws-sdk/client-dynamodb';
 
 @Controller('waitlist')
 export class WaitlistController {
@@ -63,7 +63,9 @@ export class WaitlistController {
           'Error in joinCustomerWaitlistMethod, with error ' + error,
         );
 
-        throw new InternalServerError(error.message || 'Internal Server Error');
+        throw new InternalServerErrorException(
+          error.message || 'Internal Server Error',
+        );
       }
     }
   }
@@ -111,7 +113,9 @@ export class WaitlistController {
           'Error in joinShopperWaitlist, with error ' + errResp,
         );
 
-        throw new InternalServerError(error.message || 'Internal Server Error');
+        throw new InternalServerErrorException(
+          error.message || 'Internal Server Error',
+        );
       }
     }
   }
@@ -147,7 +151,9 @@ export class WaitlistController {
 
       this.logger.error('Error in joinBusinessWaitlist, with error ' + error);
 
-      throw new InternalServerError(error.message || 'Internal Server Error');
+      throw new InternalServerErrorException(
+        error.message || 'Internal Server Error',
+      );
     }
   }
 }

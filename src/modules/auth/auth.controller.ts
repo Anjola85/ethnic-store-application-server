@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { AwsSecretKey } from 'src/common/util/secret';
 import { createResponse } from '../../common/util/response';
 import { SecureLoginDto } from './dto/secure-login.dto';
 import { ApiResponse } from '@nestjs/swagger';
@@ -25,7 +24,6 @@ import { LoginOtpRequest } from 'src/contract/version1/request/auth/loginOtp.req
 import { AuthOtppRespDto } from 'src/contract/version1/response/otp-response.dto';
 import { SignupOtpRequest } from 'src/contract/version1/request/auth/signupOtp.request';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
@@ -37,7 +35,6 @@ export class AuthController {
 
   constructor(
     private readonly authService: AuthService,
-    private readonly awsSecretKey: AwsSecretKey,
     private readonly geocodingService: GeocodingService,
   ) {}
 
@@ -123,7 +120,10 @@ export class AuthController {
 
       if (error instanceof HttpException) throw error;
 
-      throw new InternalServerError(error.message);
+      throw new HttpException(
+        "we're working on it",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

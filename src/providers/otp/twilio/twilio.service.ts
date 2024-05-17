@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { Twilio } from 'twilio';
 import { generateOtpCode } from 'src/providers/util/otp-code-util';
-import { EnvConfigService } from 'src/modules/config/env-config.';
+import { EnvConfigService } from 'src/config/env-config';
 
 @Injectable()
 export default class TwilioService {

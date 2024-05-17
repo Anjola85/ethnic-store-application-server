@@ -1,18 +1,30 @@
-// shared/aws-s3.service.ts
 import { Injectable } from '@nestjs/common';
-import * as AWS from 'aws-sdk';
-// import * as AWS from 'aws-sdk-js-codemod';
+import {
+  GetObjectCommand,
+  GetObjectCommandOutput,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
+import { EnvConfigService } from 'src/config/env-config';
 
 @Injectable()
 export class AwsS3Service {
-  private readonly AWS_S3: AWS.S3;
+  private readonly s3Client: S3Client;
   private readonly BUCKET_NAME =
-    process.env.AWS_BUCKET_NAME || 'quiikmart-version1-app';
+    EnvConfigService.get('AWS_BUCKET_NAME') || 'quiikmart-version1-app';
+  private readonly AWS_REGION =
+    EnvConfigService.get('AWS_REGION') || 'ca-central-1';
 
   constructor() {
-    this.AWS_S3 = new AWS.S3({
-      accessKeyId: process.env.AWS_S3_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_S3_KEY_SECRET,
+    this.s3Client = new S3Client({
+      region: this.AWS_REGION,
+      credentials: {
+        accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
+        secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
+      },
     });
   }
 
@@ -33,8 +45,10 @@ export class AwsS3Service {
       Body: imageBuffer,
     };
 
-    const s3Response = await this.AWS_S3.upload(params).promise();
-    return s3Response.Location;
+    const command = new PutObjectCommand(params);
+    const s3Response = await this.s3Client.send(command);
+    // return s3Response.Location;
+    return `https://${this.BUCKET_NAME}.s3.${this.AWS_REGION}.amazonaws.com/${folderPath}`;
   }
 
   /**
@@ -48,10 +62,10 @@ export class AwsS3Service {
       Key: folderPath,
     };
 
-    const s3Response = await this.AWS_S3.getSignedUrlPromise(
-      'getObject',
-      params,
-    );
+    const command = new GetObjectCommand(params);
+    const s3Response = await getSignedUrl(this.s3Client, command, {
+      expiresIn: 3600,
+    });
     return s3Response;
   }
 
@@ -66,8 +80,17 @@ export class AwsS3Service {
       Key: folderPath,
     };
 
-    const s3Response = await this.AWS_S3.getObject(params).promise();
-    return s3Response.Body as Buffer;
+    const command = new GetObjectCommand(params);
+    const s3Response: GetObjectCommandOutput = await this.s3Client.send(
+      command,
+    );
+    return new Promise((resolve, reject) => {
+      const chunks: any[] = [];
+      const stream = s3Response.Body as Readable;
+      stream.on('data', (chunk) => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
   }
 
   /**
@@ -80,7 +103,8 @@ export class AwsS3Service {
       Bucket: this.BUCKET_NAME,
       Prefix: folderPath,
     };
-    const s3Response = await this.AWS_S3.listObjectsV2(params).promise();
+    const command = new ListObjectsV2Command(params);
+    const s3Response = await this.s3Client.send(command);
     return s3Response.KeyCount;
   }
 }

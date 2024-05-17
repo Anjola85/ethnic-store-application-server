@@ -15,7 +15,7 @@ import { AddressModule } from './modules/address/address.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BusinessModule } from './modules/business/business.module';
 import { CategoryModule } from './modules/category/category.module';
-import { EnvConfigService, isProduction } from './modules/config/env-config.';
+import { EnvConfigService, isProduction } from './config/env-config';
 import { ContinentModule } from './modules/continent/continent.module';
 import { CountryModule } from './modules/country/country.module';
 import { FavouriteModule } from './modules/favourite/favourite.module';
@@ -62,8 +62,7 @@ import { StoreSuggestionModule } from './modules/store-suggestion/store-suggesti
           password: EnvConfigService.get('DB_PASSWORD'),
           database: EnvConfigService.get('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          // synchronize: isProduction() ? false : true,
-          synchronize: true,
+          synchronize: isProduction() ? false : true,
         };
 
         if (isProduction()) {

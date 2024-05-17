@@ -42,8 +42,9 @@ export class RegionController {
   @Get('all')
   async findAll() {
     try {
-      this.logger.debug('RegionController.findAll called');
+      this.logger.debug('region/all api called');
       const payload = await this.regionService.findAll();
+      this.logger.debug('Fetched all regions');
       return createResponse('List of regions', {
         result: payload,
       });

@@ -11,20 +11,34 @@ import {
   Logger,
   ConflictException,
   HttpException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CountryService } from './country.service';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { createResponse } from 'src/common/util/response';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('country')
 export class CountryController {
   private readonly logger = new Logger(CountryController.name);
   constructor(private readonly countryService: CountryService) {}
 
+  /**
+   * TODO: add functionality to upload image
+   * Method to register a country with its image
+   * @param createCountryDto
+   * @returns
+   */
   @Post('register')
-  async create(@Body() createCountryDto: CreateCountryDto): Promise<any> {
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() createCountryDto: CreateCountryDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ): Promise<any> {
     try {
       this.logger.debug('CountryController.create called');
+      if (image) createCountryDto.image = image;
       const resp = await this.countryService.create(createCountryDto);
       return createResponse('Country registered successfully', resp);
     } catch (err) {
@@ -39,8 +53,6 @@ export class CountryController {
       );
     }
   }
-
-  // controlle to get all countries and their respective region
 
   @Get('all')
   async findAll(): Promise<any> {
@@ -57,6 +69,10 @@ export class CountryController {
     }
   }
 
+  /**
+   * This method gets a country with its region and its continent
+   * @returns
+   */
   @Get('all-info')
   async getAllWithRegion(): Promise<any> {
     try {
@@ -66,8 +82,7 @@ export class CountryController {
     } catch (error) {
       this.logger.debug(error);
 
-      if(error instanceof  HttpException)
-        throw error
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         "We're working on it",
