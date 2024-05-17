@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { EnvConfigService } from './env-config';
+import { EnvConfigService, isProduction } from './env-config';
 import { Client } from 'pg';
 import { convertToDataSourceOptions, getTypeOrmConfig } from './typeorm-config';
 
@@ -22,29 +22,32 @@ export const initializeAppDataSource = async (
     database: EnvConfigService.get('DB_NAME'),
   };
 
-  const ensureDatabaseExists = async () => {
-    console.log('Ensuring database exists');
-    const client = new Client({
-      ...dbConfig,
-      database: 'postgres',
-    });
+  let ensureDatabaseExists: () => Promise<void> = async () => {};
+  if (isProduction()) {
+    ensureDatabaseExists = async () => {
+      console.log('Ensuring database exists');
+      const client = new Client({
+        ...dbConfig,
+        database: 'postgres',
+      });
 
-    try {
-      await client.connect();
-      const res = await client.query(
-        `SELECT 1 FROM pg_database WHERE datname = $1`,
-        [dbConfig.database],
-      );
-      if (res.rowCount === 0) {
-        await client.query(`CREATE DATABASE "${dbConfig.database}"`);
-        console.log(`Database "${dbConfig.database}" created successfully`);
-      } else {
-        console.log(`Database "${dbConfig.database}" already exists`);
+      try {
+        await client.connect();
+        const res = await client.query(
+          `SELECT 1 FROM pg_database WHERE datname = $1`,
+          [dbConfig.database],
+        );
+        if (res.rowCount === 0) {
+          await client.query(`CREATE DATABASE "${dbConfig.database}"`);
+          console.log(`Database "${dbConfig.database}" created successfully`);
+        } else {
+          console.log(`Database "${dbConfig.database}" already exists`);
+        }
+      } finally {
+        await client.end();
       }
-    } finally {
-      await client.end();
-    }
-  };
+    };
+  }
 
   await ensureDatabaseExists();
 
