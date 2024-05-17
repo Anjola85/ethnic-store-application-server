@@ -56,13 +56,13 @@ export class EnvConfigService {
     dotenv.config();
 
     const parametersToLoad = [
+      { name: 'AWS_ACCESS_KEY', isSecure: true },
+      { name: 'AWS_SECRET_ACCESS_KEY', isSecure: true },
       { name: 'DB_PORT', isSecure: false },
       { name: 'DB_NAME', isSecure: true },
       { name: 'DB_HOST', isSecure: true },
       { name: 'DB_USER', isSecure: true },
       { name: 'DB_PASSWORD', isSecure: true },
-      { name: 'AWS_ACCESS_KEY', isSecure: true },
-      { name: 'AWS_SECRET_ACCESS_KEY', isSecure: true },
       { name: 'SECRET_KEY', isSecure: true },
       { name: 'AWS_REGION', isSecure: false },
       { name: 'AWS_BUCKET_NAME', isSecure: false },
@@ -92,7 +92,7 @@ export class EnvConfigService {
 
       this.logger.debug(`Loading ${params.name} from SSM`);
       const command = new GetParameterCommand({
-        Name: `/${this.currentEnv}/q1/config/${params.name}`,
+        Name: `/prod/q1/config/${params.name}`,
         WithDecryption: params.isSecure,
       });
 
@@ -106,10 +106,10 @@ export class EnvConfigService {
         EnvConfigService.appConfig[params.name] = Parameter?.Value || '';
       } catch (error) {
         this.logger.error(
-          `Failed to load ${params.name} from SSM with error: ${error.message}`,
+          `Failed to load ${params.name} from SSM with error: ${error}`,
         );
         throw new Error(
-          `Failed to load ${params.name} from SSM with error: ${error.message}`,
+          `Failed to load ${params.name} from SSM with error: ${error}`,
         );
       }
     }
