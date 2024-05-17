@@ -15,12 +15,11 @@ export class AwsS3Service {
   private readonly s3Client: S3Client;
   private readonly BUCKET_NAME =
     EnvConfigService.get('AWS_BUCKET_NAME') || 'quiikmart-version1-app';
-  private readonly AWS_REGION =
-    EnvConfigService.get('AWS_REGION') || 'ca-central-1';
+  private readonly AWS_REGION = 'ca-central-1';
 
   constructor() {
     this.s3Client = new S3Client({
-      region: EnvConfigService.get('AWS_REGION') || 'ca-central-1',
+      region: 'ca-central-1',
       credentials: {
         accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
         secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
@@ -48,7 +47,7 @@ export class AwsS3Service {
     const command = new PutObjectCommand(params);
     const s3Response = await this.s3Client.send(command);
     // return s3Response.Location;
-    return `https://${this.BUCKET_NAME}.s3.${this.AWS_REGION}.amazonaws.com/${folderPath}`;
+    return `https://${this.BUCKET_NAME}.s3.ca-central-1.amazonaws.com/${folderPath}`;
   }
 
   /**

@@ -7,7 +7,7 @@ const algorithm = 'AES-256-CBC';
 const configService = new EnvConfigService();
 
 const kmsClient = new KMSClient({
-  region: EnvConfigService.get('AWS_REGION'),
+  region: 'ca-central-1',
   credentials: {
     accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
     secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
