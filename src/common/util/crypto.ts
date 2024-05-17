@@ -1,21 +1,20 @@
-//TODO: issue with JSON.stringify here
-import { EnvConfigService } from 'src/modules/config/env-config.';
+import { EnvConfigService } from 'src/config/env-config';
 import * as crypto from 'crypto';
-import * as aws from 'aws-sdk';
-// import * as aws from 'aws-sdk-js-codemod';
-import { AwsSecretKey } from './secret';
+import { DecryptCommand, EncryptCommand, KMSClient } from '@aws-sdk/client-kms';
 
 const iv = Buffer.from('EjRWeJ_aZpQ0TEhKT0dKSg==', 'base64');
 const algorithm = 'AES-256-CBC';
 const configService = new EnvConfigService();
 
-export const encryptKms = async (buffer: Buffer) => {
-  const kmsClient = new aws.KMS({
-    region: EnvConfigService.get('AWS_REGION'),
+const kmsClient = new KMSClient({
+  region: EnvConfigService.get('AWS_REGION'),
+  credentials: {
     accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
     secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
-  });
+  },
+});
 
+export const encryptKms = async (buffer: Buffer) => {
   const params = {
     KeyId: EnvConfigService.get('AWS_KMS_KEY_ID'),
     Plaintext: buffer,
@@ -24,7 +23,8 @@ export const encryptKms = async (buffer: Buffer) => {
     },
   };
 
-  const encryptedBuffer = await kmsClient.encrypt(params).promise();
+  const command = new EncryptCommand(params);
+  const encryptedBuffer = await kmsClient.send(command);
 
   const blobData = encryptedBuffer.CiphertextBlob;
 
@@ -38,13 +38,7 @@ export const encryptKms = async (buffer: Buffer) => {
  */
 export const decryptPayload = async (data: string) => {
   try {
-    const buffer: AWS.KMS.CiphertextType = Buffer.from(data, 'base64');
-
-    const kmsClient = new aws.KMS({
-      region: EnvConfigService.get('AWS_REGION'),
-      accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
-      secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
-    });
+    const buffer = Buffer.from(data, 'base64');
 
     const params = {
       KeyId: EnvConfigService.get('AWS_KMS_KEY_ID'),
@@ -54,9 +48,12 @@ export const decryptPayload = async (data: string) => {
       },
     };
 
-    const decryptedBuffer = await kmsClient.decrypt(params).promise();
+    const command = new DecryptCommand(params);
+    const decryptedBuffer = await kmsClient.send(command);
 
-    const clearText = decryptedBuffer.Plaintext!.toString();
+    if (!decryptedBuffer.Plaintext) throw new Error('Error decrypting payload');
+
+    const clearText = decryptedBuffer.Plaintext.toString();
 
     let decryptedData;
 
@@ -73,13 +70,9 @@ export const decryptPayload = async (data: string) => {
 export const encryptData = (keyIn: string, data: any): string => {
   const key: Buffer = Buffer.from(keyIn, 'base64');
 
-  // create encryptor
   const cipher = crypto.createCipheriv(algorithm, key, iv);
 
   let stringifiedData: string;
-  // if (data instanceof Object) {
-  //   data = JSON.stringify(data);
-  // }
 
   if (data instanceof Object) {
     try {
@@ -110,7 +103,6 @@ export const decryptData = (keyIn: string, cipherText: string): string => {
 
   decryptedData += decipher.final('utf8');
 
-  // check if decrypted data is a JSON object
   if (decryptedData[0] === '{') {
     decryptedData = JSON.parse(decryptedData);
   }
@@ -146,8 +138,8 @@ export const encryptPayload = async (payload: {
   // encrypt payload
   const encryptedUserBlob = await encryptKms(payloadToEncryptBuffer);
 
-  // convert encyrpted blob to base64 string
-  const encryptedResp = encryptedUserBlob.toString('base64');
+  //TODO: convert encyrpted blob to base64 string
+  const encryptedResp = encryptedUserBlob.toString();
 
   return encryptedResp;
 };

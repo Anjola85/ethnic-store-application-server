@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 import { Auth } from './entities/auth.entity';
-import { AwsSecretKey } from 'src/common/util/secret';
+// import { AwsSecretKey } from 'src/common/util/secret';
 import { Address } from '../address/entities/address.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AwsS3Service } from '../files/aws-s3.service';
@@ -23,7 +23,7 @@ import { MobileRepository } from '../mobile/mobile.repository';
     AuthService,
     UserService,
     AddressRepository,
-    AwsSecretKey,
+    // AwsSecretKey,
     UserFileService,
     AwsS3Service,
     AuthRepository,

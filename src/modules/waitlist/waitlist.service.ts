@@ -11,7 +11,7 @@ import { WaitlistShopperDto } from './dto/waitlist_shopper.dto';
 import axios from 'axios';
 import { AddressDto } from '../address/dto/address.dto';
 import { SendgridService } from 'src/providers/otp/sendgrid/sendgrid.service';
-import { EnvConfigService } from '../config/env-config.';
+import { EnvConfigService } from '../../config/env-config';
 @Injectable()
 export class WaitlistService {
   private readonly logger = new Logger(WaitlistService.name);

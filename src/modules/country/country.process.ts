@@ -6,8 +6,8 @@ import { Country } from './entities/country.entity';
 
 export class CountryProcessor {
   public static mapEntityToResp(country: Country): CountryRespDto {
-    const { id, name } = country;
-    return { id, name };
+    const { id, name, imageUrl } = country;
+    return { id, name, imageUrl };
   }
 
   public static mapEntityListToResp(countries: Country[]): CountryListRespDto {

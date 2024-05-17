@@ -1,25 +1,67 @@
-import { UpdateCategoryDto } from "./../category/dto/update-category.dto";
-import { ConflictException, Injectable, Logger } from "@nestjs/common";
-import { Country } from "./entities/country.entity";
-import { CreateCountryDto } from "./dto/create-country.dto";
-import { CountryListRespDto, CountryRespDto } from "src/contract/version1/response/country-response.dto";
-import { CountryProcessor } from "./country.process";
-import { CountryRepository } from "./country.repository";
-import { CountryRegionContinentProcessor } from "../../contract/version1/response/country-region-continent.response";
+import { UpdateCategoryDto } from './../category/dto/update-category.dto';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { Country } from './entities/country.entity';
+import { CreateCountryDto } from './dto/create-country.dto';
+import {
+  CountryListRespDto,
+  CountryRespDto,
+} from 'src/contract/version1/response/country-response.dto';
+import { CountryProcessor } from './country.process';
+import { CountryRepository } from './country.repository';
+import { CountryRegionContinentProcessor } from '../../contract/version1/response/country-region-continent.response';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AwsS3Service } from '../files/aws-s3.service';
+import { DataSource } from 'typeorm';
+import { AppDataSource } from 'src/config/app-data-source';
+import * as path from 'path';
 
 @Injectable()
 export class CountryService {
   private readonly logger = new Logger(CountryService.name);
 
-  constructor(private countryRepository: CountryRepository) {}
+  constructor(
+    @InjectRepository(CountryRepository)
+    private countryRepository: CountryRepository,
+    private awsS3Service: AwsS3Service,
+    private connection: DataSource,
+  ) {}
 
   async create(createCountryDto: CreateCountryDto): Promise<CountryRespDto> {
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       const country = new Country();
       Object.assign(country, createCountryDto);
-      const newCountry = await this.countryRepository.save(country);
-      return newCountry;
+
+      const newCountry = await queryRunner.manager.save(country);
+      await queryRunner.commitTransaction();
+
+      // process response
+      const countryRespDto: CountryRespDto =
+        CountryProcessor.mapEntityToResp(newCountry);
+
+      if (createCountryDto.image) {
+        const extension = path.extname(createCountryDto.image.originalname);
+        const imageUrl = await this.awsS3Service.uploadImgToFolder(
+          `server/geographic_images/countries/${createCountryDto.name}${extension}`,
+          createCountryDto.image.buffer,
+        );
+
+        // Start a new transaction to update the image URL
+        await queryRunner.startTransaction();
+        newCountry.imageUrl = imageUrl;
+
+        const updatedCountry = await queryRunner.manager.save(newCountry);
+        await queryRunner.commitTransaction();
+
+        countryRespDto.imageUrl = updatedCountry.imageUrl;
+      }
+
+      return countryRespDto;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       this.logger.debug(error);
 
       if (
@@ -27,11 +69,10 @@ export class CountryService {
         error.message.includes('violates foreign key constraint')
       ) {
         this.logger.error(
-          `Attempted to create a country with a non-existent continent: ${createCountryDto.regionId}`,
+          `Attempted to create a country with a non-existent region: ${createCountryDto.regionId}`,
         );
-
         throw new ConflictException(
-          `Continent with id ${createCountryDto.regionId} does not exist`,
+          `Region with id ${createCountryDto.regionId} does not exist`,
         );
       }
 
@@ -42,20 +83,21 @@ export class CountryService {
         this.logger.error(
           `Attempted to create a country with a duplicate name: ${createCountryDto.name}`,
         );
-
         throw new ConflictException(
           `Country with name ${createCountryDto.name} already exists`,
         );
       }
 
       throw error;
+    } finally {
+      await queryRunner.release();
     }
   }
 
   async findAll(): Promise<CountryListRespDto> {
     try {
       const country = await this.countryRepository.find({
-        select: ['name', 'id'],
+        select: ['name', 'id', 'imageUrl'],
         order: {
           id: 'ASC',
         },

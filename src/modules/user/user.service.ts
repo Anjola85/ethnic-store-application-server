@@ -18,6 +18,7 @@ import {
   AddressRespDto,
 } from '../../contract/version1/response/address-response.dto';
 import { FeedbackService } from '../feedback/feedback.service';
+import { DeleteUserDto } from './dto/delete-user.dto';
 
 @Injectable()
 export class UserService {
@@ -181,16 +182,15 @@ export class UserService {
     return AddressProcessor.mapEntityToResp(newAddress);
   }
 
-  async deleteUser(userId: number) {
-    // const user = await this.getUserById(userId);
-    // // get auth with userId
-    // //get mobile with authId and set delete to true
-    // // get address with userId and set delete to true
-    // // get favourites with userId and set delete to true
-    // // get feedback with userId and set delete to true
-    // // delete user
-    // this.addressService.deleteAddressByUserId(userId);
-    // this.feedbackService.deleteFeedbackByUserId(userId);
+  async deleteUser(user: DeleteUserDto): Promise<any> {
+    try {
+      // find all associated entities and delete them
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in user.service.ts, deleteUser method: ' + error,
+      );
+      throw error;
+    }
   }
 
   async deleteUserAddress(addressId: number, userId: number) {
