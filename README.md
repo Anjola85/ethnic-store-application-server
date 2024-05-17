@@ -134,7 +134,7 @@ To run: `docker run -p 7080:7080 image_name`
 
 ## Steps to make the docker image available on AWS EC2
 
-NOTE: Remember to login to aws on EC2, if no configuration for docker command comes up run:
+NOTE: NEVER Login with AWS Credentials, create IAM Role to grant access to the ECS:
 `sudo chmod 666 /var/run/docker.sock`
 
 1. Run the following command to pull this image from the ECR Repository on EC2
