@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { EnvConfigService } from './env-config';
+import { EnvConfigService, isProduction } from './env-config';
 import { Client } from 'pg';
 import { convertToDataSourceOptions, getTypeOrmConfig } from './typeorm-config';
 
@@ -22,12 +22,14 @@ export const initializeAppDataSource = async (
     database: EnvConfigService.get('DB_NAME'),
   };
 
-  const ensureDatabaseExists = async () => {
-    console.log('Ensuring database exists');
-    const client = new Client({
-      ...dbConfig,
-      database: 'postgres',
-    });
+  let ensureDatabaseExists: () => Promise<void> = async () => {};
+  if (isProduction()) {
+    ensureDatabaseExists = async () => {
+      console.log('Ensuring database exists');
+      const client = new Client({
+        ...dbConfig,
+        database: EnvConfigService.get('DB_HOST'),
+      });
 
     try {
       await client.connect();
