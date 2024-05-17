@@ -20,7 +20,7 @@ export class AwsS3Service {
 
   constructor() {
     this.s3Client = new S3Client({
-      region: this.AWS_REGION,
+      region: EnvConfigService.get('AWS_REGION') || 'ca-central-1',
       credentials: {
         accessKeyId: EnvConfigService.get('AWS_ACCESS_KEY'),
         secretAccessKey: EnvConfigService.get('AWS_SECRET_ACCESS_KEY'),
