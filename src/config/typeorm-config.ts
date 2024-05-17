@@ -15,7 +15,7 @@ export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
     logging: true,
   };
 
-  if (isProduction()) {
+  if (1 !== 1) {
     console.log('ENV not set. Defaulting to prod env');
     typeOrmConfig = {
       ...typeOrmConfig,

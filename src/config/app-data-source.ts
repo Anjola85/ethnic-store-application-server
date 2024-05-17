@@ -20,36 +20,39 @@ export const initializeAppDataSource = async (
     user: EnvConfigService.get('DB_USER'),
     password: EnvConfigService.get('DB_PASSWORD'),
     database: EnvConfigService.get('DB_NAME'),
+    // ssl: {
+    //   rejectUnauthorized: false,
+    // },
   };
 
-  // let ensureDatabaseExists: () => Promise<void> = async () => {};
-  // if (isProduction()) {
-  //   ensureDatabaseExists = async () => {
-  //     console.log('Ensuring database exists');
-  //     const client = new Client({
-  //       ...dbConfig,
-  //       database: EnvConfigService.get('DB_HOST'),
-  //     });
+  let ensureDatabaseExists: () => Promise<void> = async () => {};
+  if (isProduction()) {
+    ensureDatabaseExists = async () => {
+      console.log('Ensuring database exists');
+      const client = new Client({
+        ...dbConfig,
+        database: EnvConfigService.get('DB_HOST'),
+      });
 
-  //     try {
-  //       await client.connect();
-  //       const res = await client.query(
-  //         `SELECT 1 FROM pg_database WHERE datname = $1`,
-  //         [dbConfig.database],
-  //       );
-  //       if (res.rowCount === 0) {
-  //         await client.query(`CREATE DATABASE "${dbConfig.database}"`);
-  //         console.log(`Database "${dbConfig.database}" created successfully`);
-  //       } else {
-  //         console.log(`Database "${dbConfig.database}" already exists`);
-  //       }
-  //     } finally {
-  //       await client.end();
-  //     }
-  //   };
-  // }
+      try {
+        await client.connect();
+        const res = await client.query(
+          `SELECT 1 FROM pg_database WHERE datname = $1`,
+          [dbConfig.database],
+        );
+        if (res.rowCount === 0) {
+          await client.query(`CREATE DATABASE "${dbConfig.database}"`);
+          console.log(`Database "${dbConfig.database}" created successfully`);
+        } else {
+          console.log(`Database "${dbConfig.database}" already exists`);
+        }
+      } finally {
+        await client.end();
+      }
+    };
+  }
 
-  // await ensureDatabaseExists();
+  await ensureDatabaseExists();
 
   AppDataSource.setOptions({
     host: dbConfig.host,
@@ -57,6 +60,7 @@ export const initializeAppDataSource = async (
     username: dbConfig.user,
     password: dbConfig.password,
     database: dbConfig.database,
+    // ssl: dbConfig.ssl,
   });
 
   const initializeDataSource = async (retries: number): Promise<void> => {
