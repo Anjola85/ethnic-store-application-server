@@ -62,7 +62,8 @@ import { StoreSuggestionModule } from './modules/store-suggestion/store-suggesti
           password: EnvConfigService.get('DB_PASSWORD'),
           database: EnvConfigService.get('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: isProduction() ? false : true,
+          // synchronize: isProduction() ? false : true,
+          synchronize: true,
         };
 
         if (isProduction()) {
