@@ -1,5 +1,3 @@
-import { DataSource, Repository } from 'typeorm';
-import { Auth, AuthParams } from './entities/auth.entity';
 import {
   HttpException,
   HttpStatus,
@@ -7,7 +5,9 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { Auth, AuthParams } from './entities/auth.entity';
 
 @Injectable()
 export class AuthRepository extends Repository<Auth> {
@@ -119,5 +119,22 @@ export class AuthRepository extends Repository<Auth> {
       .set({ otpCode: code, otpExpiry: expiry })
       .where('id = :id', { id: authId })
       .execute();
+  }
+
+  async deleteAuthById(id: any, manager: EntityManager) {
+    try {
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(Auth)
+        .where('id = :id', { id })
+        .execute();
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in auth.repository.ts, deleteAuthByUserId method, with error: ' +
+          error,
+      );
+      throw new Error(`Unable to delete auth from the database`);
+    }
   }
 }

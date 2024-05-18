@@ -14,10 +14,8 @@ export interface MobileParams {
 export class Mobile extends CommonEntity {
   @ManyToOne(() => Auth, (auth) => auth.mobile, {
     nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'auth_id'})
+  @JoinColumn({ name: 'auth_id' })
   auth: Auth;
 
   @OneToOne(() => Business, (business) => business.mobile)

@@ -18,10 +18,8 @@ export class Address extends CommonEntity {
 
   @ManyToOne(() => User, (user) => user.id, {
     nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'user_id'})
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Column({ default: false, nullable: false, type: 'boolean' })

@@ -12,6 +12,7 @@ import { AddressProcessor } from './address.processor';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UserRepository } from '../user/user.repository';
 import { User } from '../user/entities/user.entity';
+import { EntityManager } from 'typeorm';
 
 export interface AddressParams {
   id?: number;
@@ -21,9 +22,6 @@ export interface AddressParams {
 
 @Injectable()
 export class AddressService {
-  deleteAddressByUserId(userId: number) {
-    throw new Error('Method not implemented.');
-  }
   private readonly logger = new Logger(AddressService.name);
   constructor(
     private readonly addressRepository: AddressRepository,
@@ -139,5 +137,20 @@ export class AddressService {
       await this.addressRepository.updateAddressUnit(addressEntity);
 
     return AddressProcessor.mapEntityToResp(updatedAddress);
+  }
+
+  async deleteAddressByUserId(
+    userId: any,
+    manager: EntityManager,
+  ): Promise<void> {
+    try {
+      await this.addressRepository.deleteAddressByUserId(userId, manager);
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in address.service.ts, deleteAddressByUserId method: ' +
+          error,
+      );
+      throw new Error('Error deleting address from Address Service');
+    }
   }
 }

@@ -19,9 +19,7 @@ export class Feedback extends CommonEntity {
 
   @ManyToOne(() => User, (user) => user.feedbacks, {
     nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'user_id'})
+  @JoinColumn({ name: 'user_id' })
   user: User;
 }

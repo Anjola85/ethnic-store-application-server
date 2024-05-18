@@ -1,8 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { getCurrentEpochTime } from 'src/common/util/functions';
 import { Auth } from '../auth/entities/auth.entity';
+import { DeleteUserDto } from './dto/delete-user.dto';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -99,7 +100,7 @@ export class UserRepository extends Repository<User> {
       where: { id: userId },
       relations: [
         'addresses',
-        "favourites.business",
+        'favourites.business',
         'countryOfOrigin',
         'business',
         'auth',
@@ -115,8 +116,12 @@ export class UserRepository extends Repository<User> {
    * @returns - user
    */
   async getUserInfoById(userId: number): Promise<User> {
+    // return this.findOne({
+    //   where: { id: userId },
+    //   relations: ['addresses', 'business', 'countryOfOrigin', 'auth'],
+    // });
     return this.findOne({
-      where: { id: userId },
+      where: { id: userId, deleted: false },
       relations: ['addresses', 'business', 'countryOfOrigin', 'auth'],
     });
   }
@@ -131,5 +136,44 @@ export class UserRepository extends Repository<User> {
 
     const updatedUser = updateResult.raw[0] as User; // Accessing the updated record from the raw property
     return updatedUser;
+  }
+
+  async hardDeleteUser(userId: any, manager: EntityManager) {
+    try {
+      // use manager
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(User)
+        .where('id = :id', { id: userId })
+        .execute();
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, deleteUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async softDeleteUser(userDto: DeleteUserDto, manager: EntityManager) {
+    try {
+      await manager
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          deleted: true,
+          deleteReason: userDto.deleteComment,
+          deletedAt: getCurrentEpochTime(),
+          deleteComment: userDto.deleteComment,
+          auth: null,
+        })
+        .where('id = :id', { id: userDto.userId })
+        .execute();
+    } catch (error) {
+      throw new HttpException(
+        `Error thrown in user.repository.ts, deleteUser method: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

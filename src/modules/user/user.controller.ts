@@ -241,35 +241,4 @@ export class UserController {
       throw new InternalServerErrorException('QuiikMart Server Error');
     }
   }
-
-  /**
-   * This method deletes a user account(soft delete)
-   */
-  @Post('delete')
-  async deleteUser(@Body() body: DeleteUserDto, @Res() res: Response) {
-    try {
-      const userId = res.locals.userId;
-      if (!userId) throw new BadRequestException('Token required in header');
-
-      const requestBody: DeleteUserDto = new DeleteUserDto(body, userId);
-
-      const deletedUser = await this.userService.deleteUser(requestBody);
-
-      // const user = await this.deleteUser(userId);
-
-      // get auth with userId
-      //get mobile with authId and set delete to true
-      // get address with userId and set delete to true
-      // get favourites with userId and set delete to true
-      // get feedback with userId and set delete to true
-      // delete user
-      // this.addressService.deleteAddressByUserId(userId);
-      // this.feedbackService.deleteFeedbackByUserId(userId);
-
-      return createResponse(null, deletedUser);
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('QuiikMart Server Error');
-    }
-  }
 }

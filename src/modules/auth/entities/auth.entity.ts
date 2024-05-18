@@ -2,13 +2,7 @@ import { getCurrentEpochTime } from 'src/common/util/functions';
 import { CommonEntity } from 'src/modules/common/base.entity';
 import { Mobile } from 'src/modules/mobile/mobile.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import {
-  BeforeInsert,
-  Column,
-  Entity,
-  OneToMany,
-  OneToOne,
-} from 'typeorm';
+import { BeforeInsert, Column, Entity, OneToMany, OneToOne } from 'typeorm';
 
 export interface AuthParams {
   authId?: number;
