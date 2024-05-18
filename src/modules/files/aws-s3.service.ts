@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   GetObjectCommand,
   GetObjectCommandOutput,
@@ -12,6 +12,7 @@ import { EnvConfigService } from 'src/config/env-config';
 
 @Injectable()
 export class AwsS3Service {
+  private readonly logger = new Logger(AwsS3Service.name);
   private readonly s3Client: S3Client;
   private readonly BUCKET_NAME =
     EnvConfigService.get('AWS_BUCKET_NAME') || 'quiikmart-version1-app';
@@ -38,16 +39,21 @@ export class AwsS3Service {
     folderPath: string,
     imageBuffer: Buffer,
   ): Promise<string> {
-    const params = {
-      Bucket: this.BUCKET_NAME,
-      Key: folderPath,
-      Body: imageBuffer,
-    };
+    try {
+      const params = {
+        Bucket: this.BUCKET_NAME,
+        Key: folderPath,
+        Body: imageBuffer,
+      };
 
-    const command = new PutObjectCommand(params);
-    const s3Response = await this.s3Client.send(command);
-    // return s3Response.Location;
-    return `https://${this.BUCKET_NAME}.s3.ca-central-1.amazonaws.com/${folderPath}`;
+      const command = new PutObjectCommand(params);
+      const s3Response = await this.s3Client.send(command);
+      // return s3Response.Location;
+      return `https://${this.BUCKET_NAME}.s3.ca-central-1.amazonaws.com/${folderPath}`;
+    } catch (err) {
+      this.logger.debug(`AWS S3 upload error: ${err}`);
+      throw err;
+    }
   }
 
   /**

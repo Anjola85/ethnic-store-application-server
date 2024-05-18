@@ -54,7 +54,7 @@ import { StoreSuggestionModule } from './modules/store-suggestion/store-suggesti
     TypeOrmModule.forRootAsync({
       imports: [],
       useFactory: (): TypeOrmModuleOptions => {
-        let typeOrmConfig: TypeOrmModuleOptions = {
+        const typeOrmConfig: TypeOrmModuleOptions = {
           type: 'postgres',
           host: EnvConfigService.get('DB_HOST'),
           port: Number(EnvConfigService.get('DB_PORT')),
@@ -64,14 +64,15 @@ import { StoreSuggestionModule } from './modules/store-suggestion/store-suggesti
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // synchronize: isProduction() ? false : true,
           synchronize: true,
+          ssl: { rejectUnauthorized: false },
         };
 
-        if (isProduction()) {
-          typeOrmConfig = {
-            ...typeOrmConfig,
-            ssl: { rejectUnauthorized: false },
-          };
-        }
+        // if (isProduction()) {
+        //   typeOrmConfig = {
+        //     ...typeOrmConfig,
+        //     ssl: { rejectUnauthorized: false },
+        //   };
+        // }
 
         return typeOrmConfig;
       },

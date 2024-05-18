@@ -3,7 +3,7 @@ import { EnvConfigService, isProduction } from './env-config';
 import { DataSourceOptions } from 'typeorm';
 
 export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
-  let typeOrmConfig: TypeOrmModuleOptions = {
+  const typeOrmConfig: TypeOrmModuleOptions = {
     type: 'postgres',
     host: EnvConfigService.get('DB_HOST'),
     port: Number(EnvConfigService.get('DB_PORT')),
@@ -13,15 +13,8 @@ export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     synchronize: isProduction() ? false : true,
     logging: true,
+    ssl: { rejectUnauthorized: false },
   };
-
-  if (1 !== 1) {
-    console.log('ENV not set. Defaulting to prod env');
-    typeOrmConfig = {
-      ...typeOrmConfig,
-      ssl: { rejectUnauthorized: false },
-    };
-  }
 
   return typeOrmConfig;
 };
