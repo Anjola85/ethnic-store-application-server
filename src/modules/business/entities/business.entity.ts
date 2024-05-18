@@ -48,7 +48,7 @@ export class Business extends CommonEntity {
     onDelete: 'CASCADE',
     eager: true,
   })
-  @JoinColumn({name: 'address_id'})
+  @JoinColumn({ name: 'address_id' })
   address: Address;
 
   @OneToOne(() => Mobile, (mobile) => mobile.business, {
@@ -56,7 +56,7 @@ export class Business extends CommonEntity {
     onDelete: 'CASCADE',
     eager: true,
   })
-  @JoinColumn({name: "mobile_id"})
+  @JoinColumn({ name: 'mobile_id' })
   mobile: Mobile;
 
   @OneToMany(() => Favourite, (favourite) => favourite.business, {
@@ -67,7 +67,7 @@ export class Business extends CommonEntity {
   favourites: Favourite[];
 
   @ManyToOne(() => User, (user) => user.business)
-  @JoinColumn({name: 'user_id'})
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Column({ name: 'business_type', type: 'varchar', default: 'grocery' })

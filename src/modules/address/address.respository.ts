@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
 import { AddressParams } from './address.service';
 import { getCurrentEpochTime } from 'src/common/util/functions';
@@ -168,8 +168,8 @@ export class AddressRepository extends Repository<Address> {
           userId,
         })
         .execute();
-      if(deletedAddress && deletedAddress.affected == 0)
-        throw new HttpException("Address does not exist", HttpStatus.NOT_FOUND);
+      if (deletedAddress && deletedAddress.affected == 0)
+        throw new HttpException('Address does not exist', HttpStatus.NOT_FOUND);
 
       return deletedAddress;
     } catch (error) {
@@ -177,8 +177,7 @@ export class AddressRepository extends Repository<Address> {
         `Error thrown in address.repository.ts, deleteUserAddress method: ${error.message}`,
       );
 
-      if(error instanceof  HttpException)
-        throw error;
+      if (error instanceof HttpException) throw error;
 
       throw new HttpException(
         "Unable to delete user's address from the database",
@@ -276,6 +275,22 @@ export class AddressRepository extends Repository<Address> {
     return await currentAddress.save();
   }
 
-  // TODO: implement transactions for dependent read/writes to DB
-  // TODO: Improve logging
+  async deleteAddressByUserId(userId: any, manager: EntityManager) {
+    try {
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(Address)
+        .where('user_id = :userId', { userId })
+        .execute();
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in address.repository.ts, deleteAddressByUserId method: ${error.message}`,
+      );
+      throw new HttpException(
+        'Unable to delete address by user id from the database',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

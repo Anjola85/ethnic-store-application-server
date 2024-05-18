@@ -1,12 +1,12 @@
-import { EncryptedDTO } from "../dto/encrypted.dto";
-import { Response } from "express";
-import { HttpStatus } from "@nestjs/common";
-import { encryptPayload } from "./crypto";
+import { EncryptedDTO } from '../dto/encrypted.dto';
+import { Response } from 'express';
+import { HttpStatus } from '@nestjs/common';
+import { encryptPayload } from './crypto';
 
-export interface  ApiResponse {
-  message?: string,
-  payload: any,
-  status: boolean
+export interface ApiResponse {
+  message?: string;
+  payload: any;
+  status: boolean;
 }
 
 export function createResponse(
@@ -42,31 +42,29 @@ export function createEncryptedResponse(encryptedData: string): EncryptedDTO {
 export async function handleCustomResponse(res: Response, result: any) {
   const cryptoresp = res.locals.cryptresp;
 
-  if (cryptoresp !== "false") {
+  if (cryptoresp !== 'false') {
     return res.status(HttpStatus.OK).json(result);
   }
 
   const encryptedResp: string = await encryptPayload(result);
-  return res
-    .status(HttpStatus.OK)
-    .json(createEncryptedResponse(encryptedResp));
+  return res.status(HttpStatus.OK).json(createEncryptedResponse(encryptedResp));
 }
-
 
 export enum TokenIdType {
   authId,
-  userId
+  userId,
 }
 
-export function extractIdFromRequest(res: Response, tokenIdType: TokenIdType): number {
+export function extractIdFromRequest(
+  res: Response,
+  tokenIdType: TokenIdType,
+): number {
   let id: number;
-  if(tokenIdType === TokenIdType.userId)
-    id = res.locals.userId;
-  else if(tokenIdType === TokenIdType.authId)
-    id = res.locals.authId;
+  if (tokenIdType === TokenIdType.userId) id = res.locals.userId;
+  else if (tokenIdType === TokenIdType.authId) id = res.locals.authId;
 
-  if(id == undefined || id == null)
-    throw new Error("Unable to extract id from token")
+  if (id == undefined || id == null)
+    throw new Error('Unable to extract id from token');
 
   return id;
 }

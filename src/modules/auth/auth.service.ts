@@ -41,6 +41,9 @@ import { AddressProcessor } from '../address/address.processor';
 import { MobileProcessor } from '../mobile/mobile.processor';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { EnvConfigService } from '../../config/env-config';
+import { DataSource, EntityManager } from 'typeorm';
+import { FavouriteService } from '../favourite/favourite.service';
+import { DeleteUserDto } from '../user/dto/delete-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -53,6 +56,8 @@ export class AuthService {
     private readonly twilioService: TwilioService,
     private readonly userSerivce: UserService,
     private readonly addressService: AddressService,
+    private readonly favouriteService: FavouriteService,
+    private dataSource: DataSource,
   ) {}
 
   async genrateOtp(email?: string, mobile?: MobileDto): Promise<OtpRespDto> {
@@ -674,5 +679,65 @@ export class AuthService {
     return updatedUserResp;
   }
 
-  async deleteAuthAndRelations(authId: number) {}
+  async deleteAuthById(userId: any, manager: EntityManager) {
+    try {
+      await this.authRepository.deleteAuthById(userId, manager);
+    } catch (error) {
+      this.logger.error('Error when deleting auth with: ' + error);
+      throw error;
+    }
+  }
+
+  async deleteUser(userDto: DeleteUserDto) {
+    try {
+      // entities associated with user
+      // user, address, mobile, auth, favourite(if any)
+
+      if (!userDto.userId) throw new BadRequestException('userId is required');
+
+      // provide default value if content not provided
+      userDto.deleteReason = userDto.deleteReason || 'No reason provided';
+      userDto.deleteComment = userDto.deleteComment || 'No comment provided';
+
+      // get authId from user
+      const userEntity = await this.userSerivce.getUserRelationsById(
+        userDto.userId,
+      );
+
+      // Validations
+      if (!userEntity) throw new NotFoundException('User not found');
+      if (!userEntity.auth)
+        throw new NotFoundException('Auth not found, registration incomplete');
+      if (userEntity.deleted)
+        throw new NotFoundException('User already deleted');
+
+      const userId = userEntity.id;
+
+      // Perform delete
+      await this.dataSource.transaction(async (manager: EntityManager) => {
+        // delete user last
+        await this.userSerivce.deleteUser(userDto, manager);
+
+        // delete mobile first
+        await this.mobileService.deleteMobileByAuthId(userId, manager);
+        // delete auth second
+        await this.deleteAuthById(userEntity.auth.id, manager);
+        // delete address third
+        await this.addressService.deleteAddressByUserId(userId, manager);
+        // delete favourite if any
+        if (userEntity.favourites.length > 0)
+          await this.favouriteService.deleteFavouriteByUserId(userId, manager);
+      });
+
+      // check if it was successful
+      const user = await this.userSerivce.getUserInfoById(userId);
+
+      if (user) throw new Error('User not deleted');
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in auth.service.ts, deleteUser method: ' + error,
+      );
+      throw error;
+    }
+  }
 }

@@ -17,14 +17,12 @@ export class StoreSuggestion extends CommonEntity {
   name: string;
 
   @OneToOne(() => Address)
-  @JoinColumn({name: 'address_id'})
+  @JoinColumn({ name: 'address_id' })
   address: Address;
 
   @ManyToOne(() => User, (user) => user.feedbacks, {
     nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'user_id'})
+  @JoinColumn({ name: 'user_id' })
   user: User;
 }

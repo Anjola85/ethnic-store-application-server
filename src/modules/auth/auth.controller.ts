@@ -28,6 +28,7 @@ import { EncryptedDTO } from 'src/common/dto/encrypted.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginRespDto } from 'src/contract/version1/response/login-response.dto';
 import { SignupRespDto } from 'src/contract/version1/response/signup-response.dto';
+import { DeleteUserDto } from '../user/dto/delete-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -284,6 +285,28 @@ export class AuthController {
 
       throw new HttpException(
         'register email failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('delete-user')
+  async deleteUser(@Body() body: DeleteUserDto, @Res() res: Response) {
+    try {
+      // get userId from token if token not provided
+      if (!body.userId) body.userId = res.locals.userId;
+
+      await this.authService.deleteUser(body);
+      return res
+        .status(HttpStatus.OK)
+        .json(createResponse('user deleted successfully'));
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw new HttpException(error.message, error.getStatus());
+      }
+
+      throw new HttpException(
+        'delete user failed',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
