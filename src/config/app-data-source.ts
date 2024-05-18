@@ -20,9 +20,6 @@ export const initializeAppDataSource = async (
     user: EnvConfigService.get('DB_USER'),
     password: EnvConfigService.get('DB_PASSWORD'),
     database: EnvConfigService.get('DB_NAME'),
-    ssl: {
-      rejectUnauthorized: false,
-    },
   };
 
   // let ensureDatabaseExists: () => Promise<void> = async () => {};
@@ -60,7 +57,6 @@ export const initializeAppDataSource = async (
     username: dbConfig.user,
     password: dbConfig.password,
     database: dbConfig.database,
-    ssl: dbConfig.ssl,
   });
 
   const initializeDataSource = async (retries: number): Promise<void> => {
