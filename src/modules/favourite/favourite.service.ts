@@ -10,6 +10,7 @@ import {
 } from 'src/contract/version1/response/favourite-response.dto';
 import { FavouriteProcessor } from './favourite.process';
 import { BusinessService } from '../business/business.service';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class FavouriteService {
@@ -102,6 +103,26 @@ export class FavouriteService {
           error.message,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Uses the manager to delete all favourites by a user id
+   * @param userId
+   * @param manager
+   */
+  async deleteFavouriteByUserId(
+    userId: any,
+    manager: EntityManager,
+  ): Promise<void> {
+    try {
+      await this.favouriteRepository.deleteFavouriteByUserId(userId, manager);
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.service.ts, deleteFavouriteByUserId method: ' +
+          error,
+      );
+      throw new Error(`Unable to delete favourite from the database`);
     }
   }
 }

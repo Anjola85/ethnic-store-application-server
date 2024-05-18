@@ -3,6 +3,7 @@ import { MobileRepository } from './mobile.repository';
 import { Mobile, MobileParams } from './mobile.entity';
 import { Auth } from '../auth/entities/auth.entity';
 import { MobileDto } from 'src/common/dto/mobile.dto';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class MobileService {
@@ -94,5 +95,17 @@ export class MobileService {
   async getMobileByAuth(auth: Auth): Promise<Mobile> {
     if (!auth) throw new Error('Auth is required');
     return await this.mobileRepository.getMobileByAuth(auth);
+  }
+
+  async deleteMobileByAuthId(
+    userId: any,
+    manager: EntityManager,
+  ): Promise<void> {
+    try {
+      await this.mobileRepository.deleteMobileByAuthId(userId, manager);
+    } catch (error) {
+      this.logger.error('Error when deleting mobile with: ' + error);
+      throw error;
+    }
   }
 }

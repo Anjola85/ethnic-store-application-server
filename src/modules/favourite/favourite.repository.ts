@@ -5,7 +5,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Favourite } from './entities/favourite.entity';
 import { User } from '../user/entities/user.entity';
 import { Business } from '../business/entities/business.entity';
@@ -177,6 +177,28 @@ export class FavouriteRepository extends Repository<Favourite> {
     } catch (error) {
       this.logger.debug(
         'Error thrown in favourite.repository.ts, getAllFavourites method: ' +
+          error +
+          ' with error message: ' +
+          error.message,
+      );
+      throw error;
+    }
+  }
+
+  async deleteFavouriteByUserId(
+    userId: any,
+    manager: EntityManager,
+  ): Promise<void> {
+    try {
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(Favourite)
+        .where('user_id = :userId', { userId })
+        .execute();
+    } catch (error) {
+      this.logger.error(
+        'Error thrown in favourite.repository.ts, deleteFavouriteByUserId method: ' +
           error +
           ' with error message: ' +
           error.message,

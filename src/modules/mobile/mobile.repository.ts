@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Mobile, MobileParams } from './mobile.entity';
 import { Auth } from '../auth/entities/auth.entity';
 import { Business } from '../business/entities/business.entity';
@@ -194,6 +194,23 @@ export class MobileRepository extends Repository<Mobile> {
         `Error thrown in mobile.repository.ts, getMobileByAuth method: ${error.message}`,
       );
       throw new Error('Unable to retrieve mobile from the database');
+    }
+  }
+
+  async deleteMobileByAuthId(authId: any, manager: EntityManager) {
+    try {
+      // use the manager to delete
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(Mobile)
+        .where('auth_id = :authId', { authId })
+        .execute();
+    } catch (error) {
+      this.logger.error(
+        `Error thrown in mobile.repository.ts, deleteMobileByUserId method: ${error.message}`,
+      );
+      throw new Error('Unable to delete mobile from the database');
     }
   }
 }

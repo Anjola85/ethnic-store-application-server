@@ -19,6 +19,7 @@ import {
 } from '../../contract/version1/response/address-response.dto';
 import { FeedbackService } from '../feedback/feedback.service';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -182,23 +183,26 @@ export class UserService {
     return AddressProcessor.mapEntityToResp(newAddress);
   }
 
-  async deleteUser(user: DeleteUserDto): Promise<any> {
-    try {
-      // find all associated entities and delete them
-    } catch (error) {
-      this.logger.error(
-        'Error thrown in user.service.ts, deleteUser method: ' + error,
-      );
-      throw error;
-    }
-  }
-
   async deleteUserAddress(addressId: number, userId: number) {
     try {
       return await this.addressService.deleteUserAddress(addressId, userId);
     } catch (e) {
       this.logger.error(
         'Error thrown in user.service.ts, deleteUserAddress method: ' + e,
+      );
+      throw e;
+    }
+  }
+
+  async deleteUser(
+    userDto: DeleteUserDto,
+    manager: EntityManager,
+  ): Promise<void> {
+    try {
+      await this.userRepository.softDeleteUser(userDto, manager);
+    } catch (e) {
+      this.logger.error(
+        'Error thrown in user.service.ts, deleteUser method: ' + e,
       );
       throw e;
     }
