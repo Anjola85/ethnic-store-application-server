@@ -9,6 +9,9 @@ import {
   RegionListRespDto,
   RegionRespDto,
 } from 'src/contract/version1/response/region-response.dto';
+import { AppDataSource } from 'src/config/app-data-source';
+import { AwsS3Service } from '../files/aws-s3.service';
+import * as path from 'path';
 
 @Injectable()
 export class RegionService {
@@ -17,15 +20,43 @@ export class RegionService {
   constructor(
     @InjectRepository(Region)
     protected regionRepository: Repository<Region>,
+    private awsS3Service: AwsS3Service,
   ) {}
 
   async create(createRegionDto: CreateRegionDto): Promise<RegionRespDto> {
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       const region = new Region();
       Object.assign(region, createRegionDto);
+
       const newRegion = await this.regionRepository.save(region);
-      const resp = RegionProcessor.mapEntityToResp(newRegion);
-      return resp;
+      await queryRunner.commitTransaction();
+
+      // process response
+      const regionRespDto: RegionRespDto =
+        RegionProcessor.mapEntityToResp(newRegion);
+
+      if (createRegionDto.image) {
+        const extension = path.extname(createRegionDto.image.originalname);
+        const imageUrl = await this.awsS3Service.uploadImgToFolder(
+          `server/geographic_images/regions/${createRegionDto.name}${extension}`,
+          createRegionDto.image.buffer,
+        );
+
+        // Start a new transaction to update the image URL
+        await queryRunner.startTransaction();
+        newRegion.imageUrl = imageUrl;
+
+        const updatedRegion = await queryRunner.manager.save(newRegion);
+        await queryRunner.commitTransaction();
+
+        regionRespDto.imageUrl = updatedRegion.imageUrl;
+      }
+
+      return regionRespDto;
     } catch (error) {
       this.logger.debug(error);
 
@@ -49,7 +80,7 @@ export class RegionService {
   async findAll(): Promise<RegionListRespDto> {
     try {
       const regions = await this.regionRepository.find({
-        select: ['name', 'id'],
+        select: ['name', 'id', 'imageUrl'],
         order: {
           id: 'ASC',
         },
@@ -70,8 +101,23 @@ export class RegionService {
 
   async update(id: number, updateRegionDto: UpdateRegionDto): Promise<any> {
     try {
-      return null;
+      // get one region
+      const updatedRegion: Region = await this.regionRepository
+        .createQueryBuilder()
+        .where('id = :id', { id })
+        .getOne();
+
+      // update the region
+      Object.assign(updatedRegion, updateRegionDto);
+
+      // save the updated region
+      await this.regionRepository.save(updatedRegion);
+
+      // map the region back to response dto
+      const regionResponse = RegionProcessor.mapEntityToResp(updatedRegion);
+      return regionResponse;
     } catch (error) {
+      this.logger.debug('Error occurred in region service');
       throw error;
     }
   }

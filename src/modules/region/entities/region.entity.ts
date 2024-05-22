@@ -17,6 +17,9 @@ export class Region extends CommonEntity {
   @Column({ type: 'varchar', length: 15, unique: true })
   name: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'image_url' })
+  imageUrl: string;
+
   @ManyToOne(() => Continent, (continent) => continent.name)
   @JoinColumn({ name: 'continent_id' })
   continentId: Continent;
