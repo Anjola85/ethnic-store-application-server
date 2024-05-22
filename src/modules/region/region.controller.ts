@@ -9,6 +9,7 @@ import {
   ConflictException,
   HttpException,
   HttpStatus,
+  UploadedFile,
 } from '@nestjs/common';
 import { RegionService } from './region.service';
 import { CreateRegionDto } from './dto/create-region.dto';
@@ -21,9 +22,13 @@ export class RegionController {
   constructor(private readonly regionService: RegionService) {}
 
   @Post('register')
-  async create(@Body() createRegionDto: CreateRegionDto) {
+  async create(
+    @Body() createRegionDto: CreateRegionDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ): Promise<any> {
     try {
       this.logger.debug('RegionController.create called');
+      if (image) createRegionDto.image = image;
       const resp = await this.regionService.create(createRegionDto);
       return createResponse('Region registered successfully', resp);
     } catch (error) {
@@ -72,10 +77,16 @@ export class RegionController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRegionDto: UpdateRegionDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateRegionDto: UpdateRegionDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
     try {
       this.logger.debug('RegionController.update called');
-      return this.regionService.update(+id, updateRegionDto);
+      if (image) updateRegionDto.image = image;
+      const response = await this.regionService.update(+id, updateRegionDto);
+      return createResponse('Region updated successfully', response);
     } catch (error) {
       this.logger.debug(error);
       throw new HttpException(
